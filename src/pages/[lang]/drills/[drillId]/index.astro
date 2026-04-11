@@ -1,6 +1,7 @@
 ---
 import Layout from '../../../../layouts/Layout.astro'
 import ContentWithTerminalLayout from '../../../../components/lesson/ContentWithTerminalLayout.astro'
+import DrillValidations from '../../../../components/drills/DrillValidations.astro'
 import Button from '../../../../components/ui/Button.astro'
 import { useLocalePath, useTranslations } from '../../../../i18n/utils'
 import { getDrillDetail } from '../../../../content/drills/facade'
@@ -49,8 +50,6 @@ const withMode = (path: string) =>
 const env = drillDetail.environment?.trim().toLowerCase()
 const seedName = env && env !== 'empty' ? env : 'minimal'
 
-const drillCompleteHref = withMode(localePath(`/drills/${drillId}/complete`))
-
 const contentBarLabels = {
   labelVisualizer: t('lesson_visualizer'),
   labelCourse: t('lesson_viewCourse'),
@@ -73,13 +72,13 @@ const terminalLockPrimaryLabel = t('lesson_terminalLock_ctaUpgrade')
 const terminalLockSecondaryHref = terminalLockCrashCourseHref
 const terminalLockSecondaryLabel = t('lesson_terminalLock_tryFreeCrashCourse')
 const drillBackHref = localePath('/drills')
+const retryHref = withMode(localePath(`/drills/${drillId}`))
 
 const guidedHref = `${localePath(`/drills/${drillId}`)}?mode=guided`
 const examHref = `${localePath(`/drills/${drillId}`)}?mode=exam`
 const kubernetesDocsUrl = 'https://kubernetes.io/docs/home/'
 
 const tasks = drillDetail.tasks
-const validations = drillDetail.validations
 ---
 
 {
@@ -141,9 +140,27 @@ const validations = drillDetail.validations
         <article class="lesson-content" data-drill-mode={runMode}>
           <p class="drill-section-label">{t('drills_tasks')}</p>
           <ol class="drill-tasks">
-            {tasks.map((task) => (
+            {tasks.map((task, index) => (
               <li class="drill-task">
-                <p class="drill-task__description">{task.task}</p>
+                <div class="drill-task__header">
+                  <p class="drill-task__description">{task.task}</p>
+                  {task.validation && (
+                    <span
+                      class="task-validation-badge task-validation-badge--not-run"
+                      data-task-validation-badge={index}
+                      aria-label="Not checked"
+                    >
+                      ○
+                    </span>
+                  )}
+                </div>
+                {task.validation && (
+                  <p
+                    class="drill-task__validation-error"
+                    data-task-validation-error={index}
+                    hidden
+                  />
+                )}
                 <details class="drill-task__solution">
                   <summary>{t('drills_solution')}</summary>
                   <p class="drill-task__explanation">{task.explanation}</p>
@@ -152,45 +169,6 @@ const validations = drillDetail.validations
               </li>
             ))}
           </ol>
-
-          {
-            validations.length > 0 && (
-              <section
-                class="drill-validations"
-                data-drill-validations-root
-                data-drill-validations-json={JSON.stringify(validations)}
-              >
-                <p class="drill-section-label">Validation</p>
-                <button
-                  type="button"
-                  class="drill-validations__run"
-                  data-drill-run-validations
-                >
-                  Run checks
-                </button>
-                <ul class="drill-validations__list">
-                  {validations.map((validation, index) => (
-                    <li class="drill-validation-item" data-validation-index={index}>
-                      <div class="drill-validation-item__row">
-                        <span class="drill-validation-item__name">
-                          {validation.name}
-                        </span>
-                        <span
-                          class="drill-validation-item__status"
-                          data-validation-status
-                        >
-                          Not run
-                        </span>
-                      </div>
-                      <p class="drill-validation-item__error" data-validation-error hidden>
-                        {validation.onFail}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )
-          }
         </article>
 
         <div class="lp__drill-complete">
@@ -204,21 +182,29 @@ const validations = drillDetail.validations
               {t('home_cta_join')}
             </Button>
           ) : (
-            <span
-              class="lp__drill-done-wrap"
-              data-drill-target-id={drillId}
-            >
+            <div class="lp__drill-done-wrap" data-drill-target-id={drillId}>
               <Button
-                href={drillCompleteHref}
+                type="button"
                 variant="solid"
                 color="cyan"
                 size="md"
+                data-drill-done-button
               >
                 {t('drills_doneButton')}
               </Button>
-            </span>
+              <div class="lp__drill-post-actions" data-drill-post-actions hidden>
+                <Button href={drillBackHref} variant="subtle" color="gray" size="sm">
+                  {t('drillComplete_backToDrills')}
+                </Button>
+                <Button href={retryHref} variant="solid" color="cyan" size="sm">
+                  Do another
+                </Button>
+              </div>
+            </div>
           )}
         </div>
+
+        <DrillValidations tasks={tasks} />
       </ContentWithTerminalLayout>
     </Layout>
   )
@@ -227,260 +213,66 @@ const validations = drillDetail.validations
 <script>
   import { sendProgressCompleteBeacon } from '../../../../lib/progress/sendProgressBeacon'
 
-  function initDrillDoneBeacon() {
+  function initDrillDoneFlow() {
     const wrap = document.querySelector<HTMLElement>('.lp__drill-done-wrap')
     const targetId = wrap?.dataset.drillTargetId
-    if (!wrap || !targetId || wrap.dataset.progressBeaconBound === 'true') {
+    const doneBtn = wrap?.querySelector<HTMLButtonElement>('[data-drill-done-button]')
+    const postActions = wrap?.querySelector<HTMLElement>('[data-drill-post-actions]')
+    if (
+      !wrap ||
+      !targetId ||
+      !doneBtn ||
+      !postActions ||
+      wrap.dataset.progressBeaconBound === 'true'
+    ) {
       return
     }
     wrap.dataset.progressBeaconBound = 'true'
 
-    wrap.addEventListener(
+    doneBtn.addEventListener(
       'click',
       () => {
-        sendProgressCompleteBeacon({ type: 'drill', targetId })
+        const onValidationComplete = (event: Event) => {
+          const detail = (event as CustomEvent<{ allPassed?: boolean }>).detail
+          if (!detail?.allPassed) {
+            doneBtn.disabled = false
+            return
+          }
+          sendProgressCompleteBeacon({ type: 'drill', targetId })
+          const elapsedMs = (window as { __drillElapsedMs?: number }).__drillElapsedMs ?? 0
+          const elapsedSec = Math.max(0, Math.round(elapsedMs / 1000))
+          const bestKey = `drillBestSeconds:${targetId}`
+          const previousRaw = localStorage.getItem(bestKey)
+          const previous =
+            previousRaw != null && Number.isFinite(Number(previousRaw))
+              ? Number(previousRaw)
+              : null
+          if (previous == null || elapsedSec < previous) {
+            localStorage.setItem(bestKey, String(elapsedSec))
+          }
+          doneBtn.hidden = true
+          postActions.hidden = false
+          doneBtn.disabled = false
+        }
+        document.addEventListener(
+          'drill-validations:complete',
+          onValidationComplete as EventListener,
+          { once: true }
+        )
+        doneBtn.disabled = true
+        document.dispatchEvent(new CustomEvent('drill-validations:run'))
       },
       true
     )
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initDrillDoneBeacon)
+    document.addEventListener('DOMContentLoaded', initDrillDoneFlow)
   } else {
-    initDrillDoneBeacon()
+    initDrillDoneFlow()
   }
 
-  document.addEventListener('astro:page-load', initDrillDoneBeacon)
-</script>
-
-<script>
-  import type { EmulatedEnvironment } from '../../../../core/emulatedEnvironment/EmulatedEnvironment'
-  import { createFileSystem } from '../../../../core/filesystem/FileSystem'
-  import { createCommandDispatcher } from '../../../../core/terminal/core/CommandDispatcher'
-  import type { DrillValidation } from '../../../../content/drills/types'
-  import { createLogger } from '../../../../logger/Logger'
-
-  type ValidationUiState = 'not-run' | 'running' | 'pass' | 'fail'
-
-  const stripAnsi = (value: string): string => {
-    return value.replace(/\x1B\[[0-9;]*[A-Za-z]/g, '')
-  }
-
-  const normalizeOutput = (value: string): string => {
-    return stripAnsi(value).replace(/\r\n/g, '\n').trim()
-  }
-
-  const matchesExpectation = (
-    output: string,
-    expect: DrillValidation['expect']
-  ): boolean => {
-    const normalized = normalizeOutput(output)
-    if (expect.mode === 'notEmpty') {
-      return normalized.length > 0
-    }
-    if (expect.mode === 'equals') {
-      return normalized === (expect.value ?? '')
-    }
-    if (expect.mode === 'contains') {
-      return normalized.includes(expect.value ?? '')
-    }
-    if (expect.mode === 'regex') {
-      try {
-        return new RegExp(expect.value ?? '').test(normalized)
-      } catch {
-        return false
-      }
-    }
-    return false
-  }
-
-  function setValidationUiState(
-    itemEl: HTMLElement,
-    state: ValidationUiState
-  ): void {
-    const statusEl = itemEl.querySelector<HTMLElement>('[data-validation-status]')
-    const errorEl = itemEl.querySelector<HTMLElement>('[data-validation-error]')
-    if (!statusEl || !errorEl) {
-      return
-    }
-
-    statusEl.classList.remove(
-      'drill-validation-item__status--running',
-      'drill-validation-item__status--pass',
-      'drill-validation-item__status--fail'
-    )
-
-    if (state === 'not-run') {
-      statusEl.textContent = 'Not run'
-      errorEl.hidden = true
-      return
-    }
-    if (state === 'running') {
-      statusEl.textContent = 'Running...'
-      statusEl.classList.add('drill-validation-item__status--running')
-      errorEl.hidden = true
-      return
-    }
-    if (state === 'pass') {
-      statusEl.textContent = 'PASS'
-      statusEl.classList.add('drill-validation-item__status--pass')
-      errorEl.hidden = true
-      return
-    }
-    statusEl.textContent = 'FAIL'
-    statusEl.classList.add('drill-validation-item__status--fail')
-    errorEl.hidden = false
-  }
-
-  async function runDrillValidations() {
-    const root = document.querySelector<HTMLElement>('[data-drill-validations-root]')
-    if (!root) {
-      return
-    }
-
-    let validations: DrillValidation[] = []
-    const rawValidations = root.getAttribute('data-drill-validations-json') ?? '[]'
-    try {
-      const parsed = JSON.parse(rawValidations)
-      if (Array.isArray(parsed)) {
-        validations = parsed as DrillValidation[]
-      }
-    } catch {
-      validations = []
-    }
-
-    if (validations.length === 0) {
-      return
-    }
-
-    const runBtn = root.querySelector<HTMLButtonElement>(
-      '[data-drill-run-validations]'
-    )
-    const itemEls = Array.from<HTMLElement>(
-      root.querySelectorAll<HTMLElement>('[data-validation-index]')
-    )
-    if (!runBtn) {
-      return
-    }
-
-    runBtn.disabled = true
-    itemEls.forEach((item) => setValidationUiState(item, 'not-run'))
-
-    const globalState = globalThis as { __lessonEnv?: EmulatedEnvironment }
-    const env = globalState.__lessonEnv
-    if (!env) {
-      itemEls.forEach((item) => setValidationUiState(item, 'fail'))
-      runBtn.disabled = false
-      return
-    }
-
-    let outputBuffer = ''
-    const renderer = {
-      write(text: string) {
-        outputBuffer += text
-      },
-      writeChar(char: string) {
-        outputBuffer += char
-      },
-      clearLine() {},
-      clearToEnd() {},
-      moveCursorLeft() {},
-      moveCursorRight() {},
-      setCursorPosition() {},
-      focus() {},
-      dispose() {}
-    }
-
-    const fileSystem = createFileSystem(
-      env.fileSystemState,
-      env.apiServer.eventBus,
-      { mutable: true }
-    )
-    const dispatcher = createCommandDispatcher({
-      fileSystem,
-      renderer,
-      shellContextStack: env.shellContextStack,
-      apiServer: env.apiServer,
-      networkRuntime: env.networkRuntime,
-      metricsProvider: env.metricsProvider,
-      logger: createLogger({ mirrorToConsole: false })
-    })
-
-    for (let index = 0; index < validations.length; index += 1) {
-      const validation = validations[index]
-      const itemEl = itemEls[index]
-      if (!itemEl) {
-        continue
-      }
-
-      setValidationUiState(itemEl, 'running')
-      outputBuffer = ''
-
-      let passed = false
-      try {
-        const result = dispatcher.execute(validation.run)
-        if (!result.ok) {
-          passed = false
-          console.group(`[validation] ${validation.name}`)
-          console.log('run:', validation.run)
-          console.log('result.ok:', result.ok)
-          console.log('result.error:', result.error)
-          console.log('outputBuffer:', outputBuffer)
-          console.log('passed:', passed)
-          console.groupEnd()
-        } else {
-          const valueOutput = typeof result.value === 'string' ? result.value : ''
-          const effectiveOutput =
-            outputBuffer.length > 0 ? outputBuffer : valueOutput
-          const normalizedOutput = normalizeOutput(effectiveOutput)
-          passed = matchesExpectation(effectiveOutput, validation.expect)
-          console.group(`[validation] ${validation.name}`)
-          console.log('run:', validation.run)
-          console.log('result.ok:', result.ok)
-          console.log('result.value:', result.value)
-          console.log('valueOutput:', valueOutput)
-          console.log('outputBuffer:', outputBuffer)
-          console.log('effectiveOutput:', effectiveOutput)
-          console.log('normalizedOutput:', normalizedOutput)
-          console.log('expect:', validation.expect)
-          console.log('passed:', passed)
-          console.groupEnd()
-        }
-      } catch {
-        passed = false
-        console.group(`[validation] ${validation.name}`)
-        console.log('run:', validation.run)
-        console.log('error: exception thrown while executing validation')
-        console.log('outputBuffer:', outputBuffer)
-        console.log('passed:', passed)
-        console.groupEnd()
-      }
-
-      setValidationUiState(itemEl, passed ? 'pass' : 'fail')
-    }
-
-    runBtn.disabled = false
-  }
-
-  function initDrillValidationsUi() {
-    const runBtn = document.querySelector<HTMLButtonElement>(
-      '[data-drill-run-validations]'
-    )
-    if (!runBtn || runBtn.dataset.validationsBound === 'true') {
-      return
-    }
-    runBtn.dataset.validationsBound = 'true'
-    runBtn.addEventListener('click', () => {
-      void runDrillValidations()
-    })
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initDrillValidationsUi)
-  } else {
-    initDrillValidationsUi()
-  }
-  document.addEventListener('astro:page-load', initDrillValidationsUi)
+  document.addEventListener('astro:page-load', initDrillDoneFlow)
 </script>
 
 <script>
@@ -517,33 +309,16 @@ const validations = drillDetail.validations
     window.setInterval(tick, TIMER_INTERVAL_MS)
   }
 
-  function persistElapsedBeforeComplete() {
-    const wrap = document.querySelector<HTMLElement>('.lp__drill-done-wrap')
-    const link = wrap?.querySelector<HTMLAnchorElement>('a[href*="complete"]')
-    const targetId = wrap?.dataset.drillTargetId
-    if (!link || !targetId || link.dataset.drillTimeBound === 'true') {
-      return
-    }
-    link.dataset.drillTimeBound = 'true'
-    link.addEventListener('click', () => {
-      const ms = window.__drillElapsedMs ?? 0
-      sessionStorage.setItem(`drillElapsed:${targetId}`, String(Math.round(ms)))
-    })
-  }
-
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
       initDrillTimer()
-      persistElapsedBeforeComplete()
     })
   } else {
     initDrillTimer()
-    persistElapsedBeforeComplete()
   }
 
   document.addEventListener('astro:page-load', () => {
     initDrillTimer()
-    persistElapsedBeforeComplete()
   })
 </script>
 
@@ -622,6 +397,7 @@ const validations = drillDetail.validations
 
   .drill-task__description {
     margin: 0 0 0.35rem;
+    flex: 1;
   }
 
   .drill-task__solution {
@@ -648,77 +424,61 @@ const validations = drillDetail.validations
     display: none;
   }
 
-  .drill-validations {
-    margin-top: 1.25rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--color-gray-4);
-  }
-
-  .drill-validations__run {
-    margin-bottom: 0.8rem;
-    border: 1px solid var(--color-gray-6);
-    background: var(--color-gray-2);
-    color: var(--color-gray-12);
-    border-radius: var(--radius-2);
-    padding: 0.35rem 0.7rem;
-    font-size: var(--text-sm);
-    cursor: pointer;
-  }
-
-  .drill-validations__run:disabled {
-    opacity: 0.6;
-    cursor: default;
-  }
-
-  .drill-validations__list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.55rem;
-  }
-
-  .drill-validation-item {
-    border: 1px solid var(--color-gray-5);
-    border-radius: var(--radius-3);
-    padding: 0.5rem 0.65rem;
-    background: var(--color-gray-2);
-  }
-
-  .drill-validation-item__row {
-    display: flex;
+  .lp__drill-post-actions {
+    margin-top: 0.75rem;
+    display: inline-flex;
     align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .drill-task__header {
+    display: flex;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 0.75rem;
   }
 
-  .drill-validation-item__name {
-    font-size: var(--text-sm);
-    color: var(--color-gray-12);
+  .drill-task__header .drill-task__description {
+    flex: 1;
+    margin: 0 0 0.35rem;
   }
 
-  .drill-validation-item__status {
-    font-size: var(--text-xs);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-gray-11);
+  .task-validation-badge {
+    flex-shrink: 0;
+    font-size: 1rem;
+    line-height: 1;
+    margin-top: 0.1rem;
+    font-family: var(--font-mono);
+    transition: color 0.15s ease;
   }
 
-  .drill-validation-item__status--running {
-    color: var(--color-amber-11);
+  .task-validation-badge--not-run {
+    color: var(--color-gray-8);
   }
 
-  .drill-validation-item__status--pass {
-    color: var(--color-green-11);
+  .task-validation-badge--running {
+    color: var(--color-amber-9);
   }
 
-  .drill-validation-item__status--fail {
+  .task-validation-badge--pass {
+    color: var(--color-green-10);
+  }
+
+  .task-validation-badge--fail {
+    color: var(--color-ruby-10);
+  }
+
+  .drill-task__validation-error {
+    margin: 0 0 0.35rem 0;
+    padding: 0.3rem 0.5rem;
+    background: color-mix(in srgb, var(--color-ruby-3) 60%, transparent);
+    border-left: 2px solid var(--color-ruby-7);
+    border-radius: 0 var(--radius-1) var(--radius-1) 0;
     color: var(--color-ruby-11);
+    font-size: var(--text-xs);
+    font-family: var(--font-mono);
   }
 
-  .drill-validation-item__error {
-    margin: 0.35rem 0 0;
-    color: var(--color-ruby-11);
-    font-size: var(--text-xs);
-  }
 </style>

@@ -27,10 +27,12 @@ tasks:
   - task: "Validate daemonset recovery reached full readiness"
     command: "kubectl rollout status daemonset/kube-proxy -n kube-system && kubectl get daemonset kube-proxy -n kube-system -o jsonpath='{.status.numberReady}/{.status.desiredNumberScheduled}'"
     explanation: "Final proof is full ready/desired parity after restart."
-validations:
-  - name: "DaemonSet kube-proxy totalement ready"
-    run: "kubectl get daemonset kube-proxy -n kube-system -o jsonpath='{.status.numberReady}/{.status.desiredNumberScheduled}'"
-    expect:
-      mode: "regex"
-      value: "^([1-9][0-9]*)/\\1$"
-    onFail: "Le DaemonSet kube-proxy n'a pas atteint un état fully ready."
+    validation:
+      assertions:
+        - type: "clusterFieldsEqual"
+          kind: "DaemonSet"
+          namespace: "kube-system"
+          name: "kube-proxy"
+          leftPath: "{.status.numberReady}"
+          rightPath: "{.status.desiredNumberScheduled}"
+          onFail: "Le DaemonSet kube-proxy n'a pas atteint un état fully ready."

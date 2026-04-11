@@ -1,0 +1,184 @@
+---
+import type { DrillTask } from '../../content/drills/types'
+
+interface Props {
+  tasks: DrillTask[]
+}
+
+const { tasks } = Astro.props
+const validationTasks = tasks
+  .map((t, i) => ({ index: i, validation: t.validation }))
+  .filter((t): t is { index: number; validation: NonNullable<typeof t.validation> } =>
+    t.validation !== undefined
+  )
+---
+
+<div
+  data-drill-validations-root
+  data-drill-validations-json={JSON.stringify(
+    validationTasks.map(({ index, validation }) => ({ index, ...validation }))
+  )}
+  hidden
+  aria-hidden="true"
+/>
+<script>
+  import type { DrillAssertion } from '../../content/drills/types'
+  import { DrillValidationService } from '../../core/drills/validation/DrillValidationService'
+  import { createRuntimeValidationQueryAdapter } from '../../core/drills/validation/RuntimeValidationQueryAdapter'
+  import { getCurrentTerminalEnvironment } from '../../core/terminal/TerminalManager'
+
+  type ValidationUiState = 'not-run' | 'running' | 'pass' | 'fail'
+
+  interface ValidationEntry {
+    index: number
+    assertions: DrillAssertion[]
+  }
+
+  function setTaskValidationUiState(
+    taskIndex: number,
+    state: ValidationUiState,
+    errorMessage?: string
+  ): void {
+    const badgeEl = document.querySelector<HTMLElement>(
+      `[data-task-validation-badge="${taskIndex}"]`
+    )
+    const errorEl = document.querySelector<HTMLElement>(
+      `[data-task-validation-error="${taskIndex}"]`
+    )
+    if (!badgeEl) {
+      return
+    }
+
+    badgeEl.classList.remove(
+      'task-validation-badge--not-run',
+      'task-validation-badge--running',
+      'task-validation-badge--pass',
+      'task-validation-badge--fail'
+    )
+
+    if (state === 'not-run') {
+      badgeEl.textContent = '○'
+      badgeEl.classList.add('task-validation-badge--not-run')
+      badgeEl.setAttribute('aria-label', 'Not checked')
+      if (errorEl) {
+        errorEl.hidden = true
+      }
+      return
+    }
+    if (state === 'running') {
+      badgeEl.textContent = '◔'
+      badgeEl.classList.add('task-validation-badge--running')
+      badgeEl.setAttribute('aria-label', 'Running...')
+      if (errorEl) {
+        errorEl.hidden = true
+      }
+      return
+    }
+    if (state === 'pass') {
+      badgeEl.textContent = '✓'
+      badgeEl.classList.add('task-validation-badge--pass')
+      badgeEl.setAttribute('aria-label', 'Passed')
+      if (errorEl) {
+        errorEl.hidden = true
+      }
+      return
+    }
+    badgeEl.textContent = '✗'
+    badgeEl.classList.add('task-validation-badge--fail')
+    badgeEl.setAttribute('aria-label', 'Failed')
+    if (errorEl && errorMessage) {
+      errorEl.textContent = errorMessage
+      errorEl.hidden = false
+    }
+  }
+
+  async function runDrillValidations(root: HTMLElement): Promise<boolean> {
+    let entries: ValidationEntry[] = []
+    const rawEntries = root.getAttribute('data-drill-validations-json') ?? '[]'
+    try {
+      const parsed = JSON.parse(rawEntries)
+      if (Array.isArray(parsed)) {
+        entries = parsed as ValidationEntry[]
+      }
+    } catch {
+      entries = []
+    }
+
+    if (entries.length === 0) {
+      return true
+    }
+
+    entries.forEach(({ index }) => setTaskValidationUiState(index, 'not-run'))
+
+    // Single source of truth: use the env currently attached to the terminal.
+    const env = getCurrentTerminalEnvironment()
+    if (!env) {
+      entries.forEach(({ index, assertions }) =>
+        setTaskValidationUiState(index, 'fail', assertions[0]?.onFail)
+      )
+      return false
+    }
+
+    const queryPort = createRuntimeValidationQueryAdapter(env)
+    const service = new DrillValidationService(queryPort)
+
+    let allPassed = true
+
+    for (const entry of entries) {
+      setTaskValidationUiState(entry.index, 'running')
+
+      const runResult = await service.run([entry])
+      if (!runResult.ok) {
+        setTaskValidationUiState(entry.index, 'fail', entry.assertions[0]?.onFail)
+        allPassed = false
+        continue
+      }
+      const taskResult = runResult.value.tasks[0]
+      const passed = taskResult?.passed === true
+
+      setTaskValidationUiState(
+        entry.index,
+        passed ? 'pass' : 'fail',
+        passed ? undefined : taskResult?.errorMessage
+      )
+      if (!passed) {
+        allPassed = false
+      }
+    }
+
+    return allPassed
+  }
+
+  function initDrillValidationsUi() {
+    const globalState = globalThis as {
+      __drillValidationEventBound?: boolean
+    }
+    if (globalState.__drillValidationEventBound) {
+      return
+    }
+    globalState.__drillValidationEventBound = true
+
+    document.addEventListener('drill-validations:run', async () => {
+      const roots = Array.from<HTMLElement>(
+        document.querySelectorAll<HTMLElement>('[data-drill-validations-root]')
+      )
+      let allPassed = true
+      for (const root of roots) {
+        const passed = await runDrillValidations(root)
+        allPassed = allPassed && passed
+      }
+      document.dispatchEvent(
+        new CustomEvent('drill-validations:complete', {
+          detail: { allPassed }
+        })
+      )
+    })
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDrillValidationsUi)
+  } else {
+    initDrillValidationsUi()
+  }
+  document.addEventListener('astro:page-load', initDrillValidationsUi)
+</script>

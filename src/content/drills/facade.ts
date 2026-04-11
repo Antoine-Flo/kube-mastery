@@ -4,7 +4,7 @@ import type { DrillIndexPort } from './port'
 import { buildDrillList, buildDrillDetail } from './domain'
 import { createDrillGlobAdapter } from './glob-adapter'
 
-export type { DrillListItem, DrillDetail, DrillTask, DrillTagId } from './types'
+export type { DrillListItem, DrillDetail, DrillTask, DrillValidation, DrillTagId } from './types'
 
 let adapter: DrillIndexPort | null = null
 

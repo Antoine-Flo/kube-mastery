@@ -368,6 +368,9 @@ export const updateTerminalTheme = (): void => {
 export const getTerminalController = (): TerminalController | null =>
   state.controller
 
+export const getCurrentTerminalEnvironment = (): EmulatedEnvironment | null =>
+  state.currentEnvironment
+
 export const focusTerminal = (): void => {
   if (state.terminal) {
     state.terminal.focus()

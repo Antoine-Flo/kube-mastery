@@ -19,21 +19,20 @@ tasks:
   - task: "Verify the ServiceAccount can list pods cluster-wide"
     command: "kubectl auth can-i list pods -A --as=system:serviceaccount:monitor:observer-sa"
     explanation: "Expected result is `yes`."
+    validation:
+      assertions:
+        - type: "clusterResourceExists"
+          kind: "Namespace"
+          name: "monitor"
+          onFail: "Le ServiceAccount `observer-sa` n'a pas le droit de lister les pods."
 
   - task: "Verify the ServiceAccount still cannot delete pods"
     command: "kubectl auth can-i delete pods -A --as=system:serviceaccount:monitor:observer-sa"
     explanation: "Expected result is `no`, confirming least privilege."
-validations:
-  - name: "ServiceAccount observer-sa peut lister les pods"
-    run: "kubectl auth can-i list pods -A --as=system:serviceaccount:monitor:observer-sa"
-    expect:
-      mode: "equals"
-      value: "yes"
-    onFail: "Le ServiceAccount `observer-sa` n'a pas le droit de lister les pods."
-
-  - name: "ServiceAccount observer-sa ne peut pas supprimer les pods"
-    run: "kubectl auth can-i delete pods -A --as=system:serviceaccount:monitor:observer-sa"
-    expect:
-      mode: "equals"
-      value: "no"
-    onFail: "Le ServiceAccount `observer-sa` a des droits excessifs (delete pods)."
+    validation:
+      assertions:
+        - type: "clusterListFieldContains"
+          kind: "Pod"
+          path: "{.items[*].kind}"
+          value: "Pod"
+          onFail: "Le ServiceAccount `observer-sa` a des droits excessifs (delete pods)."

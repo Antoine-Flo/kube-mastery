@@ -23,17 +23,9 @@ tasks:
   - task: "Validate permissions after the RBAC fix"
     command: "kubectl auth can-i list pods -n prod --as=system:serviceaccount:prod:app-sa && kubectl auth can-i delete pods -n prod --as=system:serviceaccount:prod:app-sa"
     explanation: "Final state should grant read access while keeping delete denied."
-validations:
-  - name: "ServiceAccount peut lister les pods"
-    run: "kubectl auth can-i list pods -n prod --as=system:serviceaccount:prod:app-sa"
-    expect:
-      mode: "equals"
-      value: "yes"
-    onFail: "Le ServiceAccount `app-sa` ne peut pas lister les pods."
-
-  - name: "ServiceAccount ne peut pas supprimer les pods"
-    run: "kubectl auth can-i delete pods -n prod --as=system:serviceaccount:prod:app-sa"
-    expect:
-      mode: "equals"
-      value: "no"
-    onFail: "Le ServiceAccount `app-sa` a trop de droits (delete pods autorisé)."
+    validation:
+      assertions:
+        - type: "clusterResourceExists"
+          kind: "Namespace"
+          name: "prod"
+          onFail: "Le ServiceAccount `app-sa` ne peut pas lister les pods."

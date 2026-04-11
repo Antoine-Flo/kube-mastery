@@ -19,27 +19,24 @@ tasks:
   - task: "Validate NodePort service contract (type/port/targetPort/nodePort)"
     command: "kubectl get svc webapp-nodeport -n app -o jsonpath='{.spec.type} {.spec.ports[0].port} {.spec.ports[0].targetPort} {.spec.ports[0].nodePort}'"
     explanation: "Expected shape is `NodePort 80 8080 30080`."
+    validation:
+      assertions:
+        - type: "clusterFieldEquals"
+          kind: "Service"
+          namespace: "app"
+          name: "webapp-nodeport"
+          path: "{.spec.ports[0].nodePort}"
+          value: "30080"
+          onFail: "Le nodePort doit être `30080`."
 
   - task: "Validate that endpoints are attached to the service"
     command: "kubectl get endpoints webapp-nodeport -n app -o jsonpath='{.subsets[*].addresses[*].ip}'"
     explanation: "Endpoint IPs confirm the service is not only defined, but actually routing to running pods."
-validations:
-  - name: "Service webapp-nodeport est de type NodePort"
-    run: "kubectl get svc webapp-nodeport -n app -o jsonpath='{.spec.type}'"
-    expect:
-      mode: "equals"
-      value: "NodePort"
-    onFail: "Le service `webapp-nodeport` doit être en type NodePort."
-
-  - name: "NodePort attendu configuré"
-    run: "kubectl get svc webapp-nodeport -n app -o jsonpath='{.spec.ports[0].nodePort}'"
-    expect:
-      mode: "equals"
-      value: "30080"
-    onFail: "Le nodePort doit être `30080`."
-
-  - name: "Service relié à des endpoints"
-    run: "kubectl get endpoints webapp-nodeport -n app -o jsonpath='{.subsets[*].addresses[*].ip}'"
-    expect:
-      mode: "notEmpty"
-    onFail: "Aucun endpoint trouvé pour `webapp-nodeport`."
+    validation:
+      assertions:
+        - type: "clusterFieldNotEmpty"
+          kind: "Endpoints"
+          namespace: "app"
+          name: "webapp-nodeport"
+          path: "{.subsets[*].addresses[*].ip}"
+          onFail: "Aucun endpoint trouvé pour `webapp-nodeport`."

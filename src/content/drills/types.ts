@@ -8,24 +8,138 @@ export const DRILL_TAG_IDS = [
 
 export type DrillTagId = (typeof DRILL_TAG_IDS)[number]
 
+export const DRILL_CLUSTER_RESOURCE_KINDS = [
+  'Pod',
+  'ConfigMap',
+  'ControllerRevision',
+  'Secret',
+  'Node',
+  'ReplicaSet',
+  'Deployment',
+  'DaemonSet',
+  'StatefulSet',
+  'Service',
+  'EndpointSlice',
+  'Endpoints',
+  'Event',
+  'Ingress',
+  'IngressClass',
+  'NetworkPolicy',
+  'GatewayClass',
+  'Gateway',
+  'HTTPRoute',
+  'PersistentVolume',
+  'PersistentVolumeClaim',
+  'Namespace',
+  'Lease',
+  'StorageClass'
+] as const
+
+export type DrillClusterResourceKind = (typeof DRILL_CLUSTER_RESOURCE_KINDS)[number]
+
+export type DrillAssertionType =
+  | 'clusterResourceExists'
+  | 'clusterFieldEquals'
+  | 'clusterFieldContains'
+  | 'clusterFieldNotEmpty'
+  | 'clusterFieldsEqual'
+  | 'clusterListFieldContains'
+  | 'filesystemFileExists'
+  | 'filesystemFileContains'
+  | 'filesystemFileNotEmpty'
+
+interface DrillAssertionBase {
+  type: DrillAssertionType
+  onFail: string
+}
+
+interface DrillClusterAssertionBase extends DrillAssertionBase {
+  kind: DrillClusterResourceKind
+  namespace?: string
+}
+
+export interface DrillClusterResourceExistsAssertion
+  extends DrillClusterAssertionBase {
+  type: 'clusterResourceExists'
+  name: string
+}
+
+export interface DrillClusterFieldEqualsAssertion
+  extends DrillClusterAssertionBase {
+  type: 'clusterFieldEquals'
+  name: string
+  path: string
+  value: string
+}
+
+export interface DrillClusterFieldContainsAssertion
+  extends DrillClusterAssertionBase {
+  type: 'clusterFieldContains'
+  name: string
+  path: string
+  value: string
+}
+
+export interface DrillClusterFieldNotEmptyAssertion
+  extends DrillClusterAssertionBase {
+  type: 'clusterFieldNotEmpty'
+  name: string
+  path: string
+}
+
+export interface DrillClusterFieldsEqualAssertion
+  extends DrillClusterAssertionBase {
+  type: 'clusterFieldsEqual'
+  name: string
+  leftPath: string
+  rightPath: string
+}
+
+export interface DrillClusterListFieldContainsAssertion
+  extends DrillClusterAssertionBase {
+  type: 'clusterListFieldContains'
+  path: string
+  value: string
+}
+
+export interface DrillFilesystemFileExistsAssertion extends DrillAssertionBase {
+  type: 'filesystemFileExists'
+  path: string
+}
+
+export interface DrillFilesystemFileContainsAssertion
+  extends DrillAssertionBase {
+  type: 'filesystemFileContains'
+  path: string
+  value: string
+}
+
+export interface DrillFilesystemFileNotEmptyAssertion
+  extends DrillAssertionBase {
+  type: 'filesystemFileNotEmpty'
+  path: string
+}
+
+export type DrillAssertion =
+  | DrillClusterResourceExistsAssertion
+  | DrillClusterFieldEqualsAssertion
+  | DrillClusterFieldContainsAssertion
+  | DrillClusterFieldNotEmptyAssertion
+  | DrillClusterFieldsEqualAssertion
+  | DrillClusterListFieldContainsAssertion
+  | DrillFilesystemFileExistsAssertion
+  | DrillFilesystemFileContainsAssertion
+  | DrillFilesystemFileNotEmptyAssertion
+
+export interface DrillValidation {
+  assertions: DrillAssertion[]
+}
+
 export interface DrillTask {
   task: string
   command: string
   explanation: string
-}
-
-export type DrillValidationMode = 'equals' | 'contains' | 'regex' | 'notEmpty'
-
-export interface DrillValidationExpectation {
-  mode: DrillValidationMode
-  value?: string
-}
-
-export interface DrillValidation {
-  name: string
-  run: string
-  expect: DrillValidationExpectation
-  onFail: string
+  validation?: DrillValidation
 }
 
 export interface DrillFile {
@@ -35,7 +149,6 @@ export interface DrillFile {
   ckaTargetMinutes?: number
   tag?: DrillTagId
   tasks: DrillTask[]
-  validations?: DrillValidation[]
 }
 
 export interface DrillListItem {
@@ -53,6 +166,5 @@ export interface DrillDetail {
   environment?: string
   ckaTargetMinutes?: number
   tasks: DrillTask[]
-  validations: DrillValidation[]
   tag: DrillTagId | null
 }

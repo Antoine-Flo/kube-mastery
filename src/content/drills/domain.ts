@@ -2,10 +2,12 @@ import { parse } from 'yaml'
 import type { UiLang } from '../courses/types'
 import {
   DRILL_TAG_IDS,
+  DRILL_CLUSTER_RESOURCE_KINDS,
   type DrillFile,
   type DrillTask,
   type DrillValidation,
-  type DrillValidationMode,
+  type DrillAssertion,
+  type DrillClusterResourceKind,
   type DrillListItem,
   type DrillDetail,
   type DrillTagId
@@ -21,53 +23,171 @@ function parseDrillTag(value: unknown): DrillTagId | undefined {
   return value as DrillTagId
 }
 
-const DRILL_VALIDATION_MODES: readonly DrillValidationMode[] = [
-  'equals',
-  'contains',
-  'regex',
-  'notEmpty'
-]
-const DRILL_VALIDATION_MODE_SET = new Set<string>(DRILL_VALIDATION_MODES)
+const DRILL_CLUSTER_RESOURCE_KIND_SET = new Set<string>(
+  DRILL_CLUSTER_RESOURCE_KINDS
+)
+const DRILL_ASSERTION_TYPES = [
+  'clusterResourceExists',
+  'clusterFieldEquals',
+  'clusterFieldContains',
+  'clusterFieldNotEmpty',
+  'clusterFieldsEqual',
+  'clusterListFieldContains',
+  'filesystemFileExists',
+  'filesystemFileContains',
+  'filesystemFileNotEmpty'
+] as const
+const DRILL_ASSERTION_TYPE_SET = new Set<string>(DRILL_ASSERTION_TYPES)
 
-function parseDrillValidations(value: unknown): DrillValidation[] {
-  if (!Array.isArray(value)) {
-    return []
+function parseClusterKind(value: unknown): DrillClusterResourceKind | undefined {
+  if (typeof value !== 'string' || !DRILL_CLUSTER_RESOURCE_KIND_SET.has(value)) {
+    return undefined
   }
-  const validations: DrillValidation[] = []
-  for (const item of value) {
-    if (!item || typeof item !== 'object') {
-      continue
+  return value as DrillClusterResourceKind
+}
+
+function parseDrillAssertion(value: unknown): DrillAssertion | undefined {
+  if (!value || typeof value !== 'object') {
+    return undefined
+  }
+  const obj = value as Record<string, unknown>
+  const type = obj.type
+  if (
+    typeof type !== 'string' ||
+    !DRILL_ASSERTION_TYPE_SET.has(type) ||
+    typeof obj.onFail !== 'string'
+  ) {
+    return undefined
+  }
+
+  if (type.startsWith('cluster')) {
+    const kind = parseClusterKind(obj.kind)
+    if (!kind) {
+      return undefined
     }
-    const obj = item as Record<string, unknown>
-    if (
-      typeof obj.name !== 'string' ||
-      typeof obj.run !== 'string' ||
-      typeof obj.onFail !== 'string' ||
-      !obj.expect ||
-      typeof obj.expect !== 'object'
-    ) {
-      continue
-    }
-    const expectObj = obj.expect as Record<string, unknown>
-    const mode = expectObj.mode
-    if (typeof mode !== 'string' || !DRILL_VALIDATION_MODE_SET.has(mode)) {
-      continue
-    }
-    const requiresValue = mode !== 'notEmpty'
-    if (requiresValue && typeof expectObj.value !== 'string') {
-      continue
-    }
-    validations.push({
-      name: obj.name,
-      run: obj.run,
-      onFail: obj.onFail,
-      expect: {
-        mode: mode as DrillValidationMode,
-        ...(typeof expectObj.value === 'string' && { value: expectObj.value })
+    const namespace =
+      typeof obj.namespace === 'string' ? obj.namespace : undefined
+
+    if (type === 'clusterResourceExists') {
+      if (typeof obj.name !== 'string') {
+        return undefined
       }
-    })
+      return { type, onFail: obj.onFail, kind, namespace, name: obj.name }
+    }
+
+    if (type === 'clusterFieldEquals' || type === 'clusterFieldContains') {
+      if (
+        typeof obj.name !== 'string' ||
+        typeof obj.path !== 'string' ||
+        typeof obj.value !== 'string'
+      ) {
+        return undefined
+      }
+      return {
+        type,
+        onFail: obj.onFail,
+        kind,
+        namespace,
+        name: obj.name,
+        path: obj.path,
+        value: obj.value
+      }
+    }
+
+    if (type === 'clusterFieldNotEmpty') {
+      if (typeof obj.name !== 'string' || typeof obj.path !== 'string') {
+        return undefined
+      }
+      return {
+        type,
+        onFail: obj.onFail,
+        kind,
+        namespace,
+        name: obj.name,
+        path: obj.path
+      }
+    }
+
+    if (type === 'clusterFieldsEqual') {
+      if (
+        typeof obj.name !== 'string' ||
+        typeof obj.leftPath !== 'string' ||
+        typeof obj.rightPath !== 'string'
+      ) {
+        return undefined
+      }
+      return {
+        type,
+        onFail: obj.onFail,
+        kind,
+        namespace,
+        name: obj.name,
+        leftPath: obj.leftPath,
+        rightPath: obj.rightPath
+      }
+    }
+
+    if (type === 'clusterListFieldContains') {
+      if (typeof obj.path !== 'string' || typeof obj.value !== 'string') {
+        return undefined
+      }
+      return {
+        type,
+        onFail: obj.onFail,
+        kind,
+        namespace,
+        path: obj.path,
+        value: obj.value
+      }
+    }
   }
-  return validations
+
+  if (type === 'filesystemFileExists' || type === 'filesystemFileNotEmpty') {
+    if (typeof obj.path !== 'string') {
+      return undefined
+    }
+    return {
+      type,
+      onFail: obj.onFail,
+      path: obj.path
+    }
+  }
+
+  if (type === 'filesystemFileContains') {
+    if (typeof obj.path !== 'string' || typeof obj.value !== 'string') {
+      return undefined
+    }
+    return {
+      type,
+      onFail: obj.onFail,
+      path: obj.path,
+      value: obj.value
+    }
+  }
+
+  return undefined
+}
+
+function parseDrillValidation(value: unknown): DrillValidation | undefined {
+  if (!value || typeof value !== 'object') {
+    return undefined
+  }
+  const obj = value as Record<string, unknown>
+  if (!Array.isArray(obj.assertions)) {
+    return undefined
+  }
+  const assertions: DrillAssertion[] = []
+  for (const assertionValue of obj.assertions) {
+    const assertion = parseDrillAssertion(assertionValue)
+    if (!assertion) {
+      return undefined
+    }
+    assertions.push(assertion)
+  }
+  if (assertions.length === 0) {
+    return undefined
+  }
+  return { assertions }
 }
 
 export function parseDrillFile(rawYaml: string): DrillFile | null {
@@ -98,16 +218,21 @@ export function parseDrillFile(rawYaml: string): DrillFile | null {
       typeof (item as Record<string, unknown>).command === 'string' &&
       typeof (item as Record<string, unknown>).explanation === 'string'
     ) {
+      const taskObj = item as Record<string, unknown>
+      const validation = parseDrillValidation(taskObj.validation)
+      if (taskObj.validation !== undefined && !validation) {
+        return null
+      }
       tasks.push({
-        task: (item as { task: string }).task,
-        command: (item as { command: string }).command,
-        explanation: (item as { explanation: string }).explanation
+        task: taskObj.task as string,
+        command: taskObj.command as string,
+        explanation: taskObj.explanation as string,
+        ...(validation && { validation })
       })
     }
   }
 
   const tag = parseDrillTag(obj.tag)
-  const validations = parseDrillValidations(obj.validations)
 
   const file: DrillFile = {
     title: obj.title,
@@ -115,8 +240,7 @@ export function parseDrillFile(rawYaml: string): DrillFile | null {
     environment: typeof obj.environment === 'string' ? obj.environment : undefined,
     ckaTargetMinutes:
       typeof obj.ckaTargetMinutes === 'number' ? obj.ckaTargetMinutes : undefined,
-    tasks,
-    ...(validations.length > 0 && { validations })
+    tasks
   }
 
   if (tag) {
@@ -165,7 +289,6 @@ export function buildDrillDetail(
     environment: file.environment,
     ckaTargetMinutes: file.ckaTargetMinutes,
     tasks: file.tasks,
-    validations: file.validations ?? [],
     tag: file.tag ?? null
   }
 }

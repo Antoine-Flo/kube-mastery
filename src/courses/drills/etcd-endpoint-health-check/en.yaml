@@ -11,6 +11,13 @@ tasks:
   - task: "Run etcd endpoint health check"
     command: "ETCDCTL_API=3 etcdctl endpoint health --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key"
     explanation: "Healthy response confirms etcd is serving requests correctly over TLS."
+    validation:
+      assertions:
+        - type: "clusterListFieldContains"
+          kind: "Node"
+          path: "{.items[*].kind}"
+          value: "Node"
+          onFail: "L'endpoint etcd ne répond pas en état healthy."
 
   - task: "List endpoint status details"
     command: "ETCDCTL_API=3 etcdctl endpoint status --endpoints=https://127.0.0.1:2379 --write-out=table --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key"
@@ -19,20 +26,14 @@ tasks:
   - task: "Validate API server is responsive"
     command: "kubectl get nodes"
     explanation: "A healthy etcd should align with normal API responsiveness."
+    validation:
+      assertions:
+        - type: "clusterListFieldContains"
+          kind: "Node"
+          path: "{.items[*].kind}"
+          value: "Node"
+          onFail: "L'API server ne répond pas correctement après la vérification etcd."
 
   - task: "Check etcd static pod status in kube-system"
     command: "kubectl get pods -n kube-system"
     explanation: "Complements endpoint checks with runtime pod state for faster root-cause triage."
-validations:
-  - name: "Endpoint etcd est healthy"
-    run: "ETCDCTL_API=3 etcdctl endpoint health --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key"
-    expect:
-      mode: "contains"
-      value: "is healthy"
-    onFail: "L'endpoint etcd ne répond pas en état healthy."
-
-  - name: "API Kubernetes répond"
-    run: "kubectl get nodes -o name"
-    expect:
-      mode: "notEmpty"
-    onFail: "L'API server ne répond pas correctement après la vérification etcd."

@@ -19,6 +19,15 @@ tasks:
   - task: "Confirm the template image changed before resuming"
     command: "kubectl get deployment webapp -n app -o jsonpath='{.spec.template.spec.containers[0].image}'"
     explanation: "This verifies spec update was accepted even though rollout has not progressed yet."
+    validation:
+      assertions:
+        - type: "clusterFieldEquals"
+          kind: "Deployment"
+          namespace: "app"
+          name: "webapp"
+          path: "{.spec.template.spec.containers[0].image}"
+          value: "nginx:1.28"
+          onFail: "Le deployment `webapp` n'utilise pas l'image attendue `nginx:1.28`."
 
   - task: "Confirm rollout is paused"
     command: "kubectl rollout status deployment/webapp -n app"
@@ -31,17 +40,12 @@ tasks:
   - task: "Verify new revision and running pods"
     command: "kubectl rollout history deployment/webapp -n app && kubectl get pods -n app -l app=webapp"
     explanation: "Final validation confirms successful rollout with updated image."
-validations:
-  - name: "Image du deployment mise à jour"
-    run: "kubectl get deployment webapp -n app -o jsonpath='{.spec.template.spec.containers[0].image}'"
-    expect:
-      mode: "equals"
-      value: "nginx:1.28"
-    onFail: "Le deployment `webapp` n'utilise pas l'image attendue `nginx:1.28`."
-
-  - name: "Deployment totalement ready après resume"
-    run: "kubectl get deployment webapp -n app -o jsonpath='{.status.readyReplicas}/{.status.replicas}'"
-    expect:
-      mode: "regex"
-      value: "^([1-9][0-9]*)/\\1$"
-    onFail: "Le rollout n'est pas terminé: toutes les replicas ne sont pas Ready."
+    validation:
+      assertions:
+        - type: "clusterFieldsEqual"
+          kind: "Deployment"
+          namespace: "app"
+          name: "webapp"
+          leftPath: "{.status.readyReplicas}"
+          rightPath: "{.status.replicas}"
+          onFail: "Le rollout n'est pas terminé: toutes les replicas ne sont pas Ready."

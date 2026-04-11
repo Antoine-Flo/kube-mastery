@@ -7,6 +7,15 @@ tasks:
   - task: "Create PriorityClass manifest"
     command: "kubectl create priorityclass high-priority --value=100000 --global-default=false --description='High priority workloads'"
     explanation: "Defines scheduler priority used during contention and preemption scenarios."
+    validation:
+      assertions:
+        - type: "clusterFieldEquals"
+          kind: "Pod"
+          namespace: "app"
+          name: "priority-pod"
+          path: "{.spec.priorityClassName}"
+          value: "high-priority"
+          onFail: "La PriorityClass `high-priority` est absente."
 
   - task: "Generate pod manifest using that PriorityClass"
     command: "kubectl run priority-pod -n app --image=nginx:1.27 --dry-run=client -o yaml > priority-pod.yaml"
@@ -19,21 +28,16 @@ tasks:
   - task: "Verify pod has expected class and numeric priority"
     command: "kubectl get pod priority-pod -n app -o jsonpath='{.spec.priorityClassName} {.spec.priority}'"
     explanation: "Final check should return `high-priority` and a high numeric value."
+    validation:
+      assertions:
+        - type: "clusterFieldEquals"
+          kind: "Pod"
+          namespace: "app"
+          name: "priority-pod"
+          path: "{.spec.priorityClassName}"
+          value: "high-priority"
+          onFail: "Le pod `priority-pod` n'utilise pas la PriorityClass attendue."
 
   - task: "Confirm PriorityClass value and default flag"
     command: "kubectl get priorityclass high-priority -o jsonpath='{.value} {.globalDefault}'"
     explanation: "Expected output confirms correct class value and non-default behavior."
-validations:
-  - name: "PriorityClass high-priority créée"
-    run: "kubectl get priorityclass high-priority -o jsonpath='{.metadata.name}'"
-    expect:
-      mode: "equals"
-      value: "high-priority"
-    onFail: "La PriorityClass `high-priority` est absente."
-
-  - name: "Pod utilise la PriorityClass attendue"
-    run: "kubectl get pod priority-pod -n app -o jsonpath='{.spec.priorityClassName}'"
-    expect:
-      mode: "equals"
-      value: "high-priority"
-    onFail: "Le pod `priority-pod` n'utilise pas la PriorityClass attendue."
