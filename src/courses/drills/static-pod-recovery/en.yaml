@@ -1,0 +1,25 @@
+title: "Recover a Static Pod From Manifest Backup"
+description: "Recreate a missing static workload by restoring its manifest under kubelet watch path."
+tag: cluster_architecture_installation
+environment: "minimal"
+ckaTargetMinutes: 8
+tasks:
+  - task: "Check if static workload `static-web` is currently absent"
+    command: "kubectl get pods -n kube-system"
+    explanation: "Confirms incident state before recovery."
+
+  - task: "Inspect kubelet static manifest directory"
+    command: "sudo ls /etc/kubernetes/manifests"
+    explanation: "Static pods are sourced directly from manifests in this directory."
+
+  - task: "Restore the missing static pod manifest from backup location"
+    command: "sudo cp /opt/static-web.yaml /etc/kubernetes/manifests/static-web.yaml"
+    explanation: "Copying the manifest into the static path triggers kubelet reconciliation."
+
+  - task: "Wait for kubelet to create the static pod"
+    command: "kubectl get pods -n kube-system -w"
+    explanation: "The static pod should appear shortly with a node-suffixed name."
+
+  - task: "Validate static pod details and node binding"
+    command: "kubectl get pods -n kube-system -o wide"
+    explanation: "Static pods should appear with node-specific naming and stable placement."

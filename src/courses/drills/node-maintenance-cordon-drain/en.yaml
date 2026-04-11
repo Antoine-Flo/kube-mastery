@@ -1,0 +1,33 @@
+title: "Node Maintenance with Cordon and Drain"
+description: "Prepare a worker for maintenance, verify evacuation, then restore scheduling capacity."
+tag: cluster_architecture_installation
+environment: "minimal"
+ckaTargetMinutes: 7
+tasks:
+  - task: "List nodes with roles and select a worker target"
+    command: "kubectl get nodes -o wide"
+    explanation: "Use a worker node for maintenance to avoid disrupting core control-plane components."
+
+  - task: "Mark the target node unschedulable"
+    command: "kubectl cordon <node-name>"
+    explanation: "Cordon prevents new pods from being scheduled to that node."
+
+  - task: "Verify node is marked SchedulingDisabled"
+    command: "kubectl get node <node-name> -o jsonpath='{.spec.unschedulable}'"
+    explanation: "Expected value is `true` before drain."
+
+  - task: "Drain workloads from the node"
+    command: "kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data"
+    explanation: "Drain evicts movable pods and is the standard pre-maintenance step."
+
+  - task: "Validate only DaemonSet/mirror pods remain on drained node"
+    command: "kubectl get pods -A -o wide --field-selector spec.nodeName=<node-name>"
+    explanation: "After drain, regular workload pods should have moved off the node."
+
+  - task: "Return node to schedulable state"
+    command: "kubectl uncordon <node-name>"
+    explanation: "Uncordon re-enables normal scheduling after maintenance."
+
+  - task: "Confirm node is Ready and schedulable"
+    command: "kubectl get node <node-name> -o jsonpath='{.status.conditions[?(@.type==\"Ready\")].status} {.spec.unschedulable}'"
+    explanation: "Final output should show `True` and an empty/false unschedulable flag."

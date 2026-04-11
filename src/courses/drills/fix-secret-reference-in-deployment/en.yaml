@@ -1,0 +1,25 @@
+title: "Repair Deployment Env From Secret"
+description: "Fix failed startup caused by wrong `secretKeyRef` mapping in deployment env vars."
+tag: troubleshooting
+environment: "minimal"
+ckaTargetMinutes: 7
+tasks:
+  - task: "Identify failing pods for deployment `api`"
+    command: "kubectl get pods -n app -l app=api"
+    explanation: "Begin by locating pods that are not healthy."
+
+  - task: "Describe a failing pod to find secret-related errors"
+    command: "kubectl describe pod <pod-name> -n app"
+    explanation: "Events commonly show `secret not found` or `couldn't find key` messages."
+
+  - task: "Inspect available secrets and print decoded key names"
+    command: "kubectl get secrets -n app && kubectl get secret app-secret -n app -o jsonpath='{.data}'"
+    explanation: "Compare existing secret payload keys with what deployment env expects."
+
+  - task: "Patch deployment env references to correct secret name/key"
+    command: "kubectl edit deployment api -n app"
+    explanation: "Fix `valueFrom.secretKeyRef` fields to match existing Secret data."
+
+  - task: "Wait for rollout and verify recovery"
+    command: "kubectl rollout status deployment/api -n app && kubectl get pods -n app -l app=api"
+    explanation: "Deployment should roll to healthy pods once secret reference is corrected."

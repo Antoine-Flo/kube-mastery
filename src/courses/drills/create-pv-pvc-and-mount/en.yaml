@@ -1,0 +1,29 @@
+title: "Create PV/PVC and Mount in a Pod"
+description: "Provision static storage with hostPath, bind PVC, and mount it in a workload."
+tag: storage
+environment: "minimal"
+ckaTargetMinutes: 9
+tasks:
+  - task: "Create namespace for storage exercise"
+    command: "kubectl create namespace storage-test"
+    explanation: "PVC and pod will live in a dedicated namespace for clean isolation."
+
+  - task: "Apply the PersistentVolume manifest"
+    command: "kubectl apply -f pv.yaml"
+    explanation: "PV is cluster-scoped and provides the backing storage."
+
+  - task: "Apply the PersistentVolumeClaim manifest in namespace `storage-test`"
+    command: "kubectl apply -f pvc.yaml -n storage-test"
+    explanation: "PVC requests storage and should bind to the matching PV."
+
+  - task: "Verify PV/PVC binding state"
+    command: "kubectl get pv,pvc -n storage-test"
+    explanation: "Expected state is `Bound` for both resources."
+
+  - task: "Deploy a pod that mounts the PVC"
+    command: "kubectl apply -f pvc-pod.yaml -n storage-test"
+    explanation: "Pod should reference `claimName` and mount path defined in manifest."
+
+  - task: "Validate mounted volume from inside the pod"
+    command: "kubectl exec -n storage-test pvc-pod -- sh -c 'echo ok > /data/health.txt && cat /data/health.txt'"
+    explanation: "Writing and reading back data confirms mount is functional."

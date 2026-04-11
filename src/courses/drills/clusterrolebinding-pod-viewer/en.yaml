@@ -1,0 +1,25 @@
+title: "Provision Read-Only Cluster Observer Identity"
+description: "Create a monitoring identity with cluster-wide pod read access and explicit denial on mutations."
+tag: cluster_architecture_installation
+environment: "minimal"
+ckaTargetMinutes: 7
+tasks:
+  - task: "Create namespace and ServiceAccount used by the observer"
+    command: "kubectl create namespace monitor && kubectl create serviceaccount observer-sa -n monitor"
+    explanation: "Defines a dedicated identity for read-only cluster visibility checks."
+
+  - task: "Create a ClusterRole allowing get/list/watch on pods"
+    command: "kubectl create clusterrole pod-observer --verb=get,list,watch --resource=pods"
+    explanation: "ClusterRole is required because visibility must span every namespace."
+
+  - task: "Bind the ClusterRole to the ServiceAccount"
+    command: "kubectl create clusterrolebinding pod-observer-binding --clusterrole=pod-observer --serviceaccount=monitor:observer-sa"
+    explanation: "ClusterRoleBinding grants cluster-wide rights to that service account."
+
+  - task: "Verify the ServiceAccount can list pods cluster-wide"
+    command: "kubectl auth can-i list pods -A --as=system:serviceaccount:monitor:observer-sa"
+    explanation: "Expected result is `yes`."
+
+  - task: "Verify the ServiceAccount still cannot delete pods"
+    command: "kubectl auth can-i delete pods -A --as=system:serviceaccount:monitor:observer-sa"
+    explanation: "Expected result is `no`, confirming least privilege."

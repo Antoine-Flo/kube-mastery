@@ -1,25 +1,21 @@
 title: "Labels and Selectors"
-description: "Add labels to resources and filter them with selectors."
+description: "Use labels to make a Service select the intended pods and restore endpoints."
 tag: cluster_architecture_installation
 environment: "minimal"
-ckaTargetMinutes: 3
+ckaTargetMinutes: 5
 tasks:
-  - task: "List all pods with their full label set"
-    command: "kubectl get pods --show-labels"
-    explanation: "Lists all pods with their full label set. The LABELS column shows every key=value pair currently attached."
+  - task: "Inspect `nginx-svc` selector in namespace `app`"
+    command: "kubectl get svc nginx-svc -n app -o jsonpath='{.spec.selector}'"
+    explanation: "Read the selector first so you know which labels must exist on target pods."
 
-  - task: "Add the label `env=production` to the `nginx` pod"
-    command: "kubectl label pod nginx env=production"
-    explanation: "Adds the label env=production to the nginx pod. To overwrite an existing label, append --overwrite."
+  - task: "Apply missing labels on pod `nginx` to satisfy the selector"
+    command: "kubectl label pod nginx -n app env=production track=stable --overwrite"
+    explanation: "Use `--overwrite` so the command succeeds even if one label already exists."
 
-  - task: "Filter pods using the label `env=production`"
-    command: "kubectl get pods -l env=production"
-    explanation: "Filters pods using a label selector. Only pods that have env=production are returned."
+  - task: "Verify pod selection with the exact selector expected by the service"
+    command: "kubectl get pods -n app -l 'app=nginx,env=production,track=stable'"
+    explanation: "This confirms your label update actually matches the routing contract."
 
-  - task: "Filter pods where `env` is either `production` or `staging`"
-    command: "kubectl get pods -l 'env in (production,staging)'"
-    explanation: "Set-based selector: matches pods where env is either production or staging. Useful when you need to match multiple values."
-
-  - task: "Remove the `env` label from the `nginx` pod"
-    command: "kubectl label pod nginx env-"
-    explanation: "Removes a label by appending a dash to the key. The pod itself is not affected, only the label is deleted."
+  - task: "Validate that service endpoints are now populated"
+    command: "kubectl get endpoints nginx-svc -n app -o jsonpath='{.subsets[*].addresses[*].ip}'"
+    explanation: "Non-empty endpoint IPs prove the selector fix restored traffic routing."

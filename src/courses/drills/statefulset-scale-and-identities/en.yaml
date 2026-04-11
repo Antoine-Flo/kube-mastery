@@ -1,0 +1,29 @@
+title: "Scale StatefulSet and Verify Stable Identities"
+description: "Scale a StatefulSet and validate ordered pod names and persistent identities."
+tag: storage
+environment: "minimal"
+ckaTargetMinutes: 8
+tasks:
+  - task: "Inspect current StatefulSet and pods"
+    command: "kubectl get statefulset,pods -n data"
+    explanation: "Baseline current replica count and pod ordinal names."
+
+  - task: "Scale StatefulSet to 3 replicas"
+    command: "kubectl scale statefulset/web -n data --replicas=3"
+    explanation: "StatefulSet scales in ordered fashion (`web-0`, `web-1`, `web-2`)."
+
+  - task: "Wait for rollout completion"
+    command: "kubectl rollout status statefulset/web -n data"
+    explanation: "Ensures all replicas are updated and ready."
+
+  - task: "Verify stable pod identities and order"
+    command: "kubectl get pods -n data -l app=web"
+    explanation: "Pod names should keep deterministic ordinals across restarts."
+
+  - task: "Delete a non-zero ordinal pod and verify it comes back with same name"
+    command: "kubectl delete pod web-1 -n data && kubectl get pod web-1 -n data -w"
+    explanation: "StatefulSet identity guarantees recreate the same ordinal instead of a random pod name."
+
+  - task: "Verify per-pod PVCs are created"
+    command: "kubectl get pvc -n data"
+    explanation: "StatefulSet with volumeClaimTemplates should create one PVC per pod ordinal."

@@ -16,13 +16,13 @@ tasks:
     command: "kubectl apply -f pod.yaml"
     explanation: "Creates the pod from the edited manifest."
 
-  - task: "Verify the pod is running and has the correct labels"
-    command: "kubectl get pod web -n exercise-01 --show-labels"
-    explanation: "Confirms the pod reached Running state and that labels app=web and tier=frontend are present."
+  - task: "Wait until pod `web` is Ready"
+    command: "kubectl wait --for=condition=Ready pod/web -n exercise-01 --timeout=60s"
+    explanation: "Ready condition is a stronger success criterion than a visual `get` check."
 
-  - task: "Get the pod's IP address using `-o wide`"
-    command: "kubectl get pod web -n exercise-01 -o wide"
-    explanation: "Shows the pod IP and the node it was scheduled on."
+  - task: "Validate labels and resource constraints on the created pod"
+    command: "kubectl get pod web -n exercise-01 -o jsonpath='{.metadata.labels.app} {.metadata.labels.tier} {.spec.containers[0].resources.requests.cpu} {.spec.containers[0].resources.limits.memory}'"
+    explanation: "Expected output should include `web frontend 100m 128Mi`."
 
   - task: "Add a new label `version=v1` to the running pod"
     command: "kubectl label pod web -n exercise-01 version=v1"
@@ -31,6 +31,10 @@ tasks:
   - task: "Remove the `tier` label from the pod"
     command: "kubectl label pod web -n exercise-01 tier-"
     explanation: "Removes a label by appending a dash to the key. Verify with --show-labels afterwards."
+
+  - task: "Prove final label state after updates"
+    command: "kubectl get pod web -n exercise-01 -o jsonpath='{.metadata.labels.app} {.metadata.labels.version} {.metadata.labels.tier}'"
+    explanation: "Final state should keep `app` and `version` and remove `tier`."
 
   - task: "Clean up — delete the namespace"
     command: "kubectl delete namespace exercise-01"

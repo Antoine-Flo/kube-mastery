@@ -1,21 +1,29 @@
-title: "Debug a Failing Pod"
-description: "Identify why a pod is not running using describe and logs."
+title: "Recover a CrashLooping Workload"
+description: "Find why `api` is crashing and apply a concrete fix until pods are Ready."
 tag: troubleshooting
 environment: "minimal"
-ckaTargetMinutes: 4
+ckaTargetMinutes: 6
 tasks:
-  - task: "List all pods across all namespaces and identify which one is not `Running`"
-    command: "kubectl get pods -A"
-    explanation: "Lists all pods across all namespaces. The STATUS column reveals which pod is not Running (CrashLoopBackOff, Error, Pending, etc.)."
+  - task: "Identify failing pods for deployment `api` in namespace `app`"
+    command: "kubectl get pods -n app -l app=api"
+    explanation: "This narrows the scope to the workload you need to recover."
 
-  - task: "Describe the failing pod and read its events"
-    command: "kubectl describe pod <pod-name> -n <namespace>"
-    explanation: "Shows full pod details: the Events section at the bottom is the most useful — it shows exactly what Kubernetes tried and why it failed."
+  - task: "Inspect events and crash reason on one failing pod"
+    command: "kubectl describe pod <pod-name> -n app"
+    explanation: "Use Events to confirm the failure mechanism before changing the deployment."
 
-  - task: "Check the pod's logs"
-    command: "kubectl logs <pod-name> -n <namespace>"
-    explanation: "Reads the container's stdout/stderr output. If the pod has crashed, add --previous to read the logs of the last failed container."
+  - task: "Read previous container logs to capture the startup error"
+    command: "kubectl logs <pod-name> -n app --previous"
+    explanation: "In CrashLoopBackOff, previous logs are often the only reliable signal."
 
-  - task: "If the pod has crashed, read the logs from the previous container instance"
-    command: "kubectl logs <pod-name> -n <namespace> --previous"
-    explanation: "Reads the logs from the terminated container instance. Essential when the pod is in CrashLoopBackOff and the current container keeps restarting."
+  - task: "Patch deployment image to a valid version"
+    command: "kubectl set image deployment/api -n app api=nginx:1.27"
+    explanation: "This exercise expects a bad image/tag root cause; update only the failing container image."
+
+  - task: "Wait for rollout completion"
+    command: "kubectl rollout status deployment/api -n app"
+    explanation: "Do not stop at patching: wait until Kubernetes confirms a successful rollout."
+
+  - task: "Prove workload recovery with Ready replicas"
+    command: "kubectl get deployment api -n app -o jsonpath='{.status.readyReplicas}/{.status.replicas}'"
+    explanation: "A full `ready/desired` value confirms the fix is effective."

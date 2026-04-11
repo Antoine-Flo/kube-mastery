@@ -1,0 +1,25 @@
+title: "Restore RBAC Access for a ServiceAccount"
+description: "Grant missing permissions using Role and RoleBinding, then verify with `kubectl auth can-i`."
+tag: cluster_architecture_installation
+environment: "minimal"
+ckaTargetMinutes: 7
+tasks:
+  - task: "Check current permissions for the ServiceAccount"
+    command: "kubectl auth can-i list pods -n prod --as=system:serviceaccount:prod:app-sa"
+    explanation: "Use an impersonation check first so you can compare before/after behavior."
+
+  - task: "Ensure the ServiceAccount exists"
+    command: "kubectl create serviceaccount app-sa -n prod --dry-run=client -o yaml | kubectl apply -f -"
+    explanation: "This idempotent create/apply ensures the bound identity exists."
+
+  - task: "Create or update Role granting pod read access"
+    command: "kubectl create role pod-reader --verb=get,list,watch --resource=pods -n prod --dry-run=client -o yaml | kubectl apply -f -"
+    explanation: "Using apply flow keeps the task rerunnable and ensures the role contract is explicit."
+
+  - task: "Create or update RoleBinding to connect Role and ServiceAccount"
+    command: "kubectl create rolebinding pod-reader-binding --role=pod-reader --serviceaccount=prod:app-sa -n prod --dry-run=client -o yaml | kubectl apply -f -"
+    explanation: "This guarantees binding exists even when rerunning the drill."
+
+  - task: "Validate permissions after the RBAC fix"
+    command: "kubectl auth can-i list pods -n prod --as=system:serviceaccount:prod:app-sa && kubectl auth can-i delete pods -n prod --as=system:serviceaccount:prod:app-sa"
+    explanation: "Final state should grant read access while keeping delete denied."

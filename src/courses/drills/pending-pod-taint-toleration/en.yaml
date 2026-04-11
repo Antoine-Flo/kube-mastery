@@ -1,0 +1,29 @@
+title: "Schedule a Pod Across Tainted Nodes"
+description: "Resolve Pending state by reconciling pod tolerations with node taints."
+tag: cluster_architecture_installation
+environment: "minimal"
+ckaTargetMinutes: 7
+tasks:
+  - task: "List only Pending pods in namespace `app`"
+    command: "kubectl get pods -n app --field-selector=status.phase=Pending"
+    explanation: "Filter to unscheduled workloads so the root-cause signal is immediate."
+
+  - task: "Inspect pod scheduling events"
+    command: "kubectl describe pod <pod-name> -n app"
+    explanation: "Events usually report taint-related rejection such as `had taint ... that the pod didn't tolerate`."
+
+  - task: "Check taints on all nodes in structured output"
+    command: "kubectl get nodes -o custom-columns=NAME:.metadata.name,TAINTS:.spec.taints"
+    explanation: "Structured view is faster than long describe output for taint triage."
+
+  - task: "Add a matching toleration to the workload template"
+    command: "kubectl patch deployment <deployment-name> -n app --type='merge' -p '{\"spec\":{\"template\":{\"spec\":{\"tolerations\":[{\"key\":\"dedicated\",\"operator\":\"Equal\",\"value\":\"app\",\"effect\":\"NoSchedule\"}]}}}}'"
+    explanation: "This variant preserves node taint policy and makes the workload explicitly eligible."
+
+  - task: "Re-check node assignment after toleration patch"
+    command: "kubectl get pod <pod-name> -n app -o jsonpath='{.spec.nodeName}'"
+    explanation: "A non-empty node name confirms scheduling constraints are now satisfied."
+
+  - task: "Confirm final pod phase is no longer Pending"
+    command: "kubectl get pod <pod-name> -n app -o jsonpath='{.status.phase}'"
+    explanation: "Final expected value is `Running` (or `ContainerCreating` if still starting)."

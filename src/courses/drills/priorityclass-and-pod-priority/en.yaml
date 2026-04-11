@@ -1,0 +1,25 @@
+title: "Schedule With PriorityClass"
+description: "Create a PriorityClass and run a pod using explicit scheduling priority."
+tag: cluster_architecture_installation
+environment: "minimal"
+ckaTargetMinutes: 6
+tasks:
+  - task: "Create PriorityClass manifest"
+    command: "kubectl create priorityclass high-priority --value=100000 --global-default=false --description='High priority workloads'"
+    explanation: "Defines scheduler priority used during contention and preemption scenarios."
+
+  - task: "Generate pod manifest using that PriorityClass"
+    command: "kubectl run priority-pod -n app --image=nginx:1.27 --dry-run=client -o yaml > priority-pod.yaml"
+    explanation: "Generate base manifest, then set `spec.priorityClassName: high-priority`."
+
+  - task: "Apply the pod manifest"
+    command: "kubectl apply -f priority-pod.yaml"
+    explanation: "Creates workload with explicit priority."
+
+  - task: "Verify pod has expected class and numeric priority"
+    command: "kubectl get pod priority-pod -n app -o jsonpath='{.spec.priorityClassName} {.spec.priority}'"
+    explanation: "Final check should return `high-priority` and a high numeric value."
+
+  - task: "Confirm PriorityClass value and default flag"
+    command: "kubectl get priorityclass high-priority -o jsonpath='{.value} {.globalDefault}'"
+    explanation: "Expected output confirms correct class value and non-default behavior."
