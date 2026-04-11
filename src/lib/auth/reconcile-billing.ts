@@ -1,6 +1,6 @@
 import { reconcilePendingSubscriptionsForUser } from '../billing/provisioning'
 import { getSupabaseAdmin } from '../supabase'
-import { emitOtelLog } from '../observability/otel'
+import { emitOtelLog } from '../api-log'
 
 type AuthenticatedUser = {
   id?: string | null

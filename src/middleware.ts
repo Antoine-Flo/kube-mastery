@@ -1,6 +1,6 @@
 import { defineMiddleware } from 'astro:middleware'
 import { getDisabledLocaleRedirectPath } from './i18n/locale-routing'
-import { initOpenTelemetry } from './lib/observability/otel'
+import { initOpenTelemetry } from './lib/api-log'
 
 function shouldAddNoindexHeader(pathname: string): boolean {
   if (/^\/api(?:\/|$)/.test(pathname)) {

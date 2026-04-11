@@ -14,7 +14,7 @@ import {
   emitApiLog,
   getDurationMs,
   startTimer
-} from '../../../lib/observability/otel'
+} from '../../../lib/api-log'
 
 const json = (body: Record<string, unknown>, status: number) =>
   new Response(JSON.stringify(body), {

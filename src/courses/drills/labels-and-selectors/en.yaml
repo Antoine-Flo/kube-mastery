@@ -1,0 +1,25 @@
+title: "Labels and Selectors"
+description: "Add labels to resources and filter them with selectors."
+tag: cluster_architecture_installation
+environment: "minimal"
+ckaTargetMinutes: 3
+tasks:
+  - task: "List all pods with their full label set"
+    command: "kubectl get pods --show-labels"
+    explanation: "Lists all pods with their full label set. The LABELS column shows every key=value pair currently attached."
+
+  - task: "Add the label `env=production` to the `nginx` pod"
+    command: "kubectl label pod nginx env=production"
+    explanation: "Adds the label env=production to the nginx pod. To overwrite an existing label, append --overwrite."
+
+  - task: "Filter pods using the label `env=production`"
+    command: "kubectl get pods -l env=production"
+    explanation: "Filters pods using a label selector. Only pods that have env=production are returned."
+
+  - task: "Filter pods where `env` is either `production` or `staging`"
+    command: "kubectl get pods -l 'env in (production,staging)'"
+    explanation: "Set-based selector: matches pods where env is either production or staging. Useful when you need to match multiple values."
+
+  - task: "Remove the `env` label from the `nginx` pod"
+    command: "kubectl label pod nginx env-"
+    explanation: "Removes a label by appending a dash to the key. The pod itself is not affected, only the label is deleted."

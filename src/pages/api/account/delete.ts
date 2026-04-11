@@ -14,7 +14,7 @@ import {
   emitApiLog,
   getDurationMs,
   startTimer
-} from '../../../lib/observability/otel'
+} from '../../../lib/api-log'
 
 export const POST: APIRoute = async ({
   url,

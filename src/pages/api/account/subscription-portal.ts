@@ -10,7 +10,7 @@ import {
   emitApiLog,
   getDurationMs,
   startTimer
-} from '../../../lib/observability/otel'
+} from '../../../lib/api-log'
 import { getSupabaseServer } from '../../../lib/supabase'
 
 export const GET: APIRoute = async ({

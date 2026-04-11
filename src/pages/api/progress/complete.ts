@@ -6,7 +6,7 @@ import {
   emitApiLog,
   getDurationMs,
   startTimer
-} from '../../../lib/observability/otel'
+} from '../../../lib/api-log'
 
 /**
  * POST /api/progress/complete

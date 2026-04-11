@@ -15,7 +15,7 @@ import {
   emitApiLog,
   getDurationMs,
   startTimer
-} from '../../../lib/observability/otel'
+} from '../../../lib/api-log'
 import { getSupabaseServer } from '../../../lib/supabase'
 import { CONFIG } from '../../../config'
 import { getTrustedClientIp } from '../../../lib/client-ip'

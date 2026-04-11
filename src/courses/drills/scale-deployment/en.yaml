@@ -1,0 +1,21 @@
+title: "Scale a Deployment"
+description: "Scale an existing deployment, verify the rollout, and confirm the replica count."
+tag: services_networking
+environment: "minimal"
+ckaTargetMinutes: 3
+tasks:
+  - task: "List all deployments in the default namespace"
+    command: "kubectl get deployments"
+    explanation: "Lists all deployments in the default namespace. Check the current READY count before scaling."
+
+  - task: "Scale the `nginx` deployment to 3 replicas"
+    command: "kubectl scale deployment/nginx --replicas=3"
+    explanation: "Scales the nginx deployment to 3 replicas. The Deployment controller immediately starts creating the missing pods."
+
+  - task: "Wait for the rollout to complete"
+    command: "kubectl rollout status deployment/nginx"
+    explanation: "Waits until all 3 replicas are updated and available. Exits 0 on success — this is the safest way to confirm a rollout."
+
+  - task: "Verify that 3 pods with the `nginx` label are running"
+    command: "kubectl get pods -l app=nginx"
+    explanation: "Final check: confirms 3 pods with the nginx label are in Running state."

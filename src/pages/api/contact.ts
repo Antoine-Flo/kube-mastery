@@ -8,7 +8,7 @@ import {
   emitApiLog,
   getDurationMs,
   startTimer
-} from '../../lib/observability/otel'
+} from '../../lib/api-log'
 
 const CONTACT_TYPES = ['support', 'suggestion', 'other'] as const
 const SWEEGO_SEND_ENDPOINT = 'https://api.sweego.io/send'

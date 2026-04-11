@@ -13,7 +13,7 @@ import {
   emitApiLog,
   getDurationMs,
   startTimer
-} from '../../../lib/observability/otel'
+} from '../../../lib/api-log'
 import { getSafeLocalRedirectTarget } from '../../../lib/redirects'
 import { coerceUiLang } from '../../../i18n/utils'
 import { getTrustedClientIp } from '../../../lib/client-ip'

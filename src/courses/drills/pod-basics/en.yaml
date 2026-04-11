@@ -1,0 +1,37 @@
+title: "Pod Basics"
+description: "Create a pod with labels and resource constraints, then manage its labels."
+tag: cluster_architecture_installation
+environment: "minimal"
+ckaTargetMinutes: 6
+tasks:
+  - task: "Create a namespace called `exercise-01`"
+    command: "kubectl create namespace exercise-01"
+    explanation: "Creates the namespace. All subsequent commands target this namespace with -n exercise-01."
+
+  - task: "Create a pod named `web` in namespace `exercise-01` with these specs: image `nginx:1.27`, labels `app=web` and `tier=frontend`, resource requests 64Mi memory / 100m CPU, resource limits 128Mi memory / 250m CPU"
+    command: "kubectl run web -n exercise-01 --image=nginx:1.27 --labels=app=web,tier=frontend --dry-run=client -o yaml > pod.yaml"
+    explanation: "Generates the pod manifest without creating anything. Edit pod.yaml to add resources.requests and resources.limits under spec.containers[0], then apply it."
+
+  - task: "Apply the manifest to create the pod"
+    command: "kubectl apply -f pod.yaml"
+    explanation: "Creates the pod from the edited manifest."
+
+  - task: "Verify the pod is running and has the correct labels"
+    command: "kubectl get pod web -n exercise-01 --show-labels"
+    explanation: "Confirms the pod reached Running state and that labels app=web and tier=frontend are present."
+
+  - task: "Get the pod's IP address using `-o wide`"
+    command: "kubectl get pod web -n exercise-01 -o wide"
+    explanation: "Shows the pod IP and the node it was scheduled on."
+
+  - task: "Add a new label `version=v1` to the running pod"
+    command: "kubectl label pod web -n exercise-01 version=v1"
+    explanation: "Adds the version=v1 label. No restart required — labels are metadata changes only."
+
+  - task: "Remove the `tier` label from the pod"
+    command: "kubectl label pod web -n exercise-01 tier-"
+    explanation: "Removes a label by appending a dash to the key. Verify with --show-labels afterwards."
+
+  - task: "Clean up — delete the namespace"
+    command: "kubectl delete namespace exercise-01"
+    explanation: "Deletes the namespace and everything inside it in one command."

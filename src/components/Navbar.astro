@@ -54,11 +54,12 @@ const userEmail = user?.email ?? ''
     <div class="right">
       <nav>
         <a href={localePath('/courses')}>{t('nav_courses')}</a>
-        {
+        <a href={localePath('/drills')}>{t('nav_drills')}</a>
+        <!-- {
           showCheatSheetNav && (
             <a href={localePath('/cheat-sheet')}>{t('nav_cheatSheet')}</a>
           )
-        }
+        } -->
         {
           showPricingNav && (
             <a href={localePath('/pricing')} class="nav-upgrade-link">

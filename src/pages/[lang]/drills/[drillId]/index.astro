@@ -1,22 +1,18 @@
 ---
-import Layout from '../../../../../layouts/Layout.astro'
-import ContentWithTerminalLayout from '../../../../../components/lesson/ContentWithTerminalLayout.astro'
-import Button from '../../../../../components/ui/Button.astro'
-import { useLocalePath, useTranslations } from '../../../../../i18n/utils'
-import {
-  getDrillContent,
-  getDrillGroupOverview
-} from '../../../../../content/drills/facade'
-import { DEMO_DRILL_GROUP_ID } from '../../../../../content/drills/constants'
-import { getCourseOverview } from '../../../../../content/overview/facade'
-import { getLayoutAuthContext } from '../../../../../lib/auth/server'
-import { getProgressContext } from '../../../../../lib/progress/server'
-import { getFirstNonPlaceholderLessonIdFromSections } from '../../../../../lib/courses/lessonTerminalAccess'
-import '../../../../../styles/components/lesson-content.css'
-import '../../../../../styles/components/cluster-visualization.css'
+import Layout from '../../../../layouts/Layout.astro'
+import ContentWithTerminalLayout from '../../../../components/lesson/ContentWithTerminalLayout.astro'
+import Button from '../../../../components/ui/Button.astro'
+import { Code } from 'astro-expressive-code/components'
+import { useLocalePath, useTranslations } from '../../../../i18n/utils'
+import { getDrillDetail } from '../../../../content/drills/facade'
+import { getCourseOverview } from '../../../../content/overview/facade'
+import { getLayoutAuthContext } from '../../../../lib/auth/server'
+import { getProgressContext } from '../../../../lib/progress/server'
+import { getFirstNonPlaceholderLessonIdFromSections } from '../../../../lib/courses/lessonTerminalAccess'
+import '../../../../styles/components/lesson-content.css'
+import '../../../../styles/components/cluster-visualization.css'
 
 const lang = Astro.params.lang as 'en' | 'fr'
-const groupId = Astro.params.groupId!
 const drillId = Astro.params.drillId!
 const localePath = useLocalePath(lang)
 const t = useTranslations(lang)
@@ -35,42 +31,26 @@ const auth = await getLayoutAuthContext(
   Astro.request,
   Astro.cookies
 )
-const isDemoDrill = groupId === DEMO_DRILL_GROUP_ID
+
+const isDemoDrill = drillId === 'intro-kubernetes'
 if (!userId && !isDemoDrill) {
   return Astro.redirect(
     localePath('/auth') + '?redirect=' + encodeURIComponent(Astro.url.pathname)
   )
 }
 
-const drillEntry = getDrillContent(groupId, drillId, lang)
-if (!drillEntry) {
-  return Astro.redirect(localePath(`/drills/${groupId}`))
+const drillDetail = getDrillDetail(drillId, lang)
+if (!drillDetail) {
+  return Astro.redirect(localePath('/drills'))
 }
 
-const overview = getDrillGroupOverview(groupId, lang)
-if (!overview) {
-  return Astro.redirect(localePath('/courses'))
-}
-
-const currentDrillMeta = overview.drills.find((d) => d.id === drillId)
 const withMode = (path: string) =>
   runMode === null ? path : `${path}${path.includes('?') ? '&' : '?'}mode=${runMode}`
 
-const { Content } = drillEntry
-const env = overview.environment?.trim().toLowerCase()
+const env = drillDetail.environment?.trim().toLowerCase()
 const seedName = env && env !== 'empty' ? env : 'minimal'
 
-const drillIndex = overview.drills.findIndex((d) => d.id === drillId)
-const prevDrill = drillIndex > 0 ? overview.drills[drillIndex - 1] : null
-const nextDrill =
-  drillIndex >= 0 && drillIndex < overview.drills.length - 1
-    ? overview.drills[drillIndex + 1]
-    : null
-
-const drillTargetId = `${groupId}/${drillId}`
-const drillCompleteHref = withMode(
-  localePath(`/drills/${groupId}/${drillId}/complete`)
-)
+const drillCompleteHref = withMode(localePath(`/drills/${drillId}/complete`))
 
 const contentBarLabels = {
   labelVisualizer: t('lesson_visualizer'),
@@ -93,19 +73,20 @@ const terminalLockPrimaryHref = localePath('/pricing')
 const terminalLockPrimaryLabel = t('lesson_terminalLock_ctaUpgrade')
 const terminalLockSecondaryHref = terminalLockCrashCourseHref
 const terminalLockSecondaryLabel = t('lesson_terminalLock_tryFreeCrashCourse')
+const drillBackHref = localePath('/drills')
 
-const guidedHref = `${localePath(`/drills/${groupId}/${drillId}`)}?mode=guided`
-const examHref = `${localePath(`/drills/${groupId}/${drillId}`)}?mode=exam`
+const guidedHref = `${localePath(`/drills/${drillId}`)}?mode=guided`
+const examHref = `${localePath(`/drills/${drillId}`)}?mode=exam`
+const kubernetesDocsUrl = 'https://kubernetes.io/docs/home/'
+
+const tasks = drillDetail.tasks
 ---
 
 {
   runMode === null && (
     <Layout>
       <main class="drill-mode-choice">
-        <h1>{overview.title}</h1>
-        {currentDrillMeta && (
-          <p class="drill-mode-choice__subtitle">{currentDrillMeta.title}</p>
-        )}
+        <h1>{drillDetail.title}</h1>
         <p class="drill-mode-choice__hint">{t('drills_mode_title')}</p>
         <div class="drill-mode-choice__actions">
           <Button href={guidedHref} variant="solid" color="cyan" size="md">
@@ -129,7 +110,7 @@ const examHref = `${localePath(`/drills/${groupId}/${drillId}`)}?mode=exam`
         lang={lang}
         showSidebar={false}
         labels={contentBarLabels}
-        supportContextId={`drills/${groupId}/${drillId}`}
+        supportContextId={`drills/${drillId}`}
         terminalInteractive={terminalInteractive}
         terminalLockTitle={t('lesson_terminalLock_title')}
         terminalLockBody={t('lesson_terminalLock_body')}
@@ -137,44 +118,42 @@ const examHref = `${localePath(`/drills/${groupId}/${drillId}`)}?mode=exam`
         terminalLockPrimaryHref={terminalLockPrimaryHref}
         terminalLockSecondaryLabel={terminalLockSecondaryLabel}
         terminalLockSecondaryHref={terminalLockSecondaryHref}
+        terminalDocsHref={kubernetesDocsUrl}
+        terminalDocsTabLabel="Docs"
+        terminalShellTabLabel="Terminal"
       >
         <div
           class="drill-timer-bar"
           data-drill-timer-wrap
           aria-live="polite"
         >
-          <span>{t('drills_timer_label')}</span>
-          <span class="drill-timer-bar__value" data-drill-timer-display>
-            00:00
+          <a class="drill-back-link" href={drillBackHref}>
+            ← {t('drillComplete_backToDrills')}
+          </a>
+          <span class="drill-timer-bar__timer">
+            <span>{t('drills_timer_label')}</span>
+            <span class="drill-timer-bar__value" data-drill-timer-display>
+              00:00
+            </span>
           </span>
         </div>
+
         <article class="lesson-content" data-drill-mode={runMode}>
-          <Content />
+          <p class="drill-section-label">{t('drills_tasks')}</p>
+          <ol class="drill-tasks">
+            {tasks.map((task) => (
+              <li class="drill-task">
+                <p class="drill-task__description">{task.task}</p>
+                <details class="drill-task__solution">
+                  <summary>{t('drills_solution')}</summary>
+                  <p class="drill-task__explanation">{task.explanation}</p>
+                  <Code code={task.command} lang="bash" />
+                </details>
+              </li>
+            ))}
+          </ol>
         </article>
-        <nav class="lp__nav--bt">
-          {prevDrill ? (
-            <a
-              href={withMode(
-                localePath(`/drills/${groupId}/${prevDrill.id}`)
-              )}
-              class="lp__lnk"
-            >
-              ← {prevDrill.title}
-            </a>
-          ) : (
-            <span />
-          )}
-          {nextDrill ? (
-            <a
-              href={withMode(
-                localePath(`/drills/${groupId}/${nextDrill.id}`)
-              )}
-              class="lp__lnk lp__lnk--next"
-            >
-              {nextDrill.title} →
-            </a>
-          ) : null}
-        </nav>
+
         <div class="lp__drill-complete">
           {isDemoDrill && !userId ? (
             <Button
@@ -188,7 +167,7 @@ const examHref = `${localePath(`/drills/${groupId}/${drillId}`)}?mode=exam`
           ) : (
             <span
               class="lp__drill-done-wrap"
-              data-drill-target-id={drillTargetId}
+              data-drill-target-id={drillId}
             >
               <Button
                 href={drillCompleteHref}
@@ -207,7 +186,7 @@ const examHref = `${localePath(`/drills/${groupId}/${drillId}`)}?mode=exam`
 }
 
 <script>
-  import { sendProgressCompleteBeacon } from '../../../../../lib/progress/sendProgressBeacon'
+  import { sendProgressCompleteBeacon } from '../../../../lib/progress/sendProgressBeacon'
 
   function initDrillDoneBeacon() {
     const wrap = document.querySelector<HTMLElement>('.lp__drill-done-wrap')
@@ -298,3 +277,105 @@ const examHref = `${localePath(`/drills/${groupId}/${drillId}`)}?mode=exam`
     persistElapsedBeforeComplete()
   })
 </script>
+
+<style>
+  .drill-mode-choice {
+    max-width: 480px;
+    margin: 6rem auto;
+    padding: 0 1rem;
+    text-align: center;
+  }
+
+  .drill-mode-choice h1 {
+    font-size: 1.5rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-gray-12);
+    margin: 0 0 0.5rem;
+  }
+
+  .drill-mode-choice__actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .drill-mode-choice__hint {
+    color: var(--color-gray-10);
+    font-size: var(--text-sm);
+    margin: 0;
+  }
+
+  .drill-back-link {
+    color: var(--color-gray-11);
+    text-decoration: none;
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+    margin-right: auto;
+  }
+
+  .drill-back-link:hover {
+    color: var(--color-gray-12);
+    text-decoration: underline;
+  }
+
+  .drill-timer-bar {
+    justify-content: flex-start;
+    padding-block: var(--spacing-6);
+    padding-inline: var(--spacing-4);
+  }
+
+  .drill-timer-bar__timer {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .drill-section-label {
+    margin: 0 0 0.9rem;
+  }
+
+  .drill-tasks {
+    list-style: decimal;
+    padding-left: 1.5rem;
+    margin: 0;
+  }
+
+  .drill-task {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--color-gray-4);
+  }
+
+  .drill-task:last-child {
+    border-bottom: none;
+  }
+
+  .drill-task__description {
+    margin: 0 0 0.35rem;
+  }
+
+  .drill-task__solution {
+    margin-top: 0.5rem;
+  }
+
+  .drill-task__solution summary {
+    cursor: pointer;
+    user-select: none;
+    color: var(--color-gray-10);
+    font-size: var(--text-sm);
+    font-weight: 400;
+  }
+
+  .drill-task__explanation {
+    margin: 0.5rem 0 0.375rem;
+  }
+
+  .drill-task__solution[open] summary {
+    color: var(--color-gray-11);
+  }
+
+  [data-drill-mode='exam'] .drill-task__solution {
+    display: none;
+  }
+</style>

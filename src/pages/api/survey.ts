@@ -5,7 +5,7 @@ import {
   emitApiLog,
   getDurationMs,
   startTimer
-} from '../../lib/observability/otel'
+} from '../../lib/api-log'
 
 const SURVEY_NAMES = ['small', 'drill', 'task'] as const
 const MIN_RATING = 1

@@ -1,48 +1,24 @@
-import type { MarkdownInstance } from 'astro'
 import type { UiLang } from '../courses/types'
-import type { DrillGroupOverview, DrillGroupListItem } from './types'
-import type { DrillGlobAdapter } from './port'
-import { buildDrillGroupOverview, buildDrillGroupList } from './domain'
+import type { DrillListItem, DrillDetail } from './types'
+import type { DrillIndexPort } from './port'
+import { buildDrillList, buildDrillDetail } from './domain'
 import { createDrillGlobAdapter } from './glob-adapter'
-import { DEMO_DRILL_GROUP_ID } from './constants'
 
-let adapter: DrillGlobAdapter | null = null
+export type { DrillListItem, DrillDetail, DrillTask, DrillTagId } from './types'
 
-function getAdapter(): DrillGlobAdapter {
+let adapter: DrillIndexPort | null = null
+
+function getAdapter(): DrillIndexPort {
   if (!adapter) {
     adapter = createDrillGlobAdapter()
   }
   return adapter
 }
 
-export type {
-  DrillGroupOverview,
-  DrillGroupListItem,
-  DrillLocation,
-  DrillOverview
-} from './types'
-
-export function getDrillGroups(lang: UiLang): DrillGroupListItem[] {
-  return buildDrillGroupList(getAdapter(), lang).filter(
-    (g) => g.id !== DEMO_DRILL_GROUP_ID
-  )
+export function getDrills(lang: UiLang): DrillListItem[] {
+  return buildDrillList(getAdapter(), lang)
 }
 
-export function getDrillGroupOverview(
-  groupId: string,
-  lang: UiLang
-): DrillGroupOverview | null {
-  return buildDrillGroupOverview(getAdapter(), groupId, lang)
-}
-
-export function getDrillContent(
-  groupId: string,
-  drillId: string,
-  lang: UiLang
-): MarkdownInstance<Record<string, unknown>> | null {
-  const content = getAdapter().getDrillContent(groupId, drillId, lang)
-  if (!content) {
-    return null
-  }
-  return content as MarkdownInstance<Record<string, unknown>>
+export function getDrillDetail(drillId: string, lang: UiLang): DrillDetail | null {
+  return buildDrillDetail(getAdapter(), drillId, lang)
 }

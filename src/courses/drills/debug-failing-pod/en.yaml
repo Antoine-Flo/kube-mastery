@@ -1,0 +1,21 @@
+title: "Debug a Failing Pod"
+description: "Identify why a pod is not running using describe and logs."
+tag: troubleshooting
+environment: "minimal"
+ckaTargetMinutes: 4
+tasks:
+  - task: "List all pods across all namespaces and identify which one is not `Running`"
+    command: "kubectl get pods -A"
+    explanation: "Lists all pods across all namespaces. The STATUS column reveals which pod is not Running (CrashLoopBackOff, Error, Pending, etc.)."
+
+  - task: "Describe the failing pod and read its events"
+    command: "kubectl describe pod <pod-name> -n <namespace>"
+    explanation: "Shows full pod details: the Events section at the bottom is the most useful — it shows exactly what Kubernetes tried and why it failed."
+
+  - task: "Check the pod's logs"
+    command: "kubectl logs <pod-name> -n <namespace>"
+    explanation: "Reads the container's stdout/stderr output. If the pod has crashed, add --previous to read the logs of the last failed container."
+
+  - task: "If the pod has crashed, read the logs from the previous container instance"
+    command: "kubectl logs <pod-name> -n <namespace> --previous"
+    explanation: "Reads the logs from the terminated container instance. Essential when the pod is in CrashLoopBackOff and the current container keeps restarting."

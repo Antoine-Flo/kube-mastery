@@ -6,7 +6,8 @@ import ContactSupportModal from './ContactSupportModal.astro'
 import ScrollArea from '../ui/ScrollArea.astro'
 import Button from '../ui/Button.astro'
 import { useTranslations } from '../../i18n/utils'
-import { ArrowLeftToLine, ArrowRightToLine } from '@lucide/astro'
+import { ArrowLeftToLine, ArrowRightToLine, Terminal } from '@lucide/astro'
+import { Kubernetes } from 'simple-icons-astro'
 
 interface Props {
   seedName: string
@@ -29,6 +30,9 @@ interface Props {
   terminalLockPrimaryHref?: string
   terminalLockSecondaryLabel?: string
   terminalLockSecondaryHref?: string
+  terminalDocsHref?: string
+  terminalDocsTabLabel?: string
+  terminalShellTabLabel?: string
 }
 
 const {
@@ -43,10 +47,14 @@ const {
   terminalLockPrimaryLabel = '',
   terminalLockPrimaryHref = '',
   terminalLockSecondaryLabel = '',
-  terminalLockSecondaryHref = ''
+  terminalLockSecondaryHref = '',
+  terminalDocsHref = '',
+  terminalDocsTabLabel = 'Docs',
+  terminalShellTabLabel = 'Terminal'
 } = Astro.props
 const t = useTranslations(lang)
 const showTerminalActions = terminalInteractive
+const hasTerminalDocsTab = terminalDocsHref.trim().length > 0
 ---
 
 <div class="lesson-layout-page">
@@ -123,66 +131,134 @@ const showTerminalActions = terminalInteractive
           data-lesson-term-wrap
           data-lesson-tour="terminal"
         >
-          <div
-            class:list={[
-              'lesson-layout__terminal',
-              !terminalInteractive && 'lesson-layout__terminal--locked'
-            ]}
-          >
+          <div class="lesson-layout__terminal-area">
             {
-              terminalInteractive ? (
-                <LessonTerminal seedName={seedName} lang={lang} />
-              ) : (
-                <div class="lesson-terminal-lock">
-                  <div class="lesson-terminal-lock__preview" aria-hidden="true">
-                    <div class="lesson-terminal-lock__fake-session">
-                      <div class="lesson-terminal-lock__session-line">~>kubectl apply -f deployment.yaml</div>
-                      <div class="lesson-terminal-lock__session-line">
-                        deployment.apps/nginx&nbsp;&nbsp;&nbsp;created
-                      </div>
-                      <div class="lesson-terminal-lock__session-line">~>kubectl get pods</div>
-                      <div class="lesson-terminal-lock__session-line">
-                        NAME&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;READY&nbsp;&nbsp;&nbsp;STATUS&nbsp;&nbsp;&nbsp;&nbsp;RESTARTS&nbsp;&nbsp;&nbsp;AGE
-                      </div>
-                      <div class="lesson-terminal-lock__session-line">
-                        nginx-7b4c9d8f5-xk2j&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1/1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Running&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;12s
-                      </div>
-                      <div class="lesson-terminal-lock__session-line">
-                        nginx-7b4c9d8f5-hn4vw&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1/1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Running&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;11s
-                      </div>
-                      <div class="lesson-terminal-lock__session-line">
-                        nginx-7b4c9d8f5-qp9rm&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1/1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Running&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;10s
-                      </div>
-                      <div class="lesson-terminal-lock__session-line">
-                        <span>~></span><span class="lesson-terminal-lock__cursor">█</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="lesson-terminal-lock__card">
-                    <h2 class="lesson-terminal-lock__title">
-                      {terminalLockTitle}
-                    </h2>
-                    <p class="lesson-terminal-lock__body">{terminalLockBody}</p>
-                    <div class="lesson-terminal-lock__ctas">
-                      <Button
-                        href={terminalLockPrimaryHref}
-                        variant="solid"
-                        color="cyan"
-                        size="sm"
-                      >
-                        {terminalLockPrimaryLabel}
-                      </Button>
-                      <Button
-                        href={terminalLockSecondaryHref}
-                        variant="outline"
-                        color="gray"
-                        size="sm"
-                      >
-                        {terminalLockSecondaryLabel}
-                      </Button>
-                    </div>
-                  </div>
+              hasTerminalDocsTab && (
+                <div
+                  class="lesson-layout__terminal-tabs"
+                  role="tablist"
+                  aria-label="Terminal tabs"
+                >
+                  <button
+                    type="button"
+                    class="lesson-layout__terminal-tab lesson-layout__terminal-tab--active"
+                    role="tab"
+                    id="lesson-terminal-tab-shell"
+                    aria-controls="lesson-terminal-panel-shell"
+                    aria-selected="true"
+                    data-terminal-tab-trigger="shell"
+                  >
+                    <span class="lesson-layout__terminal-tab-icon" aria-hidden="true">
+                      <Terminal size={14} />
+                    </span>
+                    {terminalShellTabLabel}
+                  </button>
+                  <button
+                    type="button"
+                    class="lesson-layout__terminal-tab"
+                    role="tab"
+                    id="lesson-terminal-tab-docs"
+                    aria-controls="lesson-terminal-panel-docs"
+                    aria-selected="false"
+                    data-terminal-tab-trigger="docs"
+                  >
+                    <span class="lesson-layout__terminal-tab-icon" aria-hidden="true">
+                      <Kubernetes size={14} />
+                    </span>
+                    {terminalDocsTabLabel}
+                  </button>
                 </div>
+              )
+            }
+            <section
+              class="lesson-layout__terminal-panel"
+              id="lesson-terminal-panel-shell"
+              role="tabpanel"
+              aria-labelledby="lesson-terminal-tab-shell"
+              data-terminal-tab-panel="shell"
+            >
+              <div
+                class:list={[
+                  'lesson-layout__terminal',
+                  !terminalInteractive && 'lesson-layout__terminal--locked'
+                ]}
+              >
+                {
+                  terminalInteractive ? (
+                    <LessonTerminal seedName={seedName} lang={lang} />
+                  ) : (
+                    <div class="lesson-terminal-lock">
+                      <div class="lesson-terminal-lock__preview" aria-hidden="true">
+                        <div class="lesson-terminal-lock__fake-session">
+                          <div class="lesson-terminal-lock__session-line">~>kubectl apply -f deployment.yaml</div>
+                          <div class="lesson-terminal-lock__session-line">
+                            deployment.apps/nginx&nbsp;&nbsp;&nbsp;created
+                          </div>
+                          <div class="lesson-terminal-lock__session-line">~>kubectl get pods</div>
+                          <div class="lesson-terminal-lock__session-line">
+                            NAME&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;READY&nbsp;&nbsp;&nbsp;STATUS&nbsp;&nbsp;&nbsp;&nbsp;RESTARTS&nbsp;&nbsp;&nbsp;AGE
+                          </div>
+                          <div class="lesson-terminal-lock__session-line">
+                            nginx-7b4c9d8f5-xk2j&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1/1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Running&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;12s
+                          </div>
+                          <div class="lesson-terminal-lock__session-line">
+                            nginx-7b4c9d8f5-hn4vw&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1/1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Running&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;11s
+                          </div>
+                          <div class="lesson-terminal-lock__session-line">
+                            nginx-7b4c9d8f5-qp9rm&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1/1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Running&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;10s
+                          </div>
+                          <div class="lesson-terminal-lock__session-line">
+                            <span>~></span><span class="lesson-terminal-lock__cursor">█</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="lesson-terminal-lock__card">
+                        <h2 class="lesson-terminal-lock__title">
+                          {terminalLockTitle}
+                        </h2>
+                        <p class="lesson-terminal-lock__body">{terminalLockBody}</p>
+                        <div class="lesson-terminal-lock__ctas">
+                          <Button
+                            href={terminalLockPrimaryHref}
+                            variant="solid"
+                            color="cyan"
+                            size="sm"
+                          >
+                            {terminalLockPrimaryLabel}
+                          </Button>
+                          <Button
+                            href={terminalLockSecondaryHref}
+                            variant="outline"
+                            color="gray"
+                            size="sm"
+                          >
+                            {terminalLockSecondaryLabel}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                }
+              </div>
+            </section>
+            {
+              hasTerminalDocsTab && (
+                <section
+                  class="lesson-layout__terminal-panel"
+                  id="lesson-terminal-panel-docs"
+                  role="tabpanel"
+                  aria-labelledby="lesson-terminal-tab-docs"
+                  data-terminal-tab-panel="docs"
+                  hidden
+                >
+                  <iframe
+                    class="lesson-layout__terminal-docs-frame"
+                    src={terminalDocsHref}
+                    title="Kubernetes documentation"
+                    loading="lazy"
+                    referrerpolicy="no-referrer"
+                  />
+                </section>
               )
             }
           </div>
@@ -359,6 +435,7 @@ const showTerminalActions = terminalInteractive
 
   let terminalToggleBound = false
   let outlineToggleBound = false
+  let terminalTabsBound = false
 
   function setupTerminalToggle() {
     const root = document.querySelector('.lesson-layout-root')
@@ -393,6 +470,58 @@ const showTerminalActions = terminalInteractive
     })
 
     document.dispatchEvent(new CustomEvent('lesson-terminal-state-changed'))
+  }
+
+  function setActiveTerminalTab(tabName: 'shell' | 'docs') {
+    const triggers = document.querySelectorAll<HTMLElement>('[data-terminal-tab-trigger]')
+    const panels = document.querySelectorAll<HTMLElement>('[data-terminal-tab-panel]')
+    const root = document.querySelector('.lesson-layout-root')
+
+    triggers.forEach((trigger) => {
+      const isActive = trigger.dataset.terminalTabTrigger === tabName
+      trigger.setAttribute('aria-selected', isActive ? 'true' : 'false')
+      trigger.classList.toggle('lesson-layout__terminal-tab--active', isActive)
+    })
+
+    panels.forEach((panel) => {
+      const isActive = panel.dataset.terminalTabPanel === tabName
+      panel.hidden = !isActive
+    })
+
+    if (root instanceof HTMLElement && tabName === 'docs') {
+      root.setAttribute('data-terminal-open', 'true')
+      document.dispatchEvent(new CustomEvent('lesson-terminal-state-changed'))
+    }
+  }
+
+  function setupTerminalTabs() {
+    const hasTabs = document.querySelector('[data-terminal-tab-trigger="docs"]')
+    if (!hasTabs) {
+      return
+    }
+
+    if (terminalTabsBound) {
+      return
+    }
+    terminalTabsBound = true
+    setActiveTerminalTab('shell')
+
+    document.addEventListener('click', (event) => {
+      const target = event.target
+      if (!(target instanceof Element)) {
+        return
+      }
+      const trigger = target.closest<HTMLElement>('[data-terminal-tab-trigger]')
+      if (!trigger) {
+        return
+      }
+      const tabName = trigger.dataset.terminalTabTrigger
+      if (tabName !== 'shell' && tabName !== 'docs') {
+        return
+      }
+      event.preventDefault()
+      setActiveTerminalTab(tabName)
+    })
   }
 
   function updateMobileOutlineUi(isOpen: boolean) {
@@ -624,6 +753,7 @@ const showTerminalActions = terminalInteractive
 
   setupSidebarToggle()
   setupTerminalToggle()
+  setupTerminalTabs()
   setupOutlineToggle()
   setupPanelResize()
   setupMermaidZoom()
@@ -633,6 +763,7 @@ const showTerminalActions = terminalInteractive
   document.addEventListener('astro:page-load', () => {
     setupSidebarToggle()
     setupTerminalToggle()
+    setupTerminalTabs()
     setupOutlineToggle()
     setupPanelResize()
     setupMermaidZoom()
@@ -797,6 +928,92 @@ const showTerminalActions = terminalInteractive
     display: flex;
     flex-direction: column;
     overflow: hidden;
+  }
+
+  .lesson-layout__terminal-area {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .lesson-layout__terminal-tabs {
+    flex-shrink: 0;
+    display: flex;
+    align-items: stretch;
+    gap: var(--spacing-4);
+    border-bottom: 1px solid var(--color-gray-6);
+    padding: 0 var(--spacing-3);
+    background: var(--color-gray-1);
+  }
+
+  .lesson-layout__terminal-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: var(--color-gray-11);
+    padding: 0.72rem 0;
+    margin-bottom: -1px;
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition:
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+
+  .lesson-layout__terminal-tab:hover {
+    color: var(--color-gray-12);
+  }
+
+  .lesson-layout__terminal-tab--active {
+    border-bottom-color: var(--color-cyan-8);
+    color: var(--color-gray-12);
+  }
+
+  .lesson-layout__terminal-tab-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.9;
+  }
+
+  .lesson-layout__terminal-tab-icon :global(svg) {
+    width: 14px;
+    height: 14px;
+    display: block;
+  }
+
+  .lesson-layout__terminal-tab:focus-visible {
+    outline: 2px solid var(--color-palette-cyan-solid-bg);
+    outline-offset: -2px;
+  }
+
+  .lesson-layout__terminal-panel {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .lesson-layout__terminal-panel[hidden] {
+    display: none;
+  }
+
+  .lesson-layout__terminal-docs-frame {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    display: block;
+    background: var(--color-gray-1);
   }
 
   .lesson-layout__terminal {
@@ -1009,6 +1226,10 @@ const showTerminalActions = terminalInteractive
 
     .lesson-layout__terminal-wrap {
       flex: 0 0 50%;
+    }
+    .lesson-layout__terminal-tabs {
+      gap: var(--spacing-3);
+      padding: 0 var(--spacing-2);
     }
   }
 

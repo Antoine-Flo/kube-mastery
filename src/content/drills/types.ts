@@ -1,35 +1,42 @@
-export interface DrillLocation {
-  groupId: string
-  drillDir: string
+/** Set `tag:` in drill YAML to one of these string ids (see `messages/*` for labels). */
+export const DRILL_TAG_IDS = [
+  'storage',
+  'troubleshooting',
+  'services_networking',
+  'cluster_architecture_installation'
+] as const
+
+export type DrillTagId = (typeof DRILL_TAG_IDS)[number]
+
+export interface DrillTask {
+  task: string
+  command: string
+  explanation: string
 }
 
-export interface DrillOverview {
-  id: string
+export interface DrillFile {
   title: string
-  /** Short one-line description for the drill card. */
-  description: string | null
-}
-
-export interface DrillGroupOverview {
-  id: string
-  title: string
-  description: string | null
-  drills: DrillOverview[]
-  environment?: string
-  /** Optional CKA-style time target in minutes (shown on completion). */
-  ckaTargetMinutes?: number
-}
-
-export interface DrillGroupListItem {
-  id: string
-  title: string
-  description: string | null
-  totalDrills: number
-}
-
-export interface DrillGroupMeta {
-  title: { en: string; fr: string }
-  description?: { en?: string; fr?: string }
+  description?: string
   environment?: string
   ckaTargetMinutes?: number
+  tag?: DrillTagId
+  tasks: DrillTask[]
+}
+
+export interface DrillListItem {
+  id: string
+  title: string
+  description: string | null
+  totalTasks: number
+  tag: DrillTagId | null
+}
+
+export interface DrillDetail {
+  id: string
+  title: string
+  description: string | null
+  environment?: string
+  ckaTargetMinutes?: number
+  tasks: DrillTask[]
+  tag: DrillTagId | null
 }

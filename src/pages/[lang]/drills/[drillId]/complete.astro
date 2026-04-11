@@ -1,13 +1,12 @@
 ---
-import Layout from '../../../../../layouts/Layout.astro'
-import Button from '../../../../../components/ui/Button.astro'
+import Layout from '../../../../layouts/Layout.astro'
+import Button from '../../../../components/ui/Button.astro'
 import { Star } from '@lucide/astro'
-import { useTranslations, useLocalePath } from '../../../../../i18n/utils'
-import { getProgressContext } from '../../../../../lib/progress/server'
-import { getDrillGroupOverview } from '../../../../../content/drills/facade'
+import { useTranslations, useLocalePath } from '../../../../i18n/utils'
+import { getProgressContext } from '../../../../lib/progress/server'
+import { getDrillDetail } from '../../../../content/drills/facade'
 
 const lang = Astro.params.lang as 'en' | 'fr'
-const groupId = Astro.params.groupId!
 const drillId = Astro.params.drillId!
 const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
@@ -23,14 +22,13 @@ if (!userId) {
   )
 }
 
-const overview = getDrillGroupOverview(groupId, lang)
-if (!overview) {
-  return Astro.redirect(localePath('/courses'))
+const drillDetail = getDrillDetail(drillId, lang)
+if (!drillDetail) {
+  return Astro.redirect(localePath('/drills'))
 }
 
-const coursesHref = localePath('/courses')
-const drillTargetId = `${groupId}/${drillId}`
-const ckaTargetMinutes = overview.ckaTargetMinutes
+const drillsHref = localePath('/drills')
+const ckaTargetMinutes = drillDetail.ckaTargetMinutes
 ---
 
 <Layout>
@@ -40,7 +38,7 @@ const ckaTargetMinutes = overview.ckaTargetMinutes
     <form
       id="complete-survey-form"
       class="complete-survey-form"
-      data-drill-id={drillTargetId}
+      data-drill-id={drillId}
     >
       <div class="complete-survey-form__field">
         <textarea
@@ -95,8 +93,8 @@ const ckaTargetMinutes = overview.ckaTargetMinutes
       >
       </p>
       <div class="complete-survey-form__footer">
-        <Button href={coursesHref} variant="subtle" color="gray" size="sm">
-          {t('courseComplete_backToCourses')}
+        <Button href={drillsHref} variant="subtle" color="gray" size="sm">
+          {t('drillComplete_backToDrills')}
         </Button>
         <Button type="submit" variant="solid" color="cyan" size="sm">
           {t('survey_submit')}
@@ -109,13 +107,13 @@ const ckaTargetMinutes = overview.ckaTargetMinutes
 <script
   is:inline
   define:vars={{
-    drillTargetId,
+    drillId,
     ckaTargetMinutes,
     timeLabel: t('drillComplete_timeLabel'),
     ckaLabel: t('drillComplete_ckaTarget'),
     successToastTitle: t('survey_successToast'),
     errorRatingMessage: t('survey_errorRating'),
-    coursesHref
+    drillsHref
   }}
 >
   function formatDuration(ms) {
@@ -130,19 +128,19 @@ const ckaTargetMinutes = overview.ckaTargetMinutes
     if (!el) {
       return
     }
-    const raw = sessionStorage.getItem(`drillElapsed:${drillTargetId}`)
+    const raw = sessionStorage.getItem(`drillElapsed:${drillId}`)
     if (!raw) {
       el.setAttribute('hidden', '')
       return
     }
     const ms = Number(raw)
-    sessionStorage.removeItem(`drillElapsed:${drillTargetId}`)
+    sessionStorage.removeItem(`drillElapsed:${drillId}`)
     if (!Number.isFinite(ms) || ms < 0) {
       el.setAttribute('hidden', '')
       return
     }
     const sec = Math.round(ms / 1000)
-    const bestKey = `drillBestSeconds:${drillTargetId}`
+    const bestKey = `drillBestSeconds:${drillId}`
     const prevBestRaw = localStorage.getItem(bestKey)
     const prevBest = prevBestRaw ? Number(prevBestRaw) : null
     if (prevBest === null || !Number.isFinite(prevBest) || sec < prevBest) {
@@ -154,7 +152,7 @@ const ckaTargetMinutes = overview.ckaTargetMinutes
       Number.isFinite(ckaTargetMinutes) &&
       ckaTargetMinutes > 0
     ) {
-      text += ` — ${ckaLabel}: < ${ckaTargetMinutes} min`
+      text += ` | ${ckaLabel}: < ${ckaTargetMinutes} min`
     }
     el.textContent = text
     el.removeAttribute('hidden')
@@ -257,7 +255,7 @@ const ckaTargetMinutes = overview.ckaTargetMinutes
     try {
       await sendSurvey(payload)
       showSuccessToast(successToastTitle)
-      window.location.href = coursesHref
+      window.location.href = drillsHref
     } catch (err) {
       showError(err instanceof Error ? err.message : 'Error')
     }
