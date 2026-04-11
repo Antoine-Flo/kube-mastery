@@ -19,3 +19,17 @@ tasks:
   - task: "Confirm snapshot file exists and is non-empty"
     command: "test -s /opt/etcd-snapshot.db && ls -lh /opt/etcd-snapshot.db"
     explanation: "This verifies the backup artifact exists and has content."
+validations:
+  - name: "Fichier snapshot créé"
+    run: "test -s /opt/etcd-snapshot.db && echo OK"
+    expect:
+      mode: "equals"
+      value: "OK"
+    onFail: "Le fichier `/opt/etcd-snapshot.db` est absent ou vide."
+
+  - name: "Snapshot lisible par etcdctl"
+    run: "ETCDCTL_API=3 etcdctl snapshot status /opt/etcd-snapshot.db --write-out=table | wc -l"
+    expect:
+      mode: "regex"
+      value: "^[2-9][0-9]*$"
+    onFail: "Le snapshot n'est pas valide ou ne peut pas être lu par etcdctl."

@@ -4,6 +4,8 @@ import {
   DRILL_TAG_IDS,
   type DrillFile,
   type DrillTask,
+  type DrillValidation,
+  type DrillValidationMode,
   type DrillListItem,
   type DrillDetail,
   type DrillTagId
@@ -17,6 +19,55 @@ function parseDrillTag(value: unknown): DrillTagId | undefined {
     return undefined
   }
   return value as DrillTagId
+}
+
+const DRILL_VALIDATION_MODES: readonly DrillValidationMode[] = [
+  'equals',
+  'contains',
+  'regex',
+  'notEmpty'
+]
+const DRILL_VALIDATION_MODE_SET = new Set<string>(DRILL_VALIDATION_MODES)
+
+function parseDrillValidations(value: unknown): DrillValidation[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+  const validations: DrillValidation[] = []
+  for (const item of value) {
+    if (!item || typeof item !== 'object') {
+      continue
+    }
+    const obj = item as Record<string, unknown>
+    if (
+      typeof obj.name !== 'string' ||
+      typeof obj.run !== 'string' ||
+      typeof obj.onFail !== 'string' ||
+      !obj.expect ||
+      typeof obj.expect !== 'object'
+    ) {
+      continue
+    }
+    const expectObj = obj.expect as Record<string, unknown>
+    const mode = expectObj.mode
+    if (typeof mode !== 'string' || !DRILL_VALIDATION_MODE_SET.has(mode)) {
+      continue
+    }
+    const requiresValue = mode !== 'notEmpty'
+    if (requiresValue && typeof expectObj.value !== 'string') {
+      continue
+    }
+    validations.push({
+      name: obj.name,
+      run: obj.run,
+      onFail: obj.onFail,
+      expect: {
+        mode: mode as DrillValidationMode,
+        ...(typeof expectObj.value === 'string' && { value: expectObj.value })
+      }
+    })
+  }
+  return validations
 }
 
 export function parseDrillFile(rawYaml: string): DrillFile | null {
@@ -56,6 +107,7 @@ export function parseDrillFile(rawYaml: string): DrillFile | null {
   }
 
   const tag = parseDrillTag(obj.tag)
+  const validations = parseDrillValidations(obj.validations)
 
   const file: DrillFile = {
     title: obj.title,
@@ -63,7 +115,8 @@ export function parseDrillFile(rawYaml: string): DrillFile | null {
     environment: typeof obj.environment === 'string' ? obj.environment : undefined,
     ckaTargetMinutes:
       typeof obj.ckaTargetMinutes === 'number' ? obj.ckaTargetMinutes : undefined,
-    tasks
+    tasks,
+    ...(validations.length > 0 && { validations })
   }
 
   if (tag) {
@@ -112,6 +165,7 @@ export function buildDrillDetail(
     environment: file.environment,
     ckaTargetMinutes: file.ckaTargetMinutes,
     tasks: file.tasks,
+    validations: file.validations ?? [],
     tag: file.tag ?? null
   }
 }

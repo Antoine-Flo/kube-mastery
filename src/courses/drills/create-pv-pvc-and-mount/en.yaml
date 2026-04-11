@@ -27,3 +27,24 @@ tasks:
   - task: "Validate mounted volume from inside the pod"
     command: "kubectl exec -n storage-test pvc-pod -- sh -c 'echo ok > /data/health.txt && cat /data/health.txt'"
     explanation: "Writing and reading back data confirms mount is functional."
+validations:
+  - name: "Au moins une PVC est Bound dans storage-test"
+    run: "kubectl get pvc -n storage-test -o jsonpath='{.items[*].status.phase}'"
+    expect:
+      mode: "contains"
+      value: "Bound"
+    onFail: "Aucune PVC en état Bound trouvée dans `storage-test`."
+
+  - name: "Pod pvc-pod est Running"
+    run: "kubectl get pod pvc-pod -n storage-test -o jsonpath='{.status.phase}'"
+    expect:
+      mode: "equals"
+      value: "Running"
+    onFail: "Le pod `pvc-pod` n'est pas en état Running."
+
+  - name: "Le volume monté est accessible en écriture"
+    run: "kubectl exec -n storage-test pvc-pod -- sh -c 'echo validation-ok > /data/validation.txt && cat /data/validation.txt'"
+    expect:
+      mode: "equals"
+      value: "validation-ok"
+    onFail: "Le volume monté dans `pvc-pod` n'est pas utilisable."

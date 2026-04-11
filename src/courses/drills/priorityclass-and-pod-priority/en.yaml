@@ -23,3 +23,17 @@ tasks:
   - task: "Confirm PriorityClass value and default flag"
     command: "kubectl get priorityclass high-priority -o jsonpath='{.value} {.globalDefault}'"
     explanation: "Expected output confirms correct class value and non-default behavior."
+validations:
+  - name: "PriorityClass high-priority créée"
+    run: "kubectl get priorityclass high-priority -o jsonpath='{.metadata.name}'"
+    expect:
+      mode: "equals"
+      value: "high-priority"
+    onFail: "La PriorityClass `high-priority` est absente."
+
+  - name: "Pod utilise la PriorityClass attendue"
+    run: "kubectl get pod priority-pod -n app -o jsonpath='{.spec.priorityClassName}'"
+    expect:
+      mode: "equals"
+      value: "high-priority"
+    onFail: "Le pod `priority-pod` n'utilise pas la PriorityClass attendue."

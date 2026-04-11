@@ -27,3 +27,17 @@ tasks:
   - task: "Prove workload recovery with Ready replicas"
     command: "kubectl get deployment api -n app -o jsonpath='{.status.readyReplicas}/{.status.replicas}'"
     explanation: "A full `ready/desired` value confirms the fix is effective."
+validations:
+  - name: "Deployment api fully ready"
+    run: "kubectl get deployment api -n app -o jsonpath='{.status.readyReplicas}/{.status.replicas}'"
+    expect:
+      mode: "regex"
+      value: "^([1-9][0-9]*)/\\1$"
+    onFail: "Le deployment `api` n'a pas toutes ses replicas prêtes."
+
+  - name: "Aucun pod api en CrashLoopBackOff"
+    run: "kubectl get pods -n app -l app=api -o jsonpath='{.items[*].status.containerStatuses[*].state.waiting.reason}' | wc -w"
+    expect:
+      mode: "equals"
+      value: "0"
+    onFail: "Au moins un pod `api` est encore en erreur de démarrage."

@@ -14,6 +14,20 @@ export interface DrillTask {
   explanation: string
 }
 
+export type DrillValidationMode = 'equals' | 'contains' | 'regex' | 'notEmpty'
+
+export interface DrillValidationExpectation {
+  mode: DrillValidationMode
+  value?: string
+}
+
+export interface DrillValidation {
+  name: string
+  run: string
+  expect: DrillValidationExpectation
+  onFail: string
+}
+
 export interface DrillFile {
   title: string
   description?: string
@@ -21,6 +35,7 @@ export interface DrillFile {
   ckaTargetMinutes?: number
   tag?: DrillTagId
   tasks: DrillTask[]
+  validations?: DrillValidation[]
 }
 
 export interface DrillListItem {
@@ -38,5 +53,6 @@ export interface DrillDetail {
   environment?: string
   ckaTargetMinutes?: number
   tasks: DrillTask[]
+  validations: DrillValidation[]
   tag: DrillTagId | null
 }

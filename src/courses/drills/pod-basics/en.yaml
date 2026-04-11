@@ -36,6 +36,27 @@ tasks:
     command: "kubectl get pod web -n exercise-01 -o jsonpath='{.metadata.labels.app} {.metadata.labels.version} {.metadata.labels.tier}'"
     explanation: "Final state should keep `app` and `version` and remove `tier`."
 
-  - task: "Clean up — delete the namespace"
+  - task: "Optional clean up — delete the namespace"
     command: "kubectl delete namespace exercise-01"
     explanation: "Deletes the namespace and everything inside it in one command."
+validations:
+  - name: "Pod web est Ready"
+    run: "kubectl get pod web -n exercise-01 -o jsonpath='{.status.conditions[?(@.type==\"Ready\")].status}'"
+    expect:
+      mode: "equals"
+      value: "True"
+    onFail: "Le pod `web` n'est pas en état Ready."
+
+  - name: "Labels finaux appliqués"
+    run: "kubectl get pod web -n exercise-01 -o jsonpath='{.metadata.labels.app} {.metadata.labels.version} {.metadata.labels.tier}'"
+    expect:
+      mode: "equals"
+      value: "web v1 "
+    onFail: "Les labels finaux attendus (`app=web`, `version=v1`, `tier` supprimé) ne sont pas respectés."
+
+  - name: "Contraintes ressources présentes"
+    run: "kubectl get pod web -n exercise-01 -o jsonpath='{.spec.containers[0].resources.requests.cpu} {.spec.containers[0].resources.limits.memory}'"
+    expect:
+      mode: "equals"
+      value: "100m 128Mi"
+    onFail: "Les resources requests/limits du pod `web` ne correspondent pas aux attentes."

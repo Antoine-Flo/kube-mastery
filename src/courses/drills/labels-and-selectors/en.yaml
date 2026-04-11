@@ -19,3 +19,16 @@ tasks:
   - task: "Validate that service endpoints are now populated"
     command: "kubectl get endpoints nginx-svc -n app -o jsonpath='{.subsets[*].addresses[*].ip}'"
     explanation: "Non-empty endpoint IPs prove the selector fix restored traffic routing."
+validations:
+  - name: "Pod nginx a les labels de routage"
+    run: "kubectl get pod nginx -n app -o jsonpath='{.metadata.labels.env} {.metadata.labels.track}'"
+    expect:
+      mode: "equals"
+      value: "production stable"
+    onFail: "Le pod `nginx` n'a pas les labels requis (`env=production`, `track=stable`)."
+
+  - name: "Service nginx-svc a des endpoints"
+    run: "kubectl get endpoints nginx-svc -n app -o jsonpath='{.subsets[*].addresses[*].ip}'"
+    expect:
+      mode: "notEmpty"
+    onFail: "Le service `nginx-svc` n'a aucun endpoint après mise à jour des labels."

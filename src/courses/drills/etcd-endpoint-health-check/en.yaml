@@ -23,3 +23,16 @@ tasks:
   - task: "Check etcd static pod status in kube-system"
     command: "kubectl get pods -n kube-system"
     explanation: "Complements endpoint checks with runtime pod state for faster root-cause triage."
+validations:
+  - name: "Endpoint etcd est healthy"
+    run: "ETCDCTL_API=3 etcdctl endpoint health --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key"
+    expect:
+      mode: "contains"
+      value: "is healthy"
+    onFail: "L'endpoint etcd ne répond pas en état healthy."
+
+  - name: "API Kubernetes répond"
+    run: "kubectl get nodes -o name"
+    expect:
+      mode: "notEmpty"
+    onFail: "L'API server ne répond pas correctement après la vérification etcd."

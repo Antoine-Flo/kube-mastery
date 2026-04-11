@@ -27,3 +27,16 @@ tasks:
   - task: "Verify final selector and endpoints together"
     command: "kubectl get svc web-svc -n app -o jsonpath='{.spec.selector}' && kubectl get endpoints web-svc -n app -o jsonpath='{.subsets[*].addresses[*].ip}'"
     explanation: "Successful result must show corrected selector and non-empty endpoint IPs."
+validations:
+  - name: "Selector du service corrigé"
+    run: "kubectl get svc web-svc -n app -o jsonpath='{.spec.selector.component}'"
+    expect:
+      mode: "equals"
+      value: "web"
+    onFail: "Le selector `component=web` n'est pas appliqué sur `web-svc`."
+
+  - name: "Endpoints présents après correction"
+    run: "kubectl get endpoints web-svc -n app -o jsonpath='{.subsets[*].addresses[*].ip}'"
+    expect:
+      mode: "notEmpty"
+    onFail: "Le service `web-svc` n'a toujours aucun endpoint."

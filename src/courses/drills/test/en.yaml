@@ -1,0 +1,50 @@
+title: "Test"
+description: "Sanity check: verify validation runner with simple deterministic checks."
+tag: cluster_architecture_installation
+environment: "minimal"
+ckaTargetMinutes: 2
+tasks:
+  - task: "Create namespace `drill-test`"
+    command: "kubectl create namespace drill-test"
+    explanation: "Creates an isolated namespace for this test drill."
+
+  - task: "Create pod `web` with image `nginx:1.27`"
+    command: "kubectl run web -n drill-test --image=nginx:1.27"
+    explanation: "Creates a simple pod with a known image."
+
+  - task: "Wait until pod is Ready"
+    command: "kubectl wait --for=condition=Ready pod/web -n drill-test --timeout=60s"
+    explanation: "Ensures the pod reaches the Ready state before checks."
+
+  - task: "Optional clean up"
+    command: "kubectl delete namespace drill-test"
+    explanation: "Optional cleanup once you finish testing."
+
+validations:
+  - name: "Namespace exists"
+    run: "kubectl get namespace drill-test -o name"
+    expect:
+      mode: "equals"
+      value: "namespace/drill-test"
+    onFail: "Namespace `drill-test` is missing."
+
+  - name: "Pod exists"
+    run: "kubectl get pod web -n drill-test -o jsonpath='{.metadata.name}'"
+    expect:
+      mode: "equals"
+      value: "web"
+    onFail: "Pod `web` was not found in namespace `drill-test`."
+
+  - name: "Pod is Running"
+    run: "kubectl get pod web -n drill-test -o jsonpath='{.status.phase}'"
+    expect:
+      mode: "equals"
+      value: "Running"
+    onFail: "Pod `web` is not in Running state."
+
+  - name: "Pod Ready condition is True"
+    run: "kubectl get pod web -n drill-test -o jsonpath='{.status.conditions[?(@.type==\"Ready\")].status}'"
+    expect:
+      mode: "equals"
+      value: "True"
+    onFail: "Pod `web` is not Ready."

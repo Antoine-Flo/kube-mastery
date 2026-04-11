@@ -24,6 +24,27 @@ tasks:
     command: "kubectl get cronjob hello-cron -n batch -o wide && kubectl get jobs -n batch --sort-by=.metadata.creationTimestamp"
     explanation: "Use cron metadata plus job creation order to confirm periodic triggering."
 
-  - task: "Clean up namespace"
+  - task: "Optional clean up — delete namespace"
     command: "kubectl delete namespace batch"
     explanation: "Removes all created batch resources."
+validations:
+  - name: "Job hello-job terminé"
+    run: "kubectl get job hello-job -n batch -o jsonpath='{.status.succeeded}'"
+    expect:
+      mode: "equals"
+      value: "1"
+    onFail: "Le job `hello-job` n'est pas terminé avec succès."
+
+  - name: "Log du job contient le marqueur final"
+    run: "kubectl logs -n batch job/hello-job"
+    expect:
+      mode: "contains"
+      value: "job-done"
+    onFail: "Le log du job ne contient pas la sortie attendue."
+
+  - name: "CronJob hello-cron existe"
+    run: "kubectl get cronjob hello-cron -n batch -o jsonpath='{.metadata.name}'"
+    expect:
+      mode: "equals"
+      value: "hello-cron"
+    onFail: "Le CronJob `hello-cron` n'existe pas."
