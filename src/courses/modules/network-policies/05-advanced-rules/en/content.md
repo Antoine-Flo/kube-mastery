@@ -32,7 +32,7 @@ graph LR
 
 The deny-all pattern is a single policy that locks down an entire namespace in one shot. It uses an empty `podSelector` to match every Pod, and lists both `Ingress` and `Egress` in `policyTypes` with no rules. The result is that all inbound and outbound traffic across every Pod in the namespace is blocked.
 
-```
+```bash
 nano deny-all.yaml
 ```
 
@@ -49,13 +49,13 @@ spec:
     - Egress
 ```
 
-```
+```bash
 kubectl apply -f deny-all.yaml
 ```
 
 After applying this, every Pod in the namespace is isolated. No communication is possible, including DNS. From this clean baseline, you selectively open what you actually need by adding targeted policies. Nothing is accidentally allowed. Every permitted connection exists because someone wrote a rule for it.
 
-```
+```bash
 kubectl get networkpolicy
 ```
 
@@ -150,7 +150,7 @@ graph LR
 
 Namespaces and Pod labels can be combined in the same `from` entry to require both conditions simultaneously. This is the cross-namespace AND pattern: the source Pod must have the right label AND come from the right namespace.
 
-```
+```bash
 nano cross-ns-policy.yaml
 ```
 

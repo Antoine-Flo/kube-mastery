@@ -78,19 +78,19 @@ You run `kubectl get service api` and the Service exists. Then `kubectl describe
 
 Once you know CoreDNS is up and the Service exists, test DNS resolution directly. Start with the short name:
 
-```
+```bash
 nslookup web-svc
 ```
 
 In the simulated cluster, `nslookup` queries the DNS simulation layer. If the Service exists in the current namespace, you get back its ClusterIP. If it fails, try the namespace-qualified name:
 
-```
+```bash
 nslookup web-svc.default
 ```
 
 And if that also fails, try the full FQDN:
 
-```
+```bash
 nslookup web-svc.default.svc.cluster.local
 ```
 
@@ -118,7 +118,7 @@ kubectl describe service broken-svc
 
 The `Endpoints` field shows `<none>`. Now resolve the name:
 
-```
+```bash
 nslookup broken-svc
 ```
 

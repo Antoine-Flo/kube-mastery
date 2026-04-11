@@ -56,7 +56,9 @@ You run `kubectl create configmap app-config --from-literal=config.yaml="log_lev
 
 Now declare the volume referencing the ConfigMap and mount it into the container:
 
-`nano config-pod.yaml`
+```bash
+nano config-pod.yaml
+```
 
 ```yaml
 apiVersion: v1
@@ -76,11 +78,11 @@ spec:
           mountPath: /etc/app
 ```
 
-```
+```bash
 kubectl apply -f config-pod.yaml
 ```
 
-```
+```bash
 kubectl describe pod config-reader
 ```
 

@@ -27,6 +27,7 @@ This creates a Pod named `web` using the `nginx:1.28` image. Fast and convenient
 
 :::quiz
 What does `kubectl run web --image=nginx:1.28` produce that you could hand to a colleague?
+
 **Answer:** Nothing. Imperative commands leave no artifact. The Pod exists in the cluster, but there is no file describing how it was created. That is the core limitation of imperative workflows.
 :::
 

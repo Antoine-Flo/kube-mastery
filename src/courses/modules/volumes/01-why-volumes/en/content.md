@@ -102,13 +102,13 @@ spec:
 
 Apply it:
 
-```
+```bash
 kubectl apply -f log-pod.yaml
 ```
 
 After a few seconds, inspect what Kubernetes sees about the volume mount:
 
-```
+```bash
 kubectl describe pod log-writer
 ```
 

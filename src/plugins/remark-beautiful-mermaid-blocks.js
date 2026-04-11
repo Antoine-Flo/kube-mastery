@@ -110,6 +110,9 @@ function normalizeMermaidSource(source) {
     // Run after \u2014> fix so the closing operator is already ASCII -->.
     .replace(/([\w-]+)\s+\u2014\s+(.+?)\s+(-->)/g, '$1 -- $2 $3')
     .replace(/([\w-]+)\s+\u2013\s+(.+?)\s+(-->)/g, '$1 -- $2 $3')
+    // Some lessons write Mermaid labels as `A --> |No| B` (with a space).
+    // `beautiful-mermaid` is stricter and expects `A -->|No| B`.
+    .replace(/-->\s+\|/g, '-->|')
     .trim()
 }
 

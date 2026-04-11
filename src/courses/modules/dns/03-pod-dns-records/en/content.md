@@ -99,7 +99,7 @@ Even if `db-1` restarts and gets a new IP, its DNS name `db-1.db.default.svc.clu
 
 Inspect pods in the simulated cluster to see the naming pattern:
 
-```
+```bash
 kubectl get pods -o wide
 ```
 
@@ -121,7 +121,7 @@ Every Pod has a `dnsPolicy` field that controls how DNS is configured inside the
 
 `None` disables all automatic DNS configuration. You must supply a `dnsConfig` block in the Pod spec with explicit nameserver and search domain entries.
 
-```
+```bash
 kubectl get pods -o wide
 ```
 

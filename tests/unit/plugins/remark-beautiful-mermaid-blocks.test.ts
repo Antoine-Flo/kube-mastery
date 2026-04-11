@@ -194,4 +194,32 @@ Done.
     expect(html).toContain('note: @@@ is rare')
     expect(html).not.toMatch(/\n@@@\n/)
   })
+
+  it('normalizes spaced branch labels so DNS decision trees keep target node labels', () => {
+    const md = `Tree
+
+@@@
+graph TD
+  Start["DNS resolution fails"] --> A["Is CoreDNS running?"]
+  A --> |No| FixCoreDNS["Check CoreDNS Pods in kube-system"]
+  A --> |Yes| B["Does the Service exist in the right namespace?"]
+  B --> |No| CreateSvc["Create the Service or use the correct namespace"]
+  B --> |Yes| C["Does the Service have Endpoints?"]
+  C --> |No| FixSelector["Fix selector or deploy matching Pods"]
+  C --> |Yes| D["Are you using the right name form?"]
+  D --> |No| UseFQDN["Use qualified name: svc.namespace or FQDN"]
+  D --> |Yes| Resolved["Failure is at the application or network layer"]
+@@@
+`
+    const html = processLessonMarkdown(md)
+    expect(html).toContain(
+      'Does the Service exist in the right namespace?'
+    )
+    expect(html).toContain('Does the Service have Endpoints?')
+    expect(html).toContain('Are you using the right name form?')
+    expect(html).toContain('Use qualified name: svc.namespace or FQDN')
+    expect(html).not.toMatch(/data-id="B" data-label="B"/)
+    expect(html).not.toMatch(/data-id="C" data-label="C"/)
+    expect(html).not.toMatch(/data-id="D" data-label="D"/)
+  })
 })

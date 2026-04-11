@@ -37,9 +37,9 @@ function getSourceSlice(
 }
 
 const CALLOUT_SINGLE_REGEX =
-  /^:::(info|warning|important|visualizer)\n([\s\S]*?)\n:::\s*$/
+  /^:::(info|warning|important|visualizer)\s*([\s\S]*?)\s*:::\s*$/
 const CALLOUT_OPEN_REGEX =
-  /^:::(info|warning|important|visualizer)(?:\n([\s\S]*))?$/
+  /^:::(info|warning|important|visualizer)\s*([\s\S]*)$/
 const CALLOUT_CLOSE_REGEX = /^:::$/
 
 const CALLOUT_ICONS: Record<string, string> = {
@@ -103,7 +103,7 @@ function parseCalloutOpen(
   }
   return {
     type: match[1],
-    firstLine: match[2]?.trim() ?? ''
+    firstLine: match[2] ?? ''
   }
 }
 
@@ -221,6 +221,24 @@ export default function remarkCalloutColons() {
       const open = parseCalloutOpen(text)
       if (!open) {
         newChildren.push(node)
+        continue
+      }
+
+      const firstLineText = open.firstLine
+      if (paragraphEndsWithClose(firstLineText)) {
+        const synthetic: Paragraph = {
+          type: 'paragraph',
+          children: [{ type: 'text', value: firstLineText }]
+        }
+        const stripped = stripTrailingCloseFromParagraph(
+          synthetic,
+          getParagraphText(synthetic)
+        )
+        const contentNodes: Root['children'] = stripped ? [stripped] : []
+        newChildren.push({
+          type: 'html',
+          value: buildCalloutHtml(open.type, mdastToHtml(contentNodes))
+        })
         continue
       }
 

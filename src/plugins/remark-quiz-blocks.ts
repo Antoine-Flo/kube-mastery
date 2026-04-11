@@ -12,7 +12,7 @@
  *   Type 3 - Reveal: open-ended question, no options
  */
 
-import type { Root, Paragraph, Text } from 'mdast'
+import type { Root, Paragraph, Text, List, ListItem } from 'mdast'
 import { visit } from 'unist-util-visit'
 import { unified } from 'unified'
 import remarkRehype from 'remark-rehype'
@@ -20,7 +20,6 @@ import rehypeRaw from 'rehype-raw'
 import rehypeStringify from 'rehype-stringify'
 import { VFile } from 'vfile'
 
-const QUIZ_OPEN_REGEX = /^:::quiz(?:\n([\s\S]*))?$/
 const QUIZ_CLOSE_REGEX = /^:::$/
 
 // getParagraphText returns plain text (strong nodes stripped of markers),
@@ -69,11 +68,8 @@ function buildQuizHtml(
 }
 
 function parseQuizOpen(text: string): boolean {
-  const match = text.match(QUIZ_OPEN_REGEX)
-  if (!match) {
-    return false
-  }
-  return true
+  const t = text.trimStart()
+  return /^:::quiz(?=$|[ \t\n\r])/.test(t)
 }
 
 function stripQuizOpenPrefix(paragraph: Paragraph): Paragraph | null {
@@ -85,7 +81,10 @@ function stripQuizOpenPrefix(paragraph: Paragraph): Paragraph | null {
   const children = paragraph.children.map((child, index) => {
     if (index === 0 && child.type === 'text') {
       const value = (child as Text).value
-      const updated = value.replace(/^:::quiz(?:\s*\n)?/, '')
+      let updated = value.replace(/^:::quiz(?:[ \t]+|\n+)/, '')
+      if (updated === value) {
+        updated = value.replace(/^:::quiz$/, '')
+      }
       if (updated !== value) {
         markerRemoved = true
       }
@@ -134,6 +133,88 @@ function paragraphEndsWithClose(text: string): boolean {
   return text.endsWith(':::') || text.includes('\n:::')
 }
 
+function findLastParagraphInListItem(item: ListItem): Paragraph | null {
+  for (let i = item.children.length - 1; i >= 0; i--) {
+    const child = item.children[i]
+    if (child.type === 'paragraph') {
+      return child as Paragraph
+    }
+  }
+  return null
+}
+
+/**
+ * When a quiz uses a bullet list, CommonMark often attaches the closing ::: line
+ * to the last list item instead of a top-level paragraph. Detect that and strip it.
+ */
+function stripQuizCloseFromList(list: List): List | null {
+  if (list.children.length === 0) {
+    return null
+  }
+
+  const lastItem = list.children[list.children.length - 1]
+  if (lastItem.type !== 'listItem') {
+    return null
+  }
+
+  const lastParagraph = findLastParagraphInListItem(lastItem)
+  if (!lastParagraph) {
+    return null
+  }
+
+  const text = getParagraphText(lastParagraph)
+  const itemChildren = lastItem.children
+  const lastIndex = itemChildren.length - 1
+  const lastBlock = itemChildren[lastIndex]
+  if (lastBlock !== lastParagraph) {
+    return null
+  }
+
+  if (QUIZ_CLOSE_REGEX.test(text)) {
+    const newItemChildren = itemChildren.slice(0, -1)
+    if (newItemChildren.length === 0) {
+      return null
+    }
+    return {
+      ...list,
+      children: [
+        ...list.children.slice(0, -1),
+        { ...lastItem, children: newItemChildren }
+      ]
+    }
+  }
+
+  if (!paragraphEndsWithClose(text)) {
+    return null
+  }
+
+  const closingNode = stripTrailingClose(lastParagraph, text)
+  if (!closingNode) {
+    const newItemChildren = itemChildren.slice(0, -1)
+    if (newItemChildren.length === 0) {
+      return null
+    }
+    return {
+      ...list,
+      children: [
+        ...list.children.slice(0, -1),
+        { ...lastItem, children: newItemChildren }
+      ]
+    }
+  }
+
+  return {
+    ...list,
+    children: [
+      ...list.children.slice(0, -1),
+      {
+        ...lastItem,
+        children: [...itemChildren.slice(0, -1), closingNode]
+      }
+    ]
+  }
+}
+
 function stripTrailingClose(
   paragraph: Paragraph,
   text: string
@@ -169,16 +250,34 @@ function stripTrailingClose(
 function collectQuizNodes(
   children: Root['children'],
   startIndex: number,
-  openingContentNode: Paragraph | null
+  openingContentNode: Paragraph | null,
+  openParagraphIndex: number
 ): { allNodes: Root['children']; endIndex: number } | null {
   const allNodes: Root['children'] = []
 
   if (openingContentNode) {
+    const openingText = getParagraphText(openingContentNode)
+    if (paragraphEndsWithClose(openingText)) {
+      const closingNode = stripTrailingClose(openingContentNode, openingText)
+      if (closingNode) {
+        return { allNodes: [closingNode], endIndex: openParagraphIndex }
+      }
+      return { allNodes: [], endIndex: openParagraphIndex }
+    }
     allNodes.push(openingContentNode)
   }
 
   for (let j = startIndex; j < children.length; j++) {
     const node = children[j]
+    if (node.type === 'list') {
+      const withoutClose = stripQuizCloseFromList(node as List)
+      if (withoutClose) {
+        allNodes.push(withoutClose)
+        return { allNodes, endIndex: j }
+      }
+      allNodes.push(node)
+      continue
+    }
     if (node.type !== 'paragraph') {
       allNodes.push(node)
       continue
@@ -205,17 +304,44 @@ function collectQuizNodes(
   return null
 }
 
-function isAnswerParagraph(node: Paragraph): boolean {
-  // The paragraph starts with a **Answer:** strong node
-  const firstChild = node.children[0]
-  if (firstChild?.type === 'strong') {
-    const innerText = (firstChild.children as Text[])
-      .map((c) => c.value ?? '')
-      .join('')
-      .trim()
-    return innerText === 'Answer:'
+function strongIsAnswerMarker(node: Paragraph['children'][number]): boolean {
+  if (node.type !== 'strong') {
+    return false
   }
-  // Fallback: plain text match (for single-paragraph callouts that lost structure)
+  const innerText = (node.children as Text[])
+    .map((c) => c.value ?? '')
+    .join('')
+    .trim()
+  return innerText === 'Answer:'
+}
+
+function findAnswerStrongChildIndex(paragraph: Paragraph): number {
+  for (let i = 0; i < paragraph.children.length; i++) {
+    if (strongIsAnswerMarker(paragraph.children[i])) {
+      return i
+    }
+  }
+  return -1
+}
+
+function splitParagraphAtInlineAnswer(
+  paragraph: Paragraph
+): { question: Paragraph; answer: Paragraph } | null {
+  const idx = findAnswerStrongChildIndex(paragraph)
+  if (idx <= 0) {
+    return null
+  }
+  return {
+    question: { ...paragraph, children: paragraph.children.slice(0, idx) },
+    answer: { ...paragraph, children: paragraph.children.slice(idx) }
+  }
+}
+
+function isAnswerParagraph(node: Paragraph): boolean {
+  const firstChild = node.children[0]
+  if (firstChild && strongIsAnswerMarker(firstChild)) {
+    return true
+  }
   return ANSWER_PARAGRAPH_REGEX.test(getParagraphText(node))
 }
 
@@ -252,6 +378,66 @@ function stripAnswerPrefix(paragraph: Paragraph): Paragraph | null {
     : null
 }
 
+function transformListWithEmbeddedAnswer(
+  list: List
+): { list: List; answerParagraph: Paragraph } | null {
+  if (list.children.length === 0) {
+    return null
+  }
+
+  const lastItem = list.children[list.children.length - 1]
+  if (lastItem.type !== 'listItem') {
+    return null
+  }
+
+  const lastParagraph = findLastParagraphInListItem(lastItem)
+  if (!lastParagraph) {
+    return null
+  }
+
+  const itemChildren = lastItem.children
+  const lastBlockIndex = itemChildren.length - 1
+  if (itemChildren[lastBlockIndex] !== lastParagraph) {
+    return null
+  }
+
+  let answerParagraph: Paragraph
+  let replacementParagraph: Paragraph | null
+
+  if (isAnswerParagraph(lastParagraph)) {
+    answerParagraph = lastParagraph
+    replacementParagraph = null
+  } else {
+    const inlineSplit = splitParagraphAtInlineAnswer(lastParagraph)
+    if (!inlineSplit) {
+      return null
+    }
+    answerParagraph = inlineSplit.answer
+    replacementParagraph = inlineSplit.question
+  }
+
+  const newLastItemChildren =
+    replacementParagraph === null
+      ? itemChildren.slice(0, -1)
+      : [...itemChildren.slice(0, -1), replacementParagraph]
+
+  if (newLastItemChildren.length === 0) {
+    return null
+  }
+
+  const newLastItem: ListItem = {
+    ...lastItem,
+    children: newLastItemChildren
+  }
+
+  const newList: List = {
+    ...list,
+    children: [...list.children.slice(0, -1), newLastItem]
+  }
+
+  return { list: newList, answerParagraph }
+}
+
 function splitAtAnswer(nodes: Root['children']): {
   questionNodes: Root['children']
   answerNodes: Root['children']
@@ -261,10 +447,34 @@ function splitAtAnswer(nodes: Root['children']): {
   let answerStarted = false
 
   for (const node of nodes) {
-    if (!answerStarted && node.type === 'paragraph') {
-      if (isAnswerParagraph(node as Paragraph)) {
+    if (!answerStarted && node.type === 'list') {
+      const transformed = transformListWithEmbeddedAnswer(node as List)
+      if (transformed) {
         answerStarted = true
-        const stripped = stripAnswerPrefix(node as Paragraph)
+        questionNodes.push(transformed.list)
+        const stripped = stripAnswerPrefix(transformed.answerParagraph)
+        if (stripped) {
+          answerNodes.push(stripped)
+        }
+        continue
+      }
+    }
+
+    if (!answerStarted && node.type === 'paragraph') {
+      const asParagraph = node as Paragraph
+      if (isAnswerParagraph(asParagraph)) {
+        answerStarted = true
+        const stripped = stripAnswerPrefix(asParagraph)
+        if (stripped) {
+          answerNodes.push(stripped)
+        }
+        continue
+      }
+      const inlineSplit = splitParagraphAtInlineAnswer(asParagraph)
+      if (inlineSplit) {
+        answerStarted = true
+        questionNodes.push(inlineSplit.question)
+        const stripped = stripAnswerPrefix(inlineSplit.answer)
         if (stripped) {
           answerNodes.push(stripped)
         }
@@ -304,7 +514,8 @@ export default function remarkQuizBlocks() {
       const collected = collectQuizNodes(
         tree.children,
         i + 1,
-        openingContentNode
+        openingContentNode,
+        i
       )
       if (!collected) {
         newChildren.push(node)

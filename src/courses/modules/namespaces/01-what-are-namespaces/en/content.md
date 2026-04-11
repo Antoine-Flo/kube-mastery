@@ -40,19 +40,18 @@ kubectl create namespace staging
 
 You can also use a manifest, which is the preferred approach when you want to track the namespace definition in version control. Open a new file:
 
-```
+```bash
 nano staging-ns.yaml
 ```
 
 ```yaml
-# illustrative only
 apiVersion: v1
 kind: Namespace
 metadata:
   name: staging
 ```
 
-```
+```bash
 kubectl apply -f staging-ns.yaml
 ```
 
@@ -62,7 +61,7 @@ Both approaches produce the same result. The manifest approach lets you add labe
 
 Every `kubectl` command that creates or queries resources accepts a `-n` flag to target a specific namespace. Deploy a workload into the `staging` namespace you just created:
 
-```
+```bash
 kubectl create deployment web --image=nginx:1.28 -n staging
 kubectl get pods -n staging
 ```
@@ -87,7 +86,7 @@ To isolate network traffic between namespaces, you need NetworkPolicies, which a
 
 Deleting a namespace deletes everything inside it. That makes cleanup straightforward, but also means a mistaken `kubectl delete namespace` is destructive:
 
-```
+```bash
 kubectl delete namespace staging
 ```
 
