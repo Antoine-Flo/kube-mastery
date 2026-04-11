@@ -7,13 +7,13 @@ import {
   startTimer
 } from '../../lib/observability/otel'
 
-const SURVEY_NAMES = ['small', 'task'] as const
+const SURVEY_NAMES = ['small', 'drill', 'task'] as const
 const MIN_RATING = 1
 const MAX_RATING = 5
 
 /**
  * POST /api/survey
- * Body: { name: 'small' | 'task', rating: number (1-5), comment?: string, taskId?: string (for name=task) }
+ * Body: { name: 'small' | 'drill', rating, comment?, drillId? } (legacy name=task + taskId still accepted)
  * Inserts into messages (type survey). User must be authenticated.
  */
 export const POST: APIRoute = async ({ request, cookies, locals }) => {
@@ -27,6 +27,7 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     name?: string
     rating?: number
     comment?: string
+    drillId?: string
     taskId?: string
   }
   try {
@@ -115,10 +116,14 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     typeof body.comment === 'string' ? body.comment.trim() : undefined
   const content =
     comment !== undefined && comment !== '' ? { rating, comment } : { rating }
+  const rawDrillId =
+    typeof body.drillId === 'string' && body.drillId.trim()
+      ? body.drillId.trim()
+      : typeof body.taskId === 'string' && body.taskId.trim()
+        ? body.taskId.trim()
+        : null
   const lessonId =
-    name === 'task' && typeof body.taskId === 'string' && body.taskId.trim()
-      ? body.taskId.trim()
-      : null
+    (name === 'drill' || name === 'task') && rawDrillId ? rawDrillId : null
 
   const { error: insertError } = await supabase.from('messages').insert({
     type: 'survey',

@@ -6,29 +6,47 @@ type RuntimeEnvLocals = {
   }
 }
 
-export function readAppEnv(key: string, locals?: unknown): string | undefined {
-  const runtimeEnv = (locals as RuntimeEnvLocals | undefined)?.runtime?.env as
-    | Record<string, unknown>
-    | undefined
-  const runtimeValue = runtimeEnv?.[key]
-  if (typeof runtimeValue === 'string') {
-    const trimmedRuntime = runtimeValue.trim()
-    if (trimmedRuntime !== '') {
-      return trimmedRuntime
+function readNonEmptyString(value: unknown): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined
+  }
+  const trimmed = value.trim()
+  if (trimmed === '') {
+    return undefined
+  }
+  return trimmed
+}
+
+function readLegacyRuntimeEnv(locals?: unknown): Record<string, unknown> | undefined {
+  if (locals == null || typeof locals !== 'object') {
+    return undefined
+  }
+  try {
+    const runtime = (locals as RuntimeEnvLocals).runtime
+    if (runtime == null || typeof runtime !== 'object') {
+      return undefined
     }
+    const runtimeEnv = runtime.env
+    if (runtimeEnv == null || typeof runtimeEnv !== 'object') {
+      return undefined
+    }
+    return runtimeEnv as Record<string, unknown>
+  } catch {
+    // Astro v6 Cloudflare throws if legacy runtime getters are accessed.
+    return undefined
+  }
+}
+
+export function readAppEnv(key: string, locals?: unknown): string | undefined {
+  const runtimeEnv = readLegacyRuntimeEnv(locals)
+  const runtimeValue = readNonEmptyString(runtimeEnv?.[key])
+  if (runtimeValue != null) {
+    return runtimeValue
   }
 
   const processEnv =
     typeof process !== 'undefined'
       ? (process.env as Record<string, unknown>)
       : undefined
-  const processValue = processEnv?.[key]
-  if (typeof processValue !== 'string') {
-    return undefined
-  }
-  const trimmed = processValue.trim()
-  if (trimmed === '') {
-    return undefined
-  }
-  return trimmed
+  return readNonEmptyString(processEnv?.[key])
 }

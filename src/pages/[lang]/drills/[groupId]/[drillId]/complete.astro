@@ -4,11 +4,11 @@ import Button from '../../../../../components/ui/Button.astro'
 import { Star } from '@lucide/astro'
 import { useTranslations, useLocalePath } from '../../../../../i18n/utils'
 import { getProgressContext } from '../../../../../lib/progress/server'
-import { getTaskGroupOverview } from '../../../../../content/tasks/facade'
+import { getDrillGroupOverview } from '../../../../../content/drills/facade'
 
 const lang = Astro.params.lang as 'en' | 'fr'
 const groupId = Astro.params.groupId!
-const taskId = Astro.params.taskId!
+const drillId = Astro.params.drillId!
 const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
 
@@ -23,22 +23,24 @@ if (!userId) {
   )
 }
 
-const overview = getTaskGroupOverview(groupId, lang)
+const overview = getDrillGroupOverview(groupId, lang)
 if (!overview) {
   return Astro.redirect(localePath('/courses'))
 }
 
 const coursesHref = localePath('/courses')
-const taskTargetId = `${groupId}/${taskId}`
+const drillTargetId = `${groupId}/${drillId}`
+const ckaTargetMinutes = overview.ckaTargetMinutes
 ---
 
 <Layout>
   <main class="complete-page">
-    <h1 class="complete-page__title">{t('taskComplete_congrats')}</h1>
+    <h1 class="complete-page__title">{t('drillComplete_congrats')}</h1>
+    <p class="drill-complete__stats" id="drill-complete-stats" hidden></p>
     <form
       id="complete-survey-form"
       class="complete-survey-form"
-      data-task-id={taskTargetId}
+      data-drill-id={drillTargetId}
     >
       <div class="complete-survey-form__field">
         <textarea
@@ -107,11 +109,59 @@ const taskTargetId = `${groupId}/${taskId}`
 <script
   is:inline
   define:vars={{
+    drillTargetId,
+    ckaTargetMinutes,
+    timeLabel: t('drillComplete_timeLabel'),
+    ckaLabel: t('drillComplete_ckaTarget'),
     successToastTitle: t('survey_successToast'),
     errorRatingMessage: t('survey_errorRating'),
     coursesHref
   }}
 >
+  function formatDuration(ms) {
+    const totalSec = Math.round(ms / 1000)
+    const m = Math.floor(totalSec / 60)
+    const s = totalSec % 60
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  }
+
+  function updateStats() {
+    const el = document.getElementById('drill-complete-stats')
+    if (!el) {
+      return
+    }
+    const raw = sessionStorage.getItem(`drillElapsed:${drillTargetId}`)
+    if (!raw) {
+      el.setAttribute('hidden', '')
+      return
+    }
+    const ms = Number(raw)
+    sessionStorage.removeItem(`drillElapsed:${drillTargetId}`)
+    if (!Number.isFinite(ms) || ms < 0) {
+      el.setAttribute('hidden', '')
+      return
+    }
+    const sec = Math.round(ms / 1000)
+    const bestKey = `drillBestSeconds:${drillTargetId}`
+    const prevBestRaw = localStorage.getItem(bestKey)
+    const prevBest = prevBestRaw ? Number(prevBestRaw) : null
+    if (prevBest === null || !Number.isFinite(prevBest) || sec < prevBest) {
+      localStorage.setItem(bestKey, String(sec))
+    }
+    let text = `${timeLabel}: ${formatDuration(ms)}`
+    if (
+      typeof ckaTargetMinutes === 'number' &&
+      Number.isFinite(ckaTargetMinutes) &&
+      ckaTargetMinutes > 0
+    ) {
+      text += ` — ${ckaLabel}: < ${ckaTargetMinutes} min`
+    }
+    el.textContent = text
+    el.removeAttribute('hidden')
+  }
+
+  updateStats()
+
   function getFormPayload(formEl) {
     const ratingEl = formEl.querySelector('#complete-survey-rating')
     const rating =
@@ -121,12 +171,12 @@ const taskTargetId = `${groupId}/${taskId}`
     const commentEl = formEl.querySelector('textarea[name="comment"]')
     const comment =
       commentEl && 'value' in commentEl ? commentEl.value.trim() : ''
-    const taskId = formEl.getAttribute('data-task-id') ?? ''
+    const id = formEl.getAttribute('data-drill-id') ?? ''
     return {
-      name: 'task',
+      name: 'drill',
       rating,
       comment: comment || undefined,
-      taskId: taskId || undefined
+      drillId: id || undefined
     }
   }
 
@@ -209,7 +259,7 @@ const taskTargetId = `${groupId}/${taskId}`
       showSuccessToast(successToastTitle)
       window.location.href = coursesHref
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Erreur')
+      showError(err instanceof Error ? err.message : 'Error')
     }
   }
 
@@ -221,6 +271,13 @@ const taskTargetId = `${groupId}/${taskId}`
 </script>
 
 <style>
+  .drill-complete__stats {
+    font-size: var(--text-lg);
+    color: var(--color-gray-11);
+    margin: 0 0 var(--spacing-6);
+    line-height: 1.5;
+  }
+
   .complete-page {
     max-width: 52rem;
     margin: 0 auto;

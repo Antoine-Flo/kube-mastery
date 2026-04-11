@@ -41,9 +41,9 @@ All commands are run from the root of the project, from a terminal:
 | `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
 | `npm run astro -- --help` | Get help using the Astro CLI                     |
 
-## Local deployments with Dagger (Cloudflare Workers)
+## Local deployments (Cloudflare Workers)
 
-This project uses local Dagger pipelines for Worker deployments:
+This project uses a single local deployment pipeline:
 
 - `staging`: `npm run deploy:staging`
 - `production`: `npm run deploy:production`
@@ -57,20 +57,14 @@ Both commands run the same quality gate before deployment:
 
 ### Prerequisites
 
-- Dagger CLI installed and available in your `PATH`
 - Cloudflare auth configured via env vars:
   - `CLOUDFLARE_API_TOKEN`
   - `CLOUDFLARE_ACCOUNT_ID`
-- Dagger module dependencies installed:
-
-```sh
-npm run dagger:install
-```
 
 ### Runtime environment separation
 
-- `wrangler deploy --env staging` uses the `staging` block in `wrangler.jsonc`
-- `wrangler deploy` uses the default (production) config
+- Staging build+deploy uses `CLOUDFLARE_ENV=staging` and `wrangler deploy --env staging`
+- Production build+deploy uses default environment and `wrangler deploy`
 - Set secrets separately for each environment:
   - production: `wrangler secret put <KEY>`
   - staging: `wrangler secret put <KEY> --env staging`

@@ -29,7 +29,7 @@ export async function getProgressContext(
   return { completed, userId: user.id }
 }
 
-export async function getCompletedTaskIds(
+export async function getCompletedDrillIds(
   locals: unknown,
   request: Request,
   cookies: AstroCookies
@@ -42,7 +42,7 @@ export async function getCompletedTaskIds(
     return new Set<string>()
   }
   const repo = createSupabaseProgressRepository(supabase)
-  return repo.getCompletedItemIds(user.id, 'task')
+  return repo.getCompletedItemIds(user.id, 'drill')
 }
 
 export { createSupabaseProgressRepository } from './supabase-adapter'

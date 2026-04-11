@@ -75,7 +75,7 @@ export function getSupabaseServer(
       'SUPABASE_PUBLISHABLE_DEFAULT_KEY'
     ])
     throw new Error(
-      `Supabase env vars missing: ${missing.join(', ')}. Checked locals.runtime.env and process.env.`
+      `Supabase env vars missing: ${missing.join(', ')}. Checked Cloudflare bindings and process.env.`
     )
   }
   const cookieHeader = request.headers.get('Cookie') ?? ''

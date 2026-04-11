@@ -1,12 +1,18 @@
 {
-  "main": "dist/_worker.js/index.js",
+  "main": "@astrojs/cloudflare/entrypoints/server",
   "name": "kubemastery",
-  "compatibility_date": "2026-02-02",
+  "compatibility_date": "2026-04-11",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": {
     "binding": "ASSETS",
     "directory": "./dist"
   },
+  "kv_namespaces": [
+    {
+      "binding": "SESSION",
+      "id": "9648023ee544462f906d142fa96bee98"
+    }
+  ],
   "vars": {
     "EARLY_ACCESS": "true",
     "ENVIRONMENT": "staging",
@@ -19,6 +25,13 @@
   },
   "env": {
     "staging": {
+      "name": "kubemastery-staging",
+      "kv_namespaces": [
+        {
+          "binding": "SESSION",
+          "id": "9648023ee544462f906d142fa96bee98"
+        }
+      ],
       "vars": {
         "EARLY_ACCESS": "true",
         "ENVIRONMENT": "staging",

@@ -1,6 +1,6 @@
 ---
 import Layout from '../../../layouts/Layout.astro'
-import { Chrome, Github, Gitlab } from '@lucide/astro'
+import { Google, Github, Gitlab } from 'simple-icons-astro'
 
 import Button from '../../../components/ui/Button.astro'
 import { useTranslations, useLocalePath } from '../../../i18n/utils'
@@ -94,7 +94,7 @@ const authCanonicalUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url)
                 class="auth__provider-button auth__provider-button--google"
               >
                 <span class="auth__provider-btn-inner">
-                  <Chrome size={20} aria-hidden="true" />
+                  <Google size={20} aria-hidden="true" />
                   {t('auth_continueWithGoogle')}
                 </span>
               </Button>

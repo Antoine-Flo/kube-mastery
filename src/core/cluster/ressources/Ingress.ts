@@ -114,7 +114,7 @@ const IngressManifestSchema = z.object({
       const hasDefault = spec.defaultBackend != null
       if (!hasRules && !hasDefault) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: 'custom',
           message:
             'spec must include at least one rule or defaultBackend when rules are omitted',
           path: ['rules']
@@ -130,7 +130,7 @@ const IngressManifestSchema = z.object({
           const rule = ruleList[index]
           if (rule.http == null) {
             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
+              code: 'custom',
               message: 'each rule must include http when rules are set',
               path: ['rules', index, 'http']
             })

@@ -10,7 +10,8 @@ import {
 
 /**
  * POST /api/progress/complete
- * JSON body: { lessonId: string } OR { type: "task", targetId: string }
+ * JSON body: { lessonId: string } OR { type: "drill", targetId: string }
+ * Legacy: { type: "task", targetId } is accepted and stored as drill.
  * Returns 204. Does not redirect. Unauthenticated requests get 204 with no write.
  */
 export const POST: APIRoute = async ({ request, cookies, locals }) => {
@@ -52,10 +53,12 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
 
   const body = parsed as Record<string, unknown>
   const lessonId = typeof body.lessonId === 'string' ? body.lessonId : undefined
-  const isTask = body.type === 'task'
+  const bodyType = body.type
+  const isDrillCompletion =
+    bodyType === 'drill' || bodyType === 'task'
   const targetId = typeof body.targetId === 'string' ? body.targetId : undefined
 
-  if (!lessonId && !(isTask && targetId)) {
+  if (!lessonId && !(isDrillCompletion && targetId)) {
     emitApiLog({
       level: 'warn',
       event: 'progress_complete_failed',
@@ -65,12 +68,12 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
       durationMs: getDurationMs(startedAt),
       errorCode: 'missing_target'
     })
-    return new Response('Missing lessonId or type=task with targetId', {
+    return new Response('Missing lessonId or type drill with targetId', {
       status: 400
     })
   }
 
-  if (lessonId && isTask) {
+  if (lessonId && isDrillCompletion) {
     emitApiLog({
       level: 'warn',
       event: 'progress_complete_failed',
@@ -80,7 +83,7 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
       durationMs: getDurationMs(startedAt),
       errorCode: 'conflicting_target'
     })
-    return new Response('Use either lessonId or type=task with targetId', {
+    return new Response('Use either lessonId or drill completion with targetId', {
       status: 400
     })
   }
@@ -100,8 +103,8 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     const repo = createSupabaseProgressRepository(supabase)
     if (lessonId) {
       await repo.addCompletedItem(user.id, 'lesson', lessonId)
-    } else if (isTask && targetId) {
-      await repo.addCompletedItem(user.id, 'task', targetId)
+    } else if (isDrillCompletion && targetId) {
+      await repo.addCompletedItem(user.id, 'drill', targetId)
     }
     emitApiLog({
       level: 'info',

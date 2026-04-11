@@ -21,9 +21,13 @@ import { authUid, authUsers, authenticatedRole } from 'drizzle-orm/supabase'
 // TABLES
 // ═══════════════════════════════════════════════════════════════════════════
 
-/** Completion types: lesson, chapter, module, course. target_id format depends on type (see plan). */
+/**
+ * Values observed in `completions.type` (free-form text column).
+ * App progress uses at least `lesson` and `drill`; other values may exist for course-level aggregates.
+ */
 export const COMPLETION_TYPES = [
   'lesson',
+  'drill',
   'chapter',
   'module',
   'course'
@@ -31,7 +35,7 @@ export const COMPLETION_TYPES = [
 export type CompletionType = (typeof COMPLETION_TYPES)[number]
 
 /**
- * Completions table - One row per completed item (lesson, chapter, module, or course).
+ * Completions table - One row per completed item (lesson, drill, chapter, module, or course).
  * Enables granular progress and stats. For percentage by course/module, use type = 'lesson'.
  */
 export const completions = pgTable(
@@ -41,7 +45,7 @@ export const completions = pgTable(
     userId: uuid('user_id')
       .notNull()
       .references(() => authUsers.id, { onDelete: 'cascade' }),
-    type: text('type').notNull(), // 'lesson' | 'chapter' | 'module' | 'course'
+    type: text('type').notNull(), // e.g. lesson | drill | chapter | module | course
     targetId: text('target_id').notNull(),
     completedAt: timestamp('completed_at', { withTimezone: true })
       .defaultNow()

@@ -1,0 +1,300 @@
+---
+import Layout from '../../../../../layouts/Layout.astro'
+import ContentWithTerminalLayout from '../../../../../components/lesson/ContentWithTerminalLayout.astro'
+import Button from '../../../../../components/ui/Button.astro'
+import { useLocalePath, useTranslations } from '../../../../../i18n/utils'
+import {
+  getDrillContent,
+  getDrillGroupOverview
+} from '../../../../../content/drills/facade'
+import { DEMO_DRILL_GROUP_ID } from '../../../../../content/drills/constants'
+import { getCourseOverview } from '../../../../../content/overview/facade'
+import { getLayoutAuthContext } from '../../../../../lib/auth/server'
+import { getProgressContext } from '../../../../../lib/progress/server'
+import { getFirstNonPlaceholderLessonIdFromSections } from '../../../../../lib/courses/lessonTerminalAccess'
+import '../../../../../styles/components/lesson-content.css'
+import '../../../../../styles/components/cluster-visualization.css'
+
+const lang = Astro.params.lang as 'en' | 'fr'
+const groupId = Astro.params.groupId!
+const drillId = Astro.params.drillId!
+const localePath = useLocalePath(lang)
+const t = useTranslations(lang)
+
+const modeRaw = Astro.url.searchParams.get('mode')
+const runMode =
+  modeRaw === 'guided' || modeRaw === 'exam' ? modeRaw : null
+
+const { userId } = await getProgressContext(
+  Astro.locals,
+  Astro.request,
+  Astro.cookies
+)
+const auth = await getLayoutAuthContext(
+  Astro.locals,
+  Astro.request,
+  Astro.cookies
+)
+const isDemoDrill = groupId === DEMO_DRILL_GROUP_ID
+if (!userId && !isDemoDrill) {
+  return Astro.redirect(
+    localePath('/auth') + '?redirect=' + encodeURIComponent(Astro.url.pathname)
+  )
+}
+
+const drillEntry = getDrillContent(groupId, drillId, lang)
+if (!drillEntry) {
+  return Astro.redirect(localePath(`/drills/${groupId}`))
+}
+
+const overview = getDrillGroupOverview(groupId, lang)
+if (!overview) {
+  return Astro.redirect(localePath('/courses'))
+}
+
+const currentDrillMeta = overview.drills.find((d) => d.id === drillId)
+const withMode = (path: string) =>
+  runMode === null ? path : `${path}${path.includes('?') ? '&' : '?'}mode=${runMode}`
+
+const { Content } = drillEntry
+const env = overview.environment?.trim().toLowerCase()
+const seedName = env && env !== 'empty' ? env : 'minimal'
+
+const drillIndex = overview.drills.findIndex((d) => d.id === drillId)
+const prevDrill = drillIndex > 0 ? overview.drills[drillIndex - 1] : null
+const nextDrill =
+  drillIndex >= 0 && drillIndex < overview.drills.length - 1
+    ? overview.drills[drillIndex + 1]
+    : null
+
+const drillTargetId = `${groupId}/${drillId}`
+const drillCompleteHref = withMode(
+  localePath(`/drills/${groupId}/${drillId}/complete`)
+)
+
+const contentBarLabels = {
+  labelVisualizer: t('lesson_visualizer'),
+  labelCourse: t('lesson_viewCourse'),
+  labelShowTerminal: t('lesson_showTerminal'),
+  labelHideTerminal: t('lesson_hideTerminal'),
+  labelContactSupport: t('lesson_contactSupport'),
+  labelReloadTerminal: t('lesson_reloadTerminal')
+}
+
+const terminalInteractive = isDemoDrill || auth.hasPaidSubscription
+const crashOverview = getCourseOverview('crash-course', lang)
+const crashFirstLessonId = crashOverview
+  ? getFirstNonPlaceholderLessonIdFromSections(crashOverview.content.sections)
+  : null
+const terminalLockCrashCourseHref = crashFirstLessonId
+  ? localePath(`/courses/crash-course/${crashFirstLessonId}`)
+  : localePath('/courses')
+const terminalLockPrimaryHref = localePath('/pricing')
+const terminalLockPrimaryLabel = t('lesson_terminalLock_ctaUpgrade')
+const terminalLockSecondaryHref = terminalLockCrashCourseHref
+const terminalLockSecondaryLabel = t('lesson_terminalLock_tryFreeCrashCourse')
+
+const guidedHref = `${localePath(`/drills/${groupId}/${drillId}`)}?mode=guided`
+const examHref = `${localePath(`/drills/${groupId}/${drillId}`)}?mode=exam`
+---
+
+{
+  runMode === null && (
+    <Layout>
+      <main class="drill-mode-choice">
+        <h1>{overview.title}</h1>
+        {currentDrillMeta && (
+          <p class="drill-mode-choice__subtitle">{currentDrillMeta.title}</p>
+        )}
+        <p class="drill-mode-choice__hint">{t('drills_mode_title')}</p>
+        <div class="drill-mode-choice__actions">
+          <Button href={guidedHref} variant="solid" color="cyan" size="md">
+            {t('drills_mode_guidedCta')}
+          </Button>
+          <p class="drill-mode-choice__hint">{t('drills_mode_subGuided')}</p>
+          <Button href={examHref} variant="subtle" color="gray" size="md">
+            {t('drills_mode_examCta')}
+          </Button>
+          <p class="drill-mode-choice__hint">{t('drills_mode_subExam')}</p>
+        </div>
+      </main>
+    </Layout>
+  )
+}
+{
+  runMode !== null && (
+    <Layout bodyClass="lp-fill navbar-app" showFooter={false}>
+      <ContentWithTerminalLayout
+        seedName={seedName}
+        lang={lang}
+        showSidebar={false}
+        labels={contentBarLabels}
+        supportContextId={`drills/${groupId}/${drillId}`}
+        terminalInteractive={terminalInteractive}
+        terminalLockTitle={t('lesson_terminalLock_title')}
+        terminalLockBody={t('lesson_terminalLock_body')}
+        terminalLockPrimaryLabel={terminalLockPrimaryLabel}
+        terminalLockPrimaryHref={terminalLockPrimaryHref}
+        terminalLockSecondaryLabel={terminalLockSecondaryLabel}
+        terminalLockSecondaryHref={terminalLockSecondaryHref}
+      >
+        <div
+          class="drill-timer-bar"
+          data-drill-timer-wrap
+          aria-live="polite"
+        >
+          <span>{t('drills_timer_label')}</span>
+          <span class="drill-timer-bar__value" data-drill-timer-display>
+            00:00
+          </span>
+        </div>
+        <article class="lesson-content" data-drill-mode={runMode}>
+          <Content />
+        </article>
+        <nav class="lp__nav--bt">
+          {prevDrill ? (
+            <a
+              href={withMode(
+                localePath(`/drills/${groupId}/${prevDrill.id}`)
+              )}
+              class="lp__lnk"
+            >
+              ← {prevDrill.title}
+            </a>
+          ) : (
+            <span />
+          )}
+          {nextDrill ? (
+            <a
+              href={withMode(
+                localePath(`/drills/${groupId}/${nextDrill.id}`)
+              )}
+              class="lp__lnk lp__lnk--next"
+            >
+              {nextDrill.title} →
+            </a>
+          ) : null}
+        </nav>
+        <div class="lp__drill-complete">
+          {isDemoDrill && !userId ? (
+            <Button
+              href={localePath('/pricing')}
+              variant="solid"
+              color="cyan"
+              size="md"
+            >
+              {t('home_cta_join')}
+            </Button>
+          ) : (
+            <span
+              class="lp__drill-done-wrap"
+              data-drill-target-id={drillTargetId}
+            >
+              <Button
+                href={drillCompleteHref}
+                variant="solid"
+                color="cyan"
+                size="md"
+              >
+                {t('drills_doneButton')}
+              </Button>
+            </span>
+          )}
+        </div>
+      </ContentWithTerminalLayout>
+    </Layout>
+  )
+}
+
+<script>
+  import { sendProgressCompleteBeacon } from '../../../../../lib/progress/sendProgressBeacon'
+
+  function initDrillDoneBeacon() {
+    const wrap = document.querySelector<HTMLElement>('.lp__drill-done-wrap')
+    const targetId = wrap?.dataset.drillTargetId
+    if (!wrap || !targetId || wrap.dataset.progressBeaconBound === 'true') {
+      return
+    }
+    wrap.dataset.progressBeaconBound = 'true'
+
+    wrap.addEventListener(
+      'click',
+      () => {
+        sendProgressCompleteBeacon({ type: 'drill', targetId })
+      },
+      true
+    )
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDrillDoneBeacon)
+  } else {
+    initDrillDoneBeacon()
+  }
+
+  document.addEventListener('astro:page-load', initDrillDoneBeacon)
+</script>
+
+<script>
+  declare global {
+    interface Window {
+      __drillElapsedMs?: number
+    }
+  }
+
+  const TIMER_INTERVAL_MS = 500
+
+  function formatMs(ms: number): string {
+    const totalSec = Math.floor(ms / 1000)
+    const m = Math.floor(totalSec / 60)
+    const s = totalSec % 60
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  }
+
+  function initDrillTimer() {
+    const display = document.querySelector<HTMLElement>(
+      '[data-drill-timer-display]'
+    )
+    if (!display || display.dataset.drillTimerBound === 'true') {
+      return
+    }
+    display.dataset.drillTimerBound = 'true'
+    const start = performance.now()
+    const tick = () => {
+      const elapsed = performance.now() - start
+      window.__drillElapsedMs = elapsed
+      display.textContent = formatMs(elapsed)
+    }
+    tick()
+    window.setInterval(tick, TIMER_INTERVAL_MS)
+  }
+
+  function persistElapsedBeforeComplete() {
+    const wrap = document.querySelector<HTMLElement>('.lp__drill-done-wrap')
+    const link = wrap?.querySelector<HTMLAnchorElement>('a[href*="complete"]')
+    const targetId = wrap?.dataset.drillTargetId
+    if (!link || !targetId || link.dataset.drillTimeBound === 'true') {
+      return
+    }
+    link.dataset.drillTimeBound = 'true'
+    link.addEventListener('click', () => {
+      const ms = window.__drillElapsedMs ?? 0
+      sessionStorage.setItem(`drillElapsed:${targetId}`, String(Math.round(ms)))
+    })
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      initDrillTimer()
+      persistElapsedBeforeComplete()
+    })
+  } else {
+    initDrillTimer()
+    persistElapsedBeforeComplete()
+  }
+
+  document.addEventListener('astro:page-load', () => {
+    initDrillTimer()
+    persistElapsedBeforeComplete()
+  })
+</script>

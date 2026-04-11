@@ -9,7 +9,7 @@ function shouldAddNoindexHeader(pathname: string): boolean {
   if (/^\/(en|fr)\/profile(?:\/|$)/.test(pathname)) {
     return true
   }
-  if (/^\/(en|fr)\/tasks(?:\/|$)/.test(pathname)) {
+  if (/^\/(en|fr)\/drills(?:\/|$)/.test(pathname)) {
     return true
   }
   if (/^\/(en|fr)\/checkout\/success(?:\/|$)/.test(pathname)) {

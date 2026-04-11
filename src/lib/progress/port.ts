@@ -1,7 +1,7 @@
 /**
  * Port for progress persistence (hexagonal architecture).
  */
-export type CompletionType = 'lesson' | 'task'
+export type CompletionType = 'lesson' | 'drill'
 
 export interface ProgressRepository {
   getCompletedLessons(userId: string): Promise<Set<string>>

@@ -2,7 +2,7 @@ const PROGRESS_COMPLETE_PATH = '/api/progress/complete'
 
 export type ProgressBeaconPayload =
   | { lessonId: string }
-  | { type: 'task'; targetId: string }
+  | { type: 'drill'; targetId: string }
 
 /**
  * Fire-and-forget progress update. Uses sendBeacon so the request is not

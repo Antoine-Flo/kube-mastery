@@ -199,7 +199,7 @@ const LabelSelectorRequirementSchema = z
       selectorRequirement.operator === 'NotIn'
     if (operatorRequiresValues && valuesCount === 0) {
       context.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         path: ['values'],
         message: "must be specified when `operator` is 'In' or 'NotIn'"
       })
@@ -210,7 +210,7 @@ const LabelSelectorRequirementSchema = z
       selectorRequirement.operator === 'DoesNotExist'
     if (operatorForbidsValues && valuesCount > 0) {
       context.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         path: ['values'],
         message:
           "may not be specified when `operator` is 'Exists' or 'DoesNotExist'"

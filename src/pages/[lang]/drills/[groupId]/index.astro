@@ -1,0 +1,204 @@
+---
+import Layout from '../../../../layouts/Layout.astro'
+import { useLocalePath, useTranslations } from '../../../../i18n/utils'
+import { getDrillGroupOverview } from '../../../../content/drills/facade'
+import { getCompletedDrillIds } from '../../../../lib/progress/server'
+import { CirclePlay, CircleCheck } from '@lucide/astro'
+
+const lang = Astro.params.lang as 'en' | 'fr'
+const groupId = Astro.params.groupId!
+const localePath = useLocalePath(lang)
+const t = useTranslations(lang)
+
+const overview = getDrillGroupOverview(groupId, lang)
+if (!overview) {
+  return Astro.redirect(localePath('/courses'))
+}
+
+const completedDrillIds = await getCompletedDrillIds(
+  Astro.locals,
+  Astro.request,
+  Astro.cookies
+)
+---
+
+<Layout>
+  <main class="drill-overview">
+    <h1>{overview.title}</h1>
+    {overview.description && <p class="desc">{overview.description}</p>}
+    <ul class="drill-list">
+      {
+        overview.drills.map((drill) => {
+          const drillTargetId = `${groupId}/${drill.id}`
+          const completed = completedDrillIds.has(drillTargetId)
+          return (
+            <li>
+              <a
+                href={localePath(`/drills/${groupId}/${drill.id}`)}
+                class={`drill-link${completed ? ' drill-link--completed' : ''}`}
+                data-drill-list-id={drillTargetId}
+              >
+                {completed ? (
+                  <CircleCheck size={18} aria-hidden="true" />
+                ) : (
+                  <CirclePlay size={18} aria-hidden="true" />
+                )}
+                <div class="drill-link__text">
+                  <span class="drill-link__title">{drill.title}</span>
+                  {drill.description && (
+                    <span class="drill-link__description">
+                      {drill.description}
+                    </span>
+                  )}
+                  <span
+                    class="drill-link__best"
+                    data-drill-best-for={drillTargetId}
+                    hidden
+                  />
+                </div>
+              </a>
+            </li>
+          )
+        })
+      }
+    </ul>
+  </main>
+</Layout>
+
+<script is:inline define:vars={{ bestLabel: t('drills_list_bestTime') }}>
+  function formatSec(sec) {
+    const m = Math.floor(sec / 60)
+    const s = sec % 60
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  }
+
+  function showBestTimes() {
+    document.querySelectorAll('[data-drill-best-for]').forEach((el) => {
+      if (!(el instanceof HTMLElement)) {
+        return
+      }
+      const id = el.dataset.drillBestFor
+      if (!id) {
+        return
+      }
+      const raw = localStorage.getItem(`drillBestSeconds:${id}`)
+      if (!raw) {
+        return
+      }
+      const sec = Number(raw)
+      if (!Number.isFinite(sec) || sec < 0) {
+        return
+      }
+      el.textContent = `${bestLabel}: ${formatSec(sec)}`
+      el.removeAttribute('hidden')
+    })
+  }
+
+  showBestTimes()
+  document.addEventListener('astro:page-load', showBestTimes)
+</script>
+
+<style>
+  .drill-overview {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+
+  .drill-overview h1 {
+    font-size: 1.875rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-gray-12);
+    margin: 0 0 0.5rem;
+  }
+
+  .drill-overview .desc {
+    color: var(--color-gray-11);
+    font-size: var(--text-lg);
+    margin: 0 0 2rem;
+  }
+
+  .drill-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .drill-list li {
+    margin: 0;
+  }
+
+  .drill-link {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-gray-6);
+    background: var(--color-gray-1);
+    color: inherit;
+    text-decoration: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color 0.15s, background 0.15s;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .drill-link:hover {
+    border-color: var(--color-cyan-7);
+    background: var(--color-cyan-2);
+  }
+
+  .drill-link:active {
+    background: var(--color-gray-2);
+  }
+
+  :global([data-theme='dark']) .drill-link:active {
+    background: var(--color-gray-3);
+  }
+
+  .drill-link:hover:active {
+    background: var(--color-cyan-1);
+  }
+
+  :global([data-theme='dark']) .drill-link:hover:active {
+    background: var(--color-cyan-4);
+  }
+
+  .drill-link :global(svg) {
+    flex-shrink: 0;
+    color: var(--color-gray-9);
+    margin-top: 0.15rem;
+  }
+
+  .drill-link--completed :global(svg) {
+    color: var(--color-green-9);
+  }
+
+  .drill-link__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  .drill-link__title {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-12);
+  }
+
+  .drill-link__description {
+    font-size: var(--text-sm);
+    color: var(--color-gray-11);
+    line-height: 1.4;
+  }
+
+  .drill-link__best {
+    font-size: var(--text-xs);
+    color: var(--color-gray-10);
+  }
+</style>

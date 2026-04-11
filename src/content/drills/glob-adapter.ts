@@ -1,18 +1,18 @@
 import type { MarkdownInstance } from 'astro'
 import type { UiLang } from '../courses/types'
-import type { TaskGroupMeta } from './types'
-import type { TaskGlobAdapter } from './port'
+import type { DrillGroupMeta } from './types'
+import type { DrillGlobAdapter } from './port'
 import { stripNumericPrefix, parseH1 } from '../utils'
 
-const groupGlob = import.meta.glob<{ group: TaskGroupMeta }>(
-  '../../courses/tasks/*/group.ts',
+const groupGlob = import.meta.glob<{ group: DrillGroupMeta }>(
+  '../../courses/drills/*/group.ts',
   {
     eager: true
   }
 )
 
 const contentRawGlob = import.meta.glob<string>(
-  '../../courses/tasks/*/*/en/content.md',
+  '../../courses/drills/*/*/en/content.md',
   {
     eager: true,
     query: '?raw',
@@ -21,7 +21,7 @@ const contentRawGlob = import.meta.glob<string>(
 )
 
 const contentFrRawGlob = import.meta.glob<string>(
-  '../../courses/tasks/*/*/fr/content.md',
+  '../../courses/drills/*/*/fr/content.md',
   {
     eager: true,
     query: '?raw',
@@ -31,7 +31,7 @@ const contentFrRawGlob = import.meta.glob<string>(
 
 const contentAsMarkdownGlob = import.meta.glob<
   MarkdownInstance<Record<string, unknown>>
->('../../courses/tasks/*/*/*/content.md', { eager: true })
+>('../../courses/drills/*/*/*/content.md', { eager: true })
 
 const contentMdKeys = Object.keys(contentAsMarkdownGlob)
 
@@ -40,42 +40,42 @@ function getGroupIds(): string[] {
 
   for (const path of Object.keys(groupGlob)) {
     const parts = path.split('/')
-    const tasksIdx = parts.indexOf('tasks')
-    if (tasksIdx === -1 || parts.length < tasksIdx + 2) {
+    const drillsIdx = parts.indexOf('drills')
+    if (drillsIdx === -1 || parts.length < drillsIdx + 2) {
       continue
     }
-    ids.push(parts[tasksIdx + 1])
+    ids.push(parts[drillsIdx + 1])
   }
 
   return ids.sort()
 }
 
-function getGroupMeta(groupId: string): TaskGroupMeta | undefined {
+function getGroupMeta(groupId: string): DrillGroupMeta | undefined {
   const pathKey = Object.keys(groupGlob).find((p) =>
     p.endsWith(`/${groupId}/group.ts`)
   )
   if (!pathKey) {
     return undefined
   }
-  const mod = groupGlob[pathKey] as { group?: TaskGroupMeta } | undefined
+  const mod = groupGlob[pathKey] as { group?: DrillGroupMeta } | undefined
   return mod?.group
 }
 
-function getTaskDirsByGroup(): Map<string, string[]> {
+function getDrillDirsByGroup(): Map<string, string[]> {
   const seen = new Map<string, Set<string>>()
 
   for (const path of contentMdKeys) {
     const parts = path.split('/')
-    const tasksIdx = parts.indexOf('tasks')
-    if (tasksIdx === -1 || parts.length < tasksIdx + 4) {
+    const drillsIdx = parts.indexOf('drills')
+    if (drillsIdx === -1 || parts.length < drillsIdx + 4) {
       continue
     }
-    const groupId = parts[tasksIdx + 1]
-    const taskDir = parts[tasksIdx + 2]
+    const groupId = parts[drillsIdx + 1]
+    const drillDir = parts[drillsIdx + 2]
     if (!seen.has(groupId)) {
       seen.set(groupId, new Set())
     }
-    seen.get(groupId)!.add(taskDir)
+    seen.get(groupId)!.add(drillDir)
   }
 
   const out = new Map<string, string[]>()
@@ -85,24 +85,24 @@ function getTaskDirsByGroup(): Map<string, string[]> {
   return out
 }
 
-function contentPath(groupId: string, taskDir: string, lang: UiLang): string {
-  return `tasks/${groupId}/${taskDir}/${lang}/content.md`
+function contentPath(groupId: string, drillDir: string, lang: UiLang): string {
+  return `drills/${groupId}/${drillDir}/${lang}/content.md`
 }
 
-function getTaskContent(
+function getDrillContent(
   groupId: string,
-  taskId: string,
+  drillId: string,
   lang: UiLang
 ): MarkdownInstance<Record<string, unknown>> | null {
-  const taskDirs = getTaskDirsByGroup().get(groupId)
-  if (!taskDirs) {
+  const drillDirs = getDrillDirsByGroup().get(groupId)
+  if (!drillDirs) {
     return null
   }
-  const taskDir = taskDirs.find((d) => stripNumericPrefix(d) === taskId)
-  if (!taskDir) {
+  const drillDir = drillDirs.find((d) => stripNumericPrefix(d) === drillId)
+  if (!drillDir) {
     return null
   }
-  const suffix = contentPath(groupId, taskDir, lang)
+  const suffix = contentPath(groupId, drillDir, lang)
   const found = Object.keys(contentAsMarkdownGlob).find((k) =>
     k.replace(/\\/g, '/').endsWith(suffix)
   )
@@ -113,12 +113,12 @@ function getTaskContent(
   return entry ?? null
 }
 
-function getTaskDescription(
+function getDrillDescription(
   groupId: string,
-  taskId: string,
+  drillId: string,
   lang: UiLang
 ): string | null {
-  const entry = getTaskContent(groupId, taskId, lang)
+  const entry = getDrillContent(groupId, drillId, lang)
   if (!entry?.frontmatter?.description) {
     return null
   }
@@ -126,35 +126,35 @@ function getTaskDescription(
   return typeof d === 'string' ? d : null
 }
 
-export function createTaskGlobAdapter(): TaskGlobAdapter {
-  const taskDirsByGroup = getTaskDirsByGroup()
+export function createDrillGlobAdapter(): DrillGlobAdapter {
+  const drillDirsByGroup = getDrillDirsByGroup()
 
   return {
     getGroupIds,
     getGroupMeta,
-    getTaskDirsByGroup: () => taskDirsByGroup,
-    getTaskTitle(groupId, taskId, lang) {
-      const dirs = taskDirsByGroup.get(groupId) ?? []
-      const taskDir = dirs.find((d) => stripNumericPrefix(d) === taskId)
-      if (!taskDir) {
-        return taskId
+    getDrillDirsByGroup: () => drillDirsByGroup,
+    getDrillTitle(groupId, drillId, lang) {
+      const dirs = drillDirsByGroup.get(groupId) ?? []
+      const drillDir = dirs.find((d) => stripNumericPrefix(d) === drillId)
+      if (!drillDir) {
+        return drillId
       }
-      const suffix = `tasks/${groupId}/${taskDir}/${lang}/content.md`
+      const suffix = `drills/${groupId}/${drillDir}/${lang}/content.md`
       const foundKey = Object.keys(contentRawGlob).find((k) =>
         k.replace(/\\/g, '/').endsWith(suffix)
       )
       if (foundKey && contentRawGlob[foundKey]) {
-        return parseH1(contentRawGlob[foundKey] ?? '') || taskId
+        return parseH1(contentRawGlob[foundKey] ?? '') || drillId
       }
       const foundFr = Object.keys(contentFrRawGlob).find((k) =>
         k.replace(/\\/g, '/').endsWith(suffix)
       )
       if (foundFr && contentFrRawGlob[foundFr] && lang === 'fr') {
-        return parseH1(contentFrRawGlob[foundFr] ?? '') || taskId
+        return parseH1(contentFrRawGlob[foundFr] ?? '') || drillId
       }
-      return taskId
+      return drillId
     },
-    getTaskContent,
-    getTaskDescription
+    getDrillContent,
+    getDrillDescription
   }
 }
