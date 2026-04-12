@@ -3,7 +3,7 @@ import Layout from '../../../../../layouts/Layout.astro'
 import CourseOutline from '../../../../../components/CourseOutline.astro'
 import ContentWithTerminalLayout from '../../../../../components/lesson/ContentWithTerminalLayout.astro'
 import LessonNav from '../../../../../components/lesson/LessonNav.astro'
-import { useLocalePath, useTranslations } from '../../../../../i18n/utils'
+import { useLocalePath } from '../../../../../i18n/utils'
 import {
   getCourseOverview,
   getModuleOverview,
@@ -13,15 +13,14 @@ import {
 } from '../../../../../content/overview/facade'
 import { getLayoutAuthContext } from '../../../../../lib/auth/server'
 import { getProgressContext } from '../../../../../lib/progress/server'
+import { getCourseMarkdown } from '../../../../../content/courses/facade'
+import { isLessonTerminalInteractive } from '../../../../../lib/lesson/lessonTerminalAccess'
 import {
-  getCourseMarkdown,
-  getCourses,
-  getCourseStructure
-} from '../../../../../content/courses/facade'
-import {
-  getFirstNonPlaceholderLessonIdFromSections,
-  isLessonTerminalInteractive
-} from '../../../../../lib/courses/lessonTerminalAccess'
+  buildLessonNavigationState,
+  buildLessonSeo,
+  buildTerminalLockSecondaryHref,
+  getModuleCourseContext
+} from '../../../../../lib/lesson/lessonPageContext'
 import '../../../../../styles/components/lesson-content.css'
 import '../../../../../styles/components/cluster-visualization.css'
 
@@ -30,7 +29,7 @@ const type = Astro.params.type as OverviewType
 const id = Astro.params.id!
 const lessonId = Astro.params.lessonId!
 const localePath = useLocalePath(lang)
-const t = useTranslations(lang)
+const pricingHref = localePath('/pricing')
 
 const lessonEntry = getLessonContent(type, id, lessonId, lang)
 if (!lessonEntry) {
@@ -50,152 +49,63 @@ const auth = await getLayoutAuthContext(
   Astro.request,
   Astro.cookies
 )
-const courseMarkdown = type === 'courses' ? getCourseMarkdown(id, lang) : null
-const courseIsFree = courseMarkdown?.frontmatter.isFree === true
-const moduleIsInFreeCourse =
+const moduleCourseFallbackContext = {
+  moduleIsInFreeCourse: false,
+  canonicalCourseIdForModule: null
+}
+const moduleCourseContext =
   type === 'modules'
-    ? getCourses(lang).some((course) => {
-        if (!course.isFree) {
-          return false
-        }
-        const structure = getCourseStructure(course.id)
-        if (!structure) {
-          return false
-        }
-        return structure.sections.some((section) =>
-          section.moduleIds.includes(id)
-        )
-      })
-    : false
+    ? getModuleCourseContext(lang, id)
+    : moduleCourseFallbackContext
+const courseIsFree =
+  type === 'courses' && getCourseMarkdown(id, lang)?.frontmatter.isFree === true
+const moduleIsInFreeCourse = moduleCourseContext.moduleIsInFreeCourse
 const learnableIsFree = courseIsFree || moduleIsInFreeCourse
+const hasUserSession = userId != null && userId !== ''
 const terminalInteractive = isLessonTerminalInteractive({
   overviewType: type,
-  hasUserSession: userId != null && userId !== '',
+  hasUserSession,
   learnableIsFree,
   hasPaidSubscription: auth.hasPaidSubscription
 })
-
-const crashOverview = getCourseOverview('crash-course', lang)
-const crashFirstLessonId = crashOverview
-  ? getFirstNonPlaceholderLessonIdFromSections(crashOverview.content.sections)
-  : null
-const terminalLockCrashCourseHref = crashFirstLessonId
-  ? localePath(`/courses/crash-course/${crashFirstLessonId}`)
-  : localePath('/courses')
-const terminalLockPrimaryHref = localePath('/pricing')
-const terminalLockPrimaryLabel = t('lesson_terminalLock_ctaUpgrade')
-const terminalLockSecondaryHref = terminalLockCrashCourseHref
-const terminalLockSecondaryLabel = t('lesson_terminalLock_tryFreeCrashCourse')
+const terminalLockSecondaryHref = buildTerminalLockSecondaryHref(lang, localePath)
 
 const allLessons = overview.content.sections.flatMap((s) =>
   s.modules.flatMap((m) => m.lessons)
 )
-const currentIndex = allLessons.findIndex((l) => l.id === lessonId)
-const currentLesson = currentIndex >= 0 ? allLessons[currentIndex] : null
-const currentLessonTitle = currentLesson?.title ?? overview.title
-const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null
-const nextLesson =
-  currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null
+const navigation = buildLessonNavigationState({
+  allLessons,
+  currentLessonId: lessonId,
+  overviewType: type,
+  learnableId: id,
+  localePath
+})
+const currentLessonTitle = navigation.currentLessonTitle ?? overview.title
 const lessonBaseUrl = localePath(`/${type}/${id}`)
 const { Content } = lessonEntry
 
-const seedName = 'minimal'
-const prevLessonHref = prevLesson
-  ? localePath(`/${type}/${id}/${prevLesson.id}`)
-  : ''
-const nextLessonHref = nextLesson
-  ? localePath(`/${type}/${id}/${nextLesson.id}`)
-  : localePath(`/${type}/${id}/complete`)
-const isFirstLesson = currentIndex === 0
-const isLastLesson = currentIndex >= allLessons.length - 1
-
-const lessonNavLabels = {
-  previous: t('courseLesson_previousLesson'),
-  nextLesson: t('courseLesson_nextLesson'),
-  courseComplete: t('courseLesson_courseComplete')
-}
-
-const contentBarLabels = {
-  labelVisualizer: t('lesson_visualizer'),
-  labelCourse: t('lesson_viewCourse'),
-  labelShowTerminal: t('lesson_showTerminal'),
-  labelHideTerminal: t('lesson_hideTerminal'),
-  labelContactSupport: t('lesson_contactSupport'),
-  labelReloadTerminal: t('lesson_reloadTerminal')
-}
-
-function getOptionalString(value: unknown): string | undefined {
-  if (typeof value !== 'string') {
-    return undefined
-  }
-  const trimmed = value.trim()
-  if (trimmed.length === 0) {
-    return undefined
-  }
-  return trimmed
-}
-
 const lessonFrontmatter = (lessonEntry.frontmatter ?? {}) as LessonFrontmatter
-const frontmatterSeoTitle = getOptionalString(lessonFrontmatter.seoTitle)
-const frontmatterSeoDescription = getOptionalString(
-  lessonFrontmatter.seoDescription
-)
-const frontmatterOpenGraphImage = getOptionalString(lessonFrontmatter.ogImage)
-const frontmatterTwitterImage = getOptionalString(
-  lessonFrontmatter.twitterImage
-)
-const fallbackDescription =
-  lang === 'fr'
-    ? `Lecon ${currentLessonTitle} dans ${overview.title} sur KubeMastery, avec explications et pratique kubectl.`
-    : `Learn ${currentLessonTitle} in ${overview.title} on KubeMastery with practical kubectl-focused guidance.`
-const lessonSeoTitle =
-  frontmatterSeoTitle ??
-  `${currentLessonTitle} | ${overview.title} | KubeMastery`
-const lessonSeoDescription =
-  frontmatterSeoDescription ??
-  overview.shortDescription ??
-  overview.description ??
-  fallbackDescription
-const canonicalCourseIdForModule =
-  type === 'modules'
-    ? getCourses(lang).find((course) => {
-        const structure = getCourseStructure(course.id)
-        if (!structure) {
-          return false
-        }
-        return structure.sections.some((section) => {
-          return section.moduleIds.includes(id)
-        })
-      })?.id
-    : null
-const canonicalLessonPath =
-  type === 'modules' && canonicalCourseIdForModule
-    ? localePath(`/courses/${canonicalCourseIdForModule}/${lessonId}`)
-    : localePath(`/${type}/${id}/${lessonId}`)
-const canonicalLessonUrl = new URL(canonicalLessonPath, Astro.url.origin).href
-const lessonSeo = {
-  title: lessonSeoTitle,
-  description: lessonSeoDescription,
-  canonical: canonicalLessonUrl,
-  openGraphType: 'article',
-  openGraphImage: frontmatterOpenGraphImage,
-  twitterImage: frontmatterTwitterImage
-}
+const lessonSeo = buildLessonSeo({
+  lessonFrontmatter,
+  currentLessonTitle,
+  defaultDescription: overview.shortDescription ?? overview.description ?? undefined,
+  overviewType: type,
+  learnableId: id,
+  currentLessonId: lessonId,
+  canonicalCourseIdForModule: moduleCourseContext.canonicalCourseIdForModule,
+  localePath,
+  origin: Astro.url.origin
+})
 ---
 
 <Layout bodyClass="lp-fill navbar-app" showFooter={false} seo={lessonSeo}>
   <ContentWithTerminalLayout
-    seedName={seedName}
+    seedName="minimal"
     lang={lang}
-    showSidebar={true}
-    labels={contentBarLabels}
+    showSidebar
     supportContextId={lessonId}
     terminalInteractive={terminalInteractive}
-    terminalLockTitle={t('lesson_terminalLock_title')}
-    terminalLockBody={t('lesson_terminalLock_body')}
-    terminalLockPrimaryLabel={terminalLockPrimaryLabel}
-    terminalLockPrimaryHref={terminalLockPrimaryHref}
-    terminalLockSecondaryLabel={terminalLockSecondaryLabel}
+    terminalLockPrimaryHref={pricingHref}
     terminalLockSecondaryHref={terminalLockSecondaryHref}
   >
     <div slot="sidebar">
@@ -210,11 +120,11 @@ const lessonSeo = {
       <Content />
     </article>
     <LessonNav
-      prevHref={prevLessonHref}
-      nextHref={nextLessonHref}
-      isFirst={isFirstLesson}
-      isLast={isLastLesson}
-      labels={lessonNavLabels}
+      lang={lang}
+      prevHref={navigation.prevHref}
+      nextHref={navigation.nextHref}
+      isFirst={navigation.isFirst}
+      isLast={navigation.isLast}
       lessonId={lessonId}
     />
   </ContentWithTerminalLayout>
@@ -224,10 +134,13 @@ const lessonSeo = {
       destroyLessonLayoutTourIfActive
     } from '../../../../../lib/lesson/lessonLayoutTour'
 
-    document.addEventListener('astro:page-load', () => {
+    const startLessonTour = () => {
       bootLessonLayoutTour()
-    })
-    bootLessonLayoutTour()
+    }
+
+    document.addEventListener('astro:page-load', startLessonTour)
+    startLessonTour()
+
     document.addEventListener('astro:before-swap', () => {
       destroyLessonLayoutTourIfActive()
     })

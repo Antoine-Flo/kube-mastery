@@ -1,22 +1,11 @@
 ---
 import Layout from '../../layouts/Layout.astro'
 import ContentWithTerminalLayout from '../../components/lesson/ContentWithTerminalLayout.astro'
-import { useTranslations } from '../../i18n/utils'
 import '../../styles/components/lesson-content.css'
 import '../../styles/components/cluster-visualization.css'
 import QuickRefContent from '../../courses/cheat-sheets/kubectl-quick-ref.md'
 
 const lang = Astro.params.lang as 'en' | 'fr'
-const t = useTranslations(lang)
-
-const contentBarLabels = {
-  labelVisualizer: t('lesson_visualizer'),
-  labelCourse: t('lesson_viewCourse'),
-  labelShowTerminal: t('lesson_showTerminal'),
-  labelHideTerminal: t('lesson_hideTerminal'),
-  labelContactSupport: t('lesson_contactSupport'),
-  labelReloadTerminal: t('lesson_reloadTerminal')
-}
 ---
 
 <Layout bodyClass="lp-fill navbar-app cheat-sheet-page" showFooter={false}>
@@ -24,7 +13,6 @@ const contentBarLabels = {
     seedName="minimal"
     lang={lang}
     showSidebar={false}
-    labels={contentBarLabels}
     terminalInteractive={true}
   >
     <article class="lesson-content cheat-sheet-content">

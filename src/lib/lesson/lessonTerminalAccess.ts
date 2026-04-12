@@ -8,16 +8,7 @@ export function isLessonTerminalInteractive(args: {
   learnableIsFree: boolean
   hasPaidSubscription: boolean
 }): boolean {
-  if (args.learnableIsFree) {
-    return true
-  }
-  if (args.hasPaidSubscription) {
-    return true
-  }
-  if (args.overviewType !== 'courses' && args.overviewType !== 'modules') {
-    return false
-  }
-  return false
+  return args.learnableIsFree || args.hasPaidSubscription
 }
 
 type OverviewSection = {
@@ -41,5 +32,6 @@ export function getFirstNonPlaceholderLessonIdFromSections(
       }
     }
   }
+
   return null
 }

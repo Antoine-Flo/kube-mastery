@@ -5,11 +5,10 @@ import DrillValidations from '../../../../components/drills/DrillValidations.ast
 import Button from '../../../../components/ui/Button.astro'
 import { useLocalePath, useTranslations } from '../../../../i18n/utils'
 import { getDrillDetail } from '../../../../content/drills/facade'
-import { renderDrillMarkdown } from '../../../../content/drills/markdownRenderer'
 import { getCourseOverview } from '../../../../content/overview/facade'
 import { getLayoutAuthContext } from '../../../../lib/auth/server'
 import { getProgressContext } from '../../../../lib/progress/server'
-import { getFirstNonPlaceholderLessonIdFromSections } from '../../../../lib/courses/lessonTerminalAccess'
+import { getFirstNonPlaceholderLessonIdFromSections } from '../../../../lib/lesson/lessonTerminalAccess'
 import '../../../../styles/components/lesson-content.css'
 import '../../../../styles/components/cluster-visualization.css'
 
@@ -58,15 +57,6 @@ const withMode = (path: string) =>
 const env = drillDetail.environment?.trim().toLowerCase()
 const seedName = env && env !== 'empty' ? env : 'minimal'
 
-const contentBarLabels = {
-  labelVisualizer: t('lesson_visualizer'),
-  labelCourse: t('lesson_viewCourse'),
-  labelShowTerminal: t('lesson_showTerminal'),
-  labelHideTerminal: t('lesson_hideTerminal'),
-  labelContactSupport: t('lesson_contactSupport'),
-  labelReloadTerminal: t('lesson_reloadTerminal')
-}
-
 const terminalInteractive =
   drillDetail.isFree === true || auth.hasPaidSubscription
 const crashOverview = getCourseOverview('crash-course', lang)
@@ -77,36 +67,13 @@ const terminalLockCrashCourseHref = crashFirstLessonId
   ? localePath(`/courses/crash-course/${crashFirstLessonId}`)
   : localePath('/courses')
 const terminalLockPrimaryHref = localePath('/pricing')
-const terminalLockPrimaryLabel = t('lesson_terminalLock_ctaUpgrade')
 const terminalLockSecondaryHref = terminalLockCrashCourseHref
-const terminalLockSecondaryLabel = t('lesson_terminalLock_tryFreeCrashCourse')
 const drillBackHref = localePath('/drills')
 const retryHref = withMode(localePath(`/drills/${drillId}`))
 
 const kubernetesDocsUrl = 'https://kubernetes.io/docs/home/'
 
 const tasks = drillDetail.tasks
-const renderedTaskContent = await Promise.all(
-  tasks.map(async (task) => {
-    const instructionHtml = task.instructionMarkdown
-      ? await renderDrillMarkdown(task.instructionMarkdown)
-      : null
-    const solutionSource =
-      task.solutionMarkdown ??
-      [
-        '```bash',
-        ...(Array.isArray(task.command) ? task.command : [task.command]),
-        '```',
-        '',
-        task.explanation
-      ].join('\n')
-    const solutionHtml = await renderDrillMarkdown(solutionSource)
-    return {
-      instructionHtml,
-      solutionHtml
-    }
-  })
-)
 ---
 
 <Layout bodyClass="lp-fill navbar-app" showFooter={false}>
@@ -114,14 +81,9 @@ const renderedTaskContent = await Promise.all(
         seedName={seedName}
         lang={lang}
         showSidebar={false}
-        labels={contentBarLabels}
         supportContextId={`drills/${drillId}`}
         terminalInteractive={terminalInteractive}
-        terminalLockTitle={t('lesson_terminalLock_title')}
-        terminalLockBody={t('lesson_terminalLock_body')}
-        terminalLockPrimaryLabel={terminalLockPrimaryLabel}
         terminalLockPrimaryHref={terminalLockPrimaryHref}
-        terminalLockSecondaryLabel={terminalLockSecondaryLabel}
         terminalLockSecondaryHref={terminalLockSecondaryHref}
         terminalDocsHref={kubernetesDocsUrl}
         terminalDocsTabLabel="Docs"
@@ -169,15 +131,17 @@ const renderedTaskContent = await Promise.all(
                 )}
                 <details class="drill-task__solution">
                   <summary>{t('drills_solution')}</summary>
-                  {renderedTaskContent[index]?.instructionHtml && (
-                    <div class="drill-task__instructions">
-                      <div
-                        set:html={renderedTaskContent[index].instructionHtml}
-                      />
-                    </div>
+                  {task.instructionMarkdown && (
+                    <p class="drill-task__explanation">{task.instructionMarkdown}</p>
                   )}
+                  <p class="drill-task__explanation">{task.explanation}</p>
                   <div class="drill-task__commands">
-                    <div set:html={renderedTaskContent[index]?.solutionHtml ?? ''} />
+                    {Array.isArray(task.command)
+                      ? task.command.map((cmd) => (
+                          <pre class="drill-task__code"><code>{cmd}</code></pre>
+                        ))
+                      : <pre class="drill-task__code"><code>{task.command}</code></pre>
+                    }
                   </div>
                 </details>
               </li>

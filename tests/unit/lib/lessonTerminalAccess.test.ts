@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   getFirstNonPlaceholderLessonIdFromSections,
   isLessonTerminalInteractive
-} from '../../../src/lib/courses/lessonTerminalAccess'
+} from '../../../src/lib/lesson/lessonTerminalAccess'
 
 describe('isLessonTerminalInteractive', () => {
   it('returns true without session for free learnable', () => {

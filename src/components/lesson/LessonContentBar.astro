@@ -1,29 +1,23 @@
 ---
 import Button from '../ui/Button.astro'
 import { ListTree, MessageCircle, RefreshCw, Telescope, Terminal } from '@lucide/astro'
+import { useTranslations } from '../../i18n/utils'
 
 interface Props {
-  labelVisualizer: string
-  labelCourse: string
-  labelShowTerminal: string
-  labelHideTerminal: string
-  labelContactSupport: string
-  labelReloadTerminal: string
+  lang: 'en' | 'fr'
   /** When false, hide cluster and reload (no emulated environment). */
   showTerminalActions?: boolean
   /** Show course outline action (mobile drawer trigger). */
   showOutlineAction?: boolean
 }
-const {
-  labelVisualizer,
-  labelCourse,
-  labelShowTerminal,
-  labelHideTerminal,
-  labelContactSupport,
-  labelReloadTerminal,
-  showTerminalActions = true,
-  showOutlineAction = false
-} = Astro.props
+const { lang, showTerminalActions = true, showOutlineAction = false } = Astro.props
+const t = useTranslations(lang)
+const labelVisualizer = t('lesson_visualizer')
+const labelCourse = t('lesson_viewCourse')
+const labelShowTerminal = t('lesson_showTerminal')
+const labelHideTerminal = t('lesson_hideTerminal')
+const labelContactSupport = t('lesson_contactSupport')
+const labelReloadTerminal = t('lesson_reloadTerminal')
 const labelTerminal = labelShowTerminal
 ---
 
@@ -119,7 +113,7 @@ const labelTerminal = labelShowTerminal
 </div>
 
 <script>
-  import { CLUSTER_PANEL_OPEN_SESSION_KEY } from '../../lib/lesson/clusterPanelSessionKey'
+  const CLUSTER_PANEL_OPEN_SESSION_KEY = 'kube-mastery:cluster-panel-open'
 
   function setVizState(btn: Element, expanded: boolean) {
     const labelV = btn.getAttribute('data-label-visualizer')

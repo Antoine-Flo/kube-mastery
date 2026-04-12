@@ -13,22 +13,10 @@ interface Props {
   seedName: string
   lang: 'en' | 'fr'
   showSidebar?: boolean
-  labels: {
-    labelVisualizer: string
-    labelCourse: string
-    labelShowTerminal: string
-    labelHideTerminal: string
-    labelContactSupport: string
-    labelReloadTerminal: string
-  }
   supportContextId?: string
   /** When false, terminal is a locked placeholder (no cluster simulation). */
   terminalInteractive?: boolean
-  terminalLockTitle?: string
-  terminalLockBody?: string
-  terminalLockPrimaryLabel?: string
   terminalLockPrimaryHref?: string
-  terminalLockSecondaryLabel?: string
   terminalLockSecondaryHref?: string
   terminalDocsHref?: string
   terminalDocsTabLabel?: string
@@ -39,20 +27,19 @@ const {
   seedName,
   lang,
   showSidebar = false,
-  labels,
   supportContextId,
   terminalInteractive = true,
-  terminalLockTitle = '',
-  terminalLockBody = '',
-  terminalLockPrimaryLabel = '',
   terminalLockPrimaryHref = '',
-  terminalLockSecondaryLabel = '',
   terminalLockSecondaryHref = '',
   terminalDocsHref = '',
   terminalDocsTabLabel = 'Docs',
   terminalShellTabLabel = 'Terminal'
 } = Astro.props
 const t = useTranslations(lang)
+const terminalLockTitle = t('lesson_terminalLock_title')
+const terminalLockBody = t('lesson_terminalLock_body')
+const terminalLockPrimaryLabel = t('lesson_terminalLock_ctaUpgrade')
+const terminalLockSecondaryLabel = t('lesson_terminalLock_tryFreeCrashCourse')
 const showTerminalActions = terminalInteractive
 const hasTerminalDocsTab = terminalDocsHref.trim().length > 0
 ---
@@ -264,12 +251,7 @@ const hasTerminalDocsTab = terminalDocsHref.trim().length > 0
           </div>
           <LessonClusterPanel />
           <LessonContentBar
-            labelVisualizer={labels.labelVisualizer}
-            labelCourse={labels.labelCourse}
-            labelShowTerminal={labels.labelShowTerminal}
-            labelHideTerminal={labels.labelHideTerminal}
-            labelContactSupport={labels.labelContactSupport}
-            labelReloadTerminal={labels.labelReloadTerminal}
+            lang={lang}
             showTerminalActions={showTerminalActions}
             showOutlineAction={showSidebar}
           />

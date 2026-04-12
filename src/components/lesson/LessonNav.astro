@@ -1,32 +1,33 @@
 ---
 import Button from '../ui/Button.astro'
 import { ArrowRight } from '@lucide/astro'
+import { useTranslations } from '../../i18n/utils'
 
 interface Props {
+  lang: 'en' | 'fr'
   prevHref: string
   nextHref: string
   isFirst: boolean
   isLast: boolean
-  labels: {
-    previous: string
-    nextLesson: string
-    courseComplete: string
-  }
   /** Current lesson id: sent via sendBeacon when navigating to the next lesson. */
   lessonId?: string
 }
 
-const { prevHref, nextHref, isFirst, isLast, labels, lessonId } = Astro.props
+const { lang, prevHref, nextHref, isFirst, isLast, lessonId } = Astro.props
+const t = useTranslations(lang)
+const labelPrevious = t('courseLesson_previousLesson')
+const labelNextLesson = t('courseLesson_nextLesson')
+const labelCourseComplete = t('courseLesson_courseComplete')
 ---
 
 <div class="lesson-nav-root" data-lesson-id={lessonId}>
   <nav class="lesson-nav">
     {
       isFirst ? (
-        <span class="lesson-nav__placeholder">{labels.previous}</span>
+        <span class="lesson-nav__placeholder">{labelPrevious}</span>
       ) : (
         <Button href={prevHref} variant="outline" size="sm">
-          {labels.previous}
+          {labelPrevious}
         </Button>
       )
     }
@@ -41,14 +42,14 @@ const { prevHref, nextHref, isFirst, isLast, labels, lessonId } = Astro.props
             size="sm"
             data-nav-next-lesson
           >
-            {labels.nextLesson}
+            {labelNextLesson}
             <ArrowRight size={18} aria-hidden="true" class="lesson-nav__next-icon" />
           </Button>
         )
       }
       {
         isLast && (
-          <span class="lesson-nav__complete">{labels.courseComplete}</span>
+          <span class="lesson-nav__complete">{labelCourseComplete}</span>
         )
       }
     </div>

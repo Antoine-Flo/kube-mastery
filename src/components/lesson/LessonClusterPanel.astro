@@ -14,7 +14,7 @@ import ScrollArea from '../ui/ScrollArea.astro'
 
 <script>
   import { mountClusterViewer } from '../cluster-viewer-mount'
-  import { CLUSTER_PANEL_OPEN_SESSION_KEY } from '../../lib/lesson/clusterPanelSessionKey'
+  const CLUSTER_PANEL_OPEN_SESSION_KEY = 'kube-mastery:cluster-panel-open'
 
   let cleanup: (() => void) | null = null
 
