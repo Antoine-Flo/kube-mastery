@@ -72,9 +72,12 @@
   border-bottom: none;
 }
 
+.lesson-content pre.astro-code {
+  padding: 0.55rem 0.7rem;
+}
+
 .lesson-content pre.astro-code code {
   background: none;
-  padding: 0;
   font-size: inherit;
 }
 
