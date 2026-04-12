@@ -121,25 +121,32 @@ kubectl apply -f pvc.yaml
 
 ### Solution
 
-Generate the base manifest:
+Generate a base manifest quickly with kubectl:
 
 ```bash
 kubectl run storage-pod -n storage-lab --image=busybox:1.36 --dry-run=client -o yaml -- sleep 3600 > pod.yaml
 ```
 
-Add the `volumes` entry under `spec` and the `volumeMounts` entry inside `containers[0]`:
+Then adapt it so `pod.yaml` matches this final manifest:
 
 ```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: storage-pod
+  namespace: storage-lab
 spec:
+  containers:
+    - name: storage-pod
+      image: busybox:1.36
+      command: ["sleep", "3600"]
+      volumeMounts:
+        - name: data
+          mountPath: /data
   volumes:
     - name: data
       persistentVolumeClaim:
         claimName: data-pvc
-  containers:
-    - name: storage-pod
-      volumeMounts:
-        - name: data
-          mountPath: /data
 ```
 
 ```bash
@@ -152,11 +159,11 @@ The `name` value must be identical in `volumes` and `volumeMounts`.
 ### Validation
 
 ```yaml
-- type: clusterFieldEquals
+- type: clusterFieldContains
   kind: Pod
   namespace: storage-lab
   name: storage-pod
-  path: '{.spec.containers[0].volumeMounts[0].mountPath}'
+  path: '{.spec.containers[0].volumeMounts[*].mountPath}'
   value: '/data'
   onFail: "Le volume n'est pas monté à `/data` dans `storage-pod`. Vérifiez `volumeMounts` et `volumes` dans le manifest."
 - type: clusterFieldEquals
