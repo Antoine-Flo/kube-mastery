@@ -1,4 +1,5 @@
 title: "Pod Basics"
+isDraft: true
 description: "Create a pod with labels and resource constraints, then manage its labels."
 tag: cluster_architecture_installation
 environment: "minimal"

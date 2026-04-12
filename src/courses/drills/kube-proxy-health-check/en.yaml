@@ -1,4 +1,5 @@
 title: "Recover kube-proxy DaemonSet Health"
+isDraft: true
 description: "Diagnose kube-proxy coverage drift and restore daemonset readiness."
 tag: troubleshooting
 environment: "minimal"

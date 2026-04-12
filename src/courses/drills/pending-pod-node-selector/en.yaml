@@ -1,4 +1,5 @@
 title: "Unblock Scheduling for a nodeSelector-Locked Pod"
+isDraft: true
 description: "Resolve Pending state caused by a strict nodeSelector mismatch."
 tag: cluster_architecture_installation
 environment: "minimal"

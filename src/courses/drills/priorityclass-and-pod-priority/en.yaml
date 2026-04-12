@@ -1,4 +1,5 @@
 title: "Schedule With PriorityClass"
+isDraft: true
 description: "Create a PriorityClass and run a pod using explicit scheduling priority."
 tag: cluster_architecture_installation
 environment: "minimal"

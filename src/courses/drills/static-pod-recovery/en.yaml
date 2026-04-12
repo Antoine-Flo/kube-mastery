@@ -1,4 +1,5 @@
 title: "Recover a Static Pod From Manifest Backup"
+isDraft: true
 description: "Recreate a missing static workload by restoring its manifest under kubelet watch path."
 tag: cluster_architecture_installation
 environment: "minimal"

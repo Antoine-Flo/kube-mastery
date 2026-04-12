@@ -1,4 +1,5 @@
 title: "Run Batch Workloads With Different Lifecycles"
+isDraft: true
 description: "Create a finite Job and a recurring CronJob, then validate logs and completion history."
 tag: cluster_architecture_installation
 environment: "minimal"

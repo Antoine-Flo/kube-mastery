@@ -6,98 +6,94 @@ describe('parseDrillFile', () => {
     expect(parseDrillFile('')).toBeNull()
   })
 
-  it('returns null when yaml has no title', () => {
-    expect(parseDrillFile('tasks:\n  - task: foo\n    command: bar\n    explanation: baz')).toBeNull()
-  })
-
-  it('returns null when yaml has no tasks array', () => {
-    expect(parseDrillFile('title: "Foo"\nsteps:\n  - command: bar')).toBeNull()
-  })
-
-  it('parses a single task correctly', () => {
+  it('returns null for yaml input (markdown-only format)', () => {
     const yaml = `
-title: "Pod Basics"
-description: "Learn pods."
-environment: "minimal"
-ckaTargetMinutes: 5
+title: "Legacy"
 tasks:
-  - task: "List all nodes"
-    command: "kubectl get nodes"
-    explanation: "Lists all nodes."
-`
-    const result = parseDrillFile(yaml)
-    expect(result).not.toBeNull()
-    expect(result!.title).toBe('Pod Basics')
-    expect(result!.description).toBe('Learn pods.')
-    expect(result!.environment).toBe('minimal')
-    expect(result!.ckaTargetMinutes).toBe(5)
-    expect(result!.tasks).toHaveLength(1)
-    expect(result!.tasks[0]).toEqual({
-      task: 'List all nodes',
-      command: 'kubectl get nodes',
-      explanation: 'Lists all nodes.'
-    })
-  })
-
-  it('parses multiple tasks in order', () => {
-    const yaml = `
-title: "Multi"
-tasks:
-  - task: "First"
-    command: "kubectl get nodes"
-    explanation: "Lists nodes."
-  - task: "Second"
+  - task: "foo"
     command: "kubectl get pods"
-    explanation: "Lists pods."
+    explanation: "legacy"
 `
-    const result = parseDrillFile(yaml)
-    expect(result!.tasks).toHaveLength(2)
-    expect(result!.tasks[0].command).toBe('kubectl get nodes')
-    expect(result!.tasks[1].command).toBe('kubectl get pods')
+    expect(parseDrillFile(yaml)).toBeNull()
   })
 
-  it('skips task items missing required fields', () => {
-    const yaml = `
-title: "Partial"
-tasks:
-  - task: "Only task, no command"
-    explanation: "No command field."
-  - task: "Valid"
-    command: "kubectl get pods"
-    explanation: "Lists pods."
-`
-    const result = parseDrillFile(yaml)
-    expect(result!.tasks).toHaveLength(1)
-    expect(result!.tasks[0].command).toBe('kubectl get pods')
-  })
-
-  it('parses optional tag when valid', () => {
-    const yaml = `
-title: "Tagged"
+  it('parses markdown drill format with solution and validation sections', () => {
+    const markdown = `---
+title: "Markdown Drill"
+description: "Example"
 tag: storage
-tasks:
-  - task: "t"
-    command: "kubectl get nodes"
-    explanation: "e"
+environment: minimal
+ckaTargetMinutes: 4
+---
+
+## First task
+
+Optional instruction text.
+
+### Solution
+
+\`\`\`bash
+kubectl get pods -n app
+\`\`\`
+
+Then inspect the output.
+
+### Validation
+
+\`\`\`yaml
+- type: clusterResourceExists
+  kind: Pod
+  namespace: app
+  name: nginx
+  onFail: "Pod missing."
+\`\`\`
 `
-    const result = parseDrillFile(yaml)
-    expect(result!.tag).toBe('storage')
+    const result = parseDrillFile(markdown)
+    expect(result).not.toBeNull()
+    expect(result!.title).toBe('Markdown Drill')
+    expect(result!.tasks).toHaveLength(1)
+    expect(result!.tasks[0].task).toBe('First task')
+    expect(result!.tasks[0].command).toBe('kubectl get pods -n app')
+    expect(result!.tasks[0].instructionMarkdown).toBe('Optional instruction text.')
+    expect(result!.tasks[0].solutionMarkdown).toContain('kubectl get pods -n app')
+    expect(result!.tasks[0].validation?.assertions).toHaveLength(1)
   })
 
-  it('ignores invalid tag values', () => {
-    const yaml = `
-title: "Bad tag"
-tag: not-a-real-tag
-tasks:
-  - task: "t"
-    command: "kubectl get nodes"
-    explanation: "e"
+  it('parses multiple bash fences in markdown solution as command array', () => {
+    const markdown = `---
+title: "Multi command markdown"
+---
+
+## Task
+
+### Solution
+
+\`\`\`bash
+kubectl apply -f cm.yaml
+\`\`\`
+
+\`\`\`bash
+kubectl get cm
+\`\`\`
 `
-    const result = parseDrillFile(yaml)
-    expect(result!.tag).toBeUndefined()
+    const result = parseDrillFile(markdown)
+    expect(result).not.toBeNull()
+    expect(result!.tasks[0].command).toEqual([
+      'kubectl apply -f cm.yaml',
+      'kubectl get cm'
+    ])
   })
 
-  it('returns null for invalid yaml', () => {
-    expect(parseDrillFile('{ invalid yaml ][')).toBeNull()
+  it('returns null when markdown has no frontmatter title', () => {
+    const markdown = `
+## Task
+
+### Solution
+
+\`\`\`bash
+kubectl get pods
+\`\`\`
+`
+    expect(parseDrillFile(markdown)).toBeNull()
   })
 })

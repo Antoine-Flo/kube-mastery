@@ -1,4 +1,5 @@
 title: "Fix Scheduling With Node Affinity"
+isDraft: true
 description: "Diagnose and correct a pod that cannot schedule due to node affinity constraints."
 tag: cluster_architecture_installation
 environment: "minimal"

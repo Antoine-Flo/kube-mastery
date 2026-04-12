@@ -1,4 +1,5 @@
 title: "Provision Read-Only Cluster Observer Identity"
+isDraft: true
 description: "Create a monitoring identity with cluster-wide pod read access and explicit denial on mutations."
 tag: cluster_architecture_installation
 environment: "minimal"

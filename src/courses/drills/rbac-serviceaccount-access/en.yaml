@@ -1,4 +1,5 @@
 title: "Restore RBAC Access for a ServiceAccount"
+isDraft: true
 description: "Grant missing permissions using Role and RoleBinding, then verify with `kubectl auth can-i`."
 tag: cluster_architecture_installation
 environment: "minimal"

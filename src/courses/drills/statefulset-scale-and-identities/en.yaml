@@ -1,4 +1,5 @@
 title: "Scale StatefulSet and Verify Stable Identities"
+isDraft: true
 description: "Scale a StatefulSet and validate ordered pod names and persistent identities."
 tag: storage
 environment: "minimal"

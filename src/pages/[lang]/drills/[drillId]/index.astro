@@ -5,6 +5,7 @@ import DrillValidations from '../../../../components/drills/DrillValidations.ast
 import Button from '../../../../components/ui/Button.astro'
 import { useLocalePath, useTranslations } from '../../../../i18n/utils'
 import { getDrillDetail } from '../../../../content/drills/facade'
+import { renderDrillMarkdown } from '../../../../content/drills/markdownRenderer'
 import { getCourseOverview } from '../../../../content/overview/facade'
 import { getLayoutAuthContext } from '../../../../lib/auth/server'
 import { getProgressContext } from '../../../../lib/progress/server'
@@ -32,20 +33,27 @@ const auth = await getLayoutAuthContext(
   Astro.cookies
 )
 
-const isDemoDrill = drillId === 'intro-kubernetes'
-if (!userId && !isDemoDrill) {
-  return Astro.redirect(
-    localePath('/auth') + '?redirect=' + encodeURIComponent(Astro.url.pathname)
-  )
-}
-
 const drillDetail = getDrillDetail(drillId, lang)
 if (!drillDetail) {
   return Astro.redirect(localePath('/drills'))
 }
 
+const allowUnauthenticated = drillDetail.isFree === true
+if (!userId && !allowUnauthenticated) {
+  const redirectTarget = `${Astro.url.pathname}${Astro.url.search}`
+  return Astro.redirect(
+    localePath('/auth') + '?redirect=' + encodeURIComponent(redirectTarget)
+  )
+}
+
+if (runMode === null) {
+  return Astro.redirect(
+    `${localePath(`/drills/${drillId}`)}?mode=guided`
+  )
+}
+
 const withMode = (path: string) =>
-  runMode === null ? path : `${path}${path.includes('?') ? '&' : '?'}mode=${runMode}`
+  `${path}${path.includes('?') ? '&' : '?'}mode=${runMode}`
 
 const env = drillDetail.environment?.trim().toLowerCase()
 const seedName = env && env !== 'empty' ? env : 'minimal'
@@ -59,7 +67,8 @@ const contentBarLabels = {
   labelReloadTerminal: t('lesson_reloadTerminal')
 }
 
-const terminalInteractive = isDemoDrill || auth.hasPaidSubscription
+const terminalInteractive =
+  drillDetail.isFree === true || auth.hasPaidSubscription
 const crashOverview = getCourseOverview('crash-course', lang)
 const crashFirstLessonId = crashOverview
   ? getFirstNonPlaceholderLessonIdFromSections(crashOverview.content.sections)
@@ -74,36 +83,33 @@ const terminalLockSecondaryLabel = t('lesson_terminalLock_tryFreeCrashCourse')
 const drillBackHref = localePath('/drills')
 const retryHref = withMode(localePath(`/drills/${drillId}`))
 
-const guidedHref = `${localePath(`/drills/${drillId}`)}?mode=guided`
-const examHref = `${localePath(`/drills/${drillId}`)}?mode=exam`
 const kubernetesDocsUrl = 'https://kubernetes.io/docs/home/'
 
 const tasks = drillDetail.tasks
+const renderedTaskContent = await Promise.all(
+  tasks.map(async (task) => {
+    const instructionHtml = task.instructionMarkdown
+      ? await renderDrillMarkdown(task.instructionMarkdown)
+      : null
+    const solutionSource =
+      task.solutionMarkdown ??
+      [
+        '```bash',
+        ...(Array.isArray(task.command) ? task.command : [task.command]),
+        '```',
+        '',
+        task.explanation
+      ].join('\n')
+    const solutionHtml = await renderDrillMarkdown(solutionSource)
+    return {
+      instructionHtml,
+      solutionHtml
+    }
+  })
+)
 ---
 
-{
-  runMode === null && (
-    <Layout>
-      <main class="drill-mode-choice">
-        <h1>{drillDetail.title}</h1>
-        <p class="drill-mode-choice__hint">{t('drills_mode_title')}</p>
-        <div class="drill-mode-choice__actions">
-          <Button href={guidedHref} variant="solid" color="cyan" size="md">
-            {t('drills_mode_guidedCta')}
-          </Button>
-          <p class="drill-mode-choice__hint">{t('drills_mode_subGuided')}</p>
-          <Button href={examHref} variant="subtle" color="gray" size="md">
-            {t('drills_mode_examCta')}
-          </Button>
-          <p class="drill-mode-choice__hint">{t('drills_mode_subExam')}</p>
-        </div>
-      </main>
-    </Layout>
-  )
-}
-{
-  runMode !== null && (
-    <Layout bodyClass="lp-fill navbar-app" showFooter={false}>
+<Layout bodyClass="lp-fill navbar-app" showFooter={false}>
       <ContentWithTerminalLayout
         seedName={seedName}
         lang={lang}
@@ -163,8 +169,16 @@ const tasks = drillDetail.tasks
                 )}
                 <details class="drill-task__solution">
                   <summary>{t('drills_solution')}</summary>
-                  <p class="drill-task__explanation">{task.explanation}</p>
-                  <pre><code class="language-bash">{task.command}</code></pre>
+                  {renderedTaskContent[index]?.instructionHtml && (
+                    <div class="drill-task__instructions">
+                      <div
+                        set:html={renderedTaskContent[index].instructionHtml}
+                      />
+                    </div>
+                  )}
+                  <div class="drill-task__commands">
+                    <div set:html={renderedTaskContent[index]?.solutionHtml ?? ''} />
+                  </div>
                 </details>
               </li>
             ))}
@@ -172,43 +186,30 @@ const tasks = drillDetail.tasks
         </article>
 
         <div class="lp__drill-complete">
-          {isDemoDrill && !userId ? (
+          <div class="lp__drill-done-wrap" data-drill-target-id={drillId}>
             <Button
-              href={localePath('/pricing')}
+              type="button"
               variant="solid"
               color="cyan"
               size="md"
+              data-drill-done-button
             >
-              {t('home_cta_join')}
+              {t('drills_doneButton')}
             </Button>
-          ) : (
-            <div class="lp__drill-done-wrap" data-drill-target-id={drillId}>
-              <Button
-                type="button"
-                variant="solid"
-                color="cyan"
-                size="md"
-                data-drill-done-button
-              >
-                {t('drills_doneButton')}
+            <div class="lp__drill-post-actions" data-drill-post-actions hidden>
+              <Button href={drillBackHref} variant="subtle" color="gray" size="sm">
+                {t('drillComplete_backToDrills')}
               </Button>
-              <div class="lp__drill-post-actions" data-drill-post-actions hidden>
-                <Button href={drillBackHref} variant="subtle" color="gray" size="sm">
-                  {t('drillComplete_backToDrills')}
-                </Button>
-                <Button href={retryHref} variant="solid" color="cyan" size="sm">
-                  Do another
-                </Button>
-              </div>
+              <Button href={retryHref} variant="solid" color="cyan" size="sm">
+                Do another
+              </Button>
             </div>
-          )}
+          </div>
         </div>
 
         <DrillValidations tasks={tasks} />
       </ContentWithTerminalLayout>
-    </Layout>
-  )
-}
+</Layout>
 
 <script>
   import { sendProgressCompleteBeacon } from '../../../../lib/progress/sendProgressBeacon'
@@ -323,34 +324,6 @@ const tasks = drillDetail.tasks
 </script>
 
 <style>
-  .drill-mode-choice {
-    max-width: 480px;
-    margin: 6rem auto;
-    padding: 0 1rem;
-    text-align: center;
-  }
-
-  .drill-mode-choice h1 {
-    font-size: 1.5rem;
-    font-weight: var(--font-weight-bold);
-    color: var(--color-gray-12);
-    margin: 0 0 0.5rem;
-  }
-
-  .drill-mode-choice__actions {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 1.5rem;
-  }
-
-  .drill-mode-choice__hint {
-    color: var(--color-gray-10);
-    font-size: var(--text-sm);
-    margin: 0;
-  }
-
   .drill-back-link {
     color: var(--color-gray-11);
     text-decoration: none;
@@ -468,6 +441,28 @@ const tasks = drillDetail.tasks
 
   .task-validation-badge--fail {
     color: var(--color-ruby-10);
+  }
+
+  .drill-task__commands {
+    padding-top: 0.5rem;
+  }
+
+  .drill-task__commands :global(pre) {
+    margin: 0;
+    border-radius: var(--radius-2);
+    font-size: var(--text-sm);
+  }
+
+  .drill-task__code {
+    background: var(--color-gray-2);
+    border: 1px solid var(--color-gray-5);
+    padding: 0.55rem 0.7rem;
+    overflow-x: auto;
+  }
+
+  .drill-task__code code {
+    font-family: var(--font-mono);
+    white-space: pre;
   }
 
   .drill-task__validation-error {

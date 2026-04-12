@@ -1,4 +1,5 @@
 title: "Check etcd Endpoint Health"
+isDraft: true
 description: "Validate etcd health using endpoint checks and control-plane certificates."
 tag: cluster_architecture_installation
 environment: "minimal"

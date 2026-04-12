@@ -1,4 +1,5 @@
 title: "Expose Workload Through NodePort"
+isDraft: true
 description: "Create or fix a NodePort service and verify external node-level exposure."
 tag: services_networking
 environment: "minimal"

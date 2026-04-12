@@ -1,4 +1,5 @@
 title: "Fix Pod Creation Blocked by ResourceQuota"
+isDraft: true
 description: "Diagnose a forbidden pod admission caused by namespace quota constraints."
 tag: troubleshooting
 environment: "minimal"

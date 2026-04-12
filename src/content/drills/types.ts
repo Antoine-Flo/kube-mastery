@@ -145,8 +145,10 @@ export interface DrillValidation {
 
 export interface DrillTask {
   task: string
-  command: string
+  command: string | string[]
   explanation: string
+  instructionMarkdown?: string
+  solutionMarkdown?: string
   validation?: DrillValidation
 }
 
@@ -155,6 +157,8 @@ export interface DrillFile {
   description?: string
   environment?: string
   ckaTargetMinutes?: number
+  isDraft?: boolean
+  isFree?: boolean
   tag?: DrillTagId
   tasks: DrillTask[]
 }
@@ -164,6 +168,7 @@ export interface DrillListItem {
   title: string
   description: string | null
   totalTasks: number
+  isFree: boolean
   tag: DrillTagId | null
 }
 
@@ -173,6 +178,7 @@ export interface DrillDetail {
   description: string | null
   environment?: string
   ckaTargetMinutes?: number
+  isFree: boolean
   tasks: DrillTask[]
   tag: DrillTagId | null
 }

@@ -37,139 +37,194 @@ const isObjectRecord = (
   return value != null && typeof value === 'object'
 }
 
+function readOptionalString(
+  obj: Record<string, unknown>,
+  key: string
+): string | undefined {
+  const value = obj[key]
+  if (typeof value !== 'string') {
+    return undefined
+  }
+  return value
+}
+
+function hasRequiredStringFields(
+  obj: Record<string, unknown>,
+  keys: string[]
+): boolean {
+  for (const key of keys) {
+    if (typeof obj[key] !== 'string') {
+      return false
+    }
+  }
+  return true
+}
+
+function readOptionalNumber(
+  obj: Record<string, unknown>,
+  key: string
+): number | undefined {
+  const value = obj[key]
+  if (typeof value !== 'number') {
+    return undefined
+  }
+  return value
+}
+
+function parseClusterAssertion(
+  obj: Record<string, unknown>,
+  type: string,
+  onFail: string
+): DrillAssertion | undefined {
+  const kind = parseClusterKind(obj.kind)
+  if (!kind) {
+    return undefined
+  }
+  const base = {
+    onFail,
+    kind,
+    namespace: readOptionalString(obj, 'namespace')
+  }
+
+  if (type === 'clusterResourceExists') {
+    const name = readOptionalString(obj, 'name')
+    if (!name) {
+      return undefined
+    }
+    return { type, ...base, name }
+  }
+  if (type === 'clusterFieldEquals' || type === 'clusterFieldContains') {
+    if (!hasRequiredStringFields(obj, ['name', 'path', 'value'])) {
+      return undefined
+    }
+    return {
+      type,
+      ...base,
+      name: obj.name as string,
+      path: obj.path as string,
+      value: obj.value as string
+    }
+  }
+  if (type === 'clusterFieldNotEmpty') {
+    if (!hasRequiredStringFields(obj, ['name', 'path'])) {
+      return undefined
+    }
+    return {
+      type,
+      ...base,
+      name: obj.name as string,
+      path: obj.path as string
+    }
+  }
+  if (type === 'clusterFieldsEqual') {
+    if (!hasRequiredStringFields(obj, ['name', 'leftPath', 'rightPath'])) {
+      return undefined
+    }
+    return {
+      type,
+      ...base,
+      name: obj.name as string,
+      leftPath: obj.leftPath as string,
+      rightPath: obj.rightPath as string
+    }
+  }
+  if (type === 'clusterListFieldContains') {
+    if (!hasRequiredStringFields(obj, ['path', 'value'])) {
+      return undefined
+    }
+    return {
+      type,
+      ...base,
+      path: obj.path as string,
+      value: obj.value as string
+    }
+  }
+  return undefined
+}
+
+function parseFilesystemAssertion(
+  obj: Record<string, unknown>,
+  type: string,
+  onFail: string
+): DrillAssertion | undefined {
+  if (type === 'filesystemFileExists' || type === 'filesystemFileNotEmpty') {
+    const path = readOptionalString(obj, 'path')
+    if (!path) {
+      return undefined
+    }
+    return { type, onFail, path }
+  }
+  if (type === 'filesystemFileContains') {
+    if (!hasRequiredStringFields(obj, ['path', 'value'])) {
+      return undefined
+    }
+    return {
+      type,
+      onFail,
+      path: obj.path as string,
+      value: obj.value as string
+    }
+  }
+  return undefined
+}
+
 function parseDrillAssertion(value: unknown): DrillAssertion | undefined {
   if (!isObjectRecord(value)) {
     return undefined
   }
   const obj = value
-  const type = obj.type
+  const type = readOptionalString(obj, 'type')
+  const onFail = readOptionalString(obj, 'onFail')
   if (
-    typeof type !== 'string' ||
+    !type ||
     !DRILL_ASSERTION_TYPE_SET.has(type) ||
-    typeof obj.onFail !== 'string'
+    !onFail
   ) {
     return undefined
   }
 
   if (type.startsWith('cluster')) {
-    const kind = parseClusterKind(obj.kind)
-    if (!kind) {
-      return undefined
-    }
-    const namespace =
-      typeof obj.namespace === 'string' ? obj.namespace : undefined
-
-    if (type === 'clusterResourceExists') {
-      if (typeof obj.name !== 'string') {
-        return undefined
-      }
-      return { type, onFail: obj.onFail, kind, namespace, name: obj.name }
-    }
-
-    if (type === 'clusterFieldEquals' || type === 'clusterFieldContains') {
-      if (
-        typeof obj.name !== 'string' ||
-        typeof obj.path !== 'string' ||
-        typeof obj.value !== 'string'
-      ) {
-        return undefined
-      }
-      return {
-        type,
-        onFail: obj.onFail,
-        kind,
-        namespace,
-        name: obj.name,
-        path: obj.path,
-        value: obj.value
-      }
-    }
-
-    if (type === 'clusterFieldNotEmpty') {
-      if (typeof obj.name !== 'string' || typeof obj.path !== 'string') {
-        return undefined
-      }
-      return {
-        type,
-        onFail: obj.onFail,
-        kind,
-        namespace,
-        name: obj.name,
-        path: obj.path
-      }
-    }
-
-    if (type === 'clusterFieldsEqual') {
-      if (
-        typeof obj.name !== 'string' ||
-        typeof obj.leftPath !== 'string' ||
-        typeof obj.rightPath !== 'string'
-      ) {
-        return undefined
-      }
-      return {
-        type,
-        onFail: obj.onFail,
-        kind,
-        namespace,
-        name: obj.name,
-        leftPath: obj.leftPath,
-        rightPath: obj.rightPath
-      }
-    }
-
-    if (type === 'clusterListFieldContains') {
-      if (typeof obj.path !== 'string' || typeof obj.value !== 'string') {
-        return undefined
-      }
-      return {
-        type,
-        onFail: obj.onFail,
-        kind,
-        namespace,
-        path: obj.path,
-        value: obj.value
-      }
-    }
+    return parseClusterAssertion(obj, type, onFail)
   }
 
-  if (type === 'filesystemFileExists' || type === 'filesystemFileNotEmpty') {
-    if (typeof obj.path !== 'string') {
-      return undefined
-    }
-    return {
-      type,
-      onFail: obj.onFail,
-      path: obj.path
-    }
-  }
-
-  if (type === 'filesystemFileContains') {
-    if (typeof obj.path !== 'string' || typeof obj.value !== 'string') {
-      return undefined
-    }
-    return {
-      type,
-      onFail: obj.onFail,
-      path: obj.path,
-      value: obj.value
-    }
-  }
-
-  return undefined
+  return parseFilesystemAssertion(obj, type, onFail)
 }
 
-function parseDrillValidation(value: unknown): DrillValidation | undefined {
-  if (!isObjectRecord(value)) {
+type ParsedDrillTaskResult =
+  | { kind: 'ok'; task: DrillTask }
+  | { kind: 'skip' }
+  | { kind: 'invalidValidation' }
+
+function parseFrontmatter(
+  rawMarkdown: string
+): { frontmatter: unknown; body: string } | null {
+  const frontmatterMatch = rawMarkdown.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/)
+  if (!frontmatterMatch) {
+    return null
+  }
+  try {
+    return {
+      frontmatter: parse(frontmatterMatch[1]),
+      body: frontmatterMatch[2]
+    }
+  } catch {
+    return null
+  }
+}
+
+function parseValidationYaml(rawYaml: string): DrillValidation | undefined {
+  let parsed: unknown
+  try {
+    parsed = parse(rawYaml)
+  } catch {
     return undefined
   }
-  const obj = value
-  if (!Array.isArray(obj.assertions)) {
+  if (!Array.isArray(parsed)) {
     return undefined
   }
   const assertions: DrillAssertion[] = []
-  for (const assertionValue of obj.assertions) {
-    const assertion = parseDrillAssertion(assertionValue)
+  for (const value of parsed) {
+    const assertion = parseDrillAssertion(value)
     if (!assertion) {
       return undefined
     }
@@ -181,60 +236,128 @@ function parseDrillValidation(value: unknown): DrillValidation | undefined {
   return { assertions }
 }
 
-type ParsedDrillTaskResult =
-  | { kind: 'ok'; task: DrillTask }
-  | { kind: 'skip' }
-  | { kind: 'invalidValidation' }
-
-function parseDrillTask(value: unknown): ParsedDrillTaskResult {
-  if (!isObjectRecord(value)) {
-    return { kind: 'skip' }
+function extractBashCommands(markdown: string): string[] {
+  const commands: string[] = []
+  const fenceRegex = /```([^\n`]*)\n([\s\S]*?)\n```/g
+  let match: RegExpExecArray | null
+  while ((match = fenceRegex.exec(markdown)) !== null) {
+    const language = match[1].trim().toLowerCase()
+    if (language === 'bash' || language === 'sh' || language === 'shell') {
+      const code = match[2].trim()
+      if (code.length > 0) {
+        commands.push(code)
+      }
+    }
   }
-  if (
-    typeof value.task !== 'string' ||
-    typeof value.command !== 'string' ||
-    typeof value.explanation !== 'string'
-  ) {
-    return { kind: 'skip' }
-  }
+  return commands
+}
 
-  const validation = parseDrillValidation(value.validation)
-  if (value.validation !== undefined && !validation) {
-    return { kind: 'invalidValidation' }
+function stripCodeFences(markdown: string): string {
+  return markdown.replace(/```[^\n`]*\n[\s\S]*?\n```/g, '').trim()
+}
+
+function splitSectionBySubHeading(
+  content: string,
+  heading: string
+): { before: string; after: string } | null {
+  const match = content.match(new RegExp(`^###\\s+${heading}\\s*$`, 'm'))
+  if (!match || match.index === undefined) {
+    return null
   }
   return {
-    kind: 'ok',
-    task: {
-      task: value.task,
-      command: value.command,
-      explanation: value.explanation,
-      ...(validation && { validation })
-    }
+    before: content.slice(0, match.index).trim(),
+    after: content.slice(match.index + match[0].length).trim()
   }
 }
 
-export function parseDrillFile(rawYaml: string): DrillFile | null {
-  let parsed: unknown
-  try {
-    parsed = parse(rawYaml)
-  } catch {
+function parseMarkdownValidation(validationMarkdown: string): ParsedDrillTaskResult | DrillValidation | undefined {
+  if (validationMarkdown.length === 0) {
+    return undefined
+  }
+  const validationFenceMatch = validationMarkdown.match(/```yaml\n([\s\S]*?)\n```/)
+  if (!validationFenceMatch) {
+    return undefined
+  }
+  const validation = parseValidationYaml(validationFenceMatch[1])
+  if (!validation) {
+    return { kind: 'invalidValidation' }
+  }
+  return validation
+}
+
+function parseMarkdownTask(
+  heading: string,
+  sectionBody: string
+): ParsedDrillTaskResult {
+  const solutionParts = splitSectionBySubHeading(sectionBody, 'Solution')
+  if (!solutionParts) {
+    return { kind: 'skip' }
+  }
+
+  const validationParts = splitSectionBySubHeading(solutionParts.after, 'Validation')
+  const solutionMarkdown = (validationParts ? validationParts.before : solutionParts.after).trim()
+  const validationMarkdown = validationParts ? validationParts.after : ''
+  const validationOrResult = parseMarkdownValidation(validationMarkdown)
+  if (
+    validationOrResult &&
+    typeof validationOrResult === 'object' &&
+    'kind' in validationOrResult
+  ) {
+    return validationOrResult
+  }
+  const validation = validationOrResult
+
+  const commands = extractBashCommands(solutionMarkdown)
+  if (commands.length === 0) {
+    return { kind: 'skip' }
+  }
+
+  const explanationText = stripCodeFences(solutionMarkdown)
+  const task: DrillTask = {
+    task: heading.trim(),
+    command: commands.length === 1 ? commands[0] : commands,
+    explanation: explanationText,
+    instructionMarkdown:
+      solutionParts.before.length > 0 ? solutionParts.before : undefined,
+    solutionMarkdown
+  }
+  if (validation) {
+    task.validation = validation
+  }
+  return { kind: 'ok', task }
+}
+
+function parseDrillMarkdownFile(rawMarkdown: string): DrillFile | null {
+  const frontmatterResult = parseFrontmatter(rawMarkdown)
+  if (!frontmatterResult) {
+    return null
+  }
+  if (!isObjectRecord(frontmatterResult.frontmatter)) {
+    return null
+  }
+  const obj = frontmatterResult.frontmatter
+  if (typeof obj.title !== 'string') {
     return null
   }
 
-  if (!isObjectRecord(parsed)) {
-    return null
-  }
-
-  const obj = parsed
-
-  if (typeof obj.title !== 'string' || !Array.isArray(obj.tasks)) {
+  const headingRegex = /^##\s+(.+)\s*$/gm
+  const headingMatches = Array.from(frontmatterResult.body.matchAll(headingRegex))
+  if (headingMatches.length === 0) {
     return null
   }
 
   const tasks: DrillTask[] = []
-
-  for (const item of obj.tasks) {
-    const parsedTask = parseDrillTask(item)
+  for (let index = 0; index < headingMatches.length; index += 1) {
+    const current = headingMatches[index]
+    const currentIndex = current.index
+    if (currentIndex === undefined) {
+      continue
+    }
+    const next = headingMatches[index + 1]
+    const nextIndex = next?.index ?? frontmatterResult.body.length
+    const start = currentIndex + current[0].length
+    const sectionBody = frontmatterResult.body.slice(start, nextIndex).trim()
+    const parsedTask = parseMarkdownTask(current[1], sectionBody)
     if (parsedTask.kind === 'invalidValidation') {
       return null
     }
@@ -245,21 +368,21 @@ export function parseDrillFile(rawYaml: string): DrillFile | null {
   }
 
   const tag = parseDrillTag(obj.tag)
-
   const file: DrillFile = {
     title: obj.title,
-    description: typeof obj.description === 'string' ? obj.description : undefined,
-    environment: typeof obj.environment === 'string' ? obj.environment : undefined,
-    ckaTargetMinutes:
-      typeof obj.ckaTargetMinutes === 'number' ? obj.ckaTargetMinutes : undefined,
-    tasks
+    description: readOptionalString(obj, 'description'),
+    environment: readOptionalString(obj, 'environment'),
+    ckaTargetMinutes: readOptionalNumber(obj, 'ckaTargetMinutes'),
+    tasks,
+    ...(obj.isDraft === true ? { isDraft: true } : {}),
+    ...(obj.isFree === true ? { isFree: true } : {}),
+    ...(tag ? { tag } : {})
   }
-
-  if (tag) {
-    file.tag = tag
-  }
-
   return file
+}
+
+export function parseDrillFile(rawMarkdown: string): DrillFile | null {
+  return parseDrillMarkdownFile(rawMarkdown)
 }
 
 export function buildDrillList(port: DrillIndexPort, lang: UiLang): DrillListItem[] {
@@ -268,7 +391,7 @@ export function buildDrillList(port: DrillIndexPort, lang: UiLang): DrillListIte
 
   for (const id of drillIds) {
     const file = port.getDrillFile(id, lang)
-    if (!file || file.tasks.length === 0) {
+    if (!file || file.tasks.length === 0 || file.isDraft === true) {
       continue
     }
 
@@ -277,6 +400,7 @@ export function buildDrillList(port: DrillIndexPort, lang: UiLang): DrillListIte
       title: file.title,
       description: file.description ?? null,
       totalTasks: file.tasks.length,
+      isFree: file.isFree === true,
       tag: file.tag ?? null
     })
   }
@@ -290,7 +414,7 @@ export function buildDrillDetail(
   lang: UiLang
 ): DrillDetail | null {
   const file = port.getDrillFile(drillId, lang)
-  if (!file) {
+  if (!file || file.isDraft === true) {
     return null
   }
 
@@ -300,6 +424,7 @@ export function buildDrillDetail(
     description: file.description ?? null,
     environment: file.environment,
     ckaTargetMinutes: file.ckaTargetMinutes,
+    isFree: file.isFree === true,
     tasks: file.tasks,
     tag: file.tag ?? null
   }

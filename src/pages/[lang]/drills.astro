@@ -4,6 +4,7 @@ import Dialog from '../../components/ui/Dialog.astro'
 import { useLocalePath, useTranslations } from '../../i18n/utils'
 import '../../styles/components/page-halo.css'
 import { getDrills, type DrillTagId } from '../../content/drills/facade'
+import { getLayoutAuthContext } from '../../lib/auth/server'
 import { Bug, HardDrive, Layers, Network, Timer } from '@lucide/astro'
 
 const DRILL_TAG_ICON = {
@@ -18,6 +19,16 @@ const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
 
 const drills = getDrills(lang)
+const auth = await getLayoutAuthContext(
+  Astro.locals,
+  Astro.request,
+  Astro.cookies
+)
+const firstFreeDrill = drills.find((d) => d.isFree)
+const tryFreeDrillHref = firstFreeDrill
+  ? `${localePath(`/drills/${firstFreeDrill.id}`)}?mode=guided`
+  : localePath('/drills')
+const pricingHref = localePath('/pricing')
 
 const DRILL_TAG_UI_KEY: Record<
   DrillTagId,
@@ -52,17 +63,31 @@ const DRILL_TAG_UI_KEY: Record<
                   data-drill-id={drill.id}
                   data-drill-title={drill.title}
                   data-drill-base-href={localePath(`/drills/${drill.id}`)}
+                  data-drill-can-access={
+                    drill.isFree || auth.hasPaidSubscription ? 'true' : 'false'
+                  }
                 >
-                  {drill.tag && CategoryIcon && (
+                  {(drill.tag || drill.isFree) && (
                     <div class="drill-card__top">
-                      <span class="drill-card__tag">
-                        {t(DRILL_TAG_UI_KEY[drill.tag])}
-                      </span>
-                      <span
-                        class={`drill-card__category-icon drill-card__category-icon--${drill.tag}`}
-                      >
-                        <CategoryIcon size={14} stroke-width={1.65} aria-hidden="true" />
-                      </span>
+                      <div class="drill-card__top-left">
+                        {drill.tag && (
+                          <span class="drill-card__tag">
+                            {t(DRILL_TAG_UI_KEY[drill.tag])}
+                          </span>
+                        )}
+                      </div>
+                      <div class="drill-card__top-right">
+                        {drill.isFree && (
+                          <span class="drill-card__free-badge">{t('drills_badge_free')}</span>
+                        )}
+                        {drill.tag && CategoryIcon && (
+                          <span
+                            class={`drill-card__category-icon drill-card__category-icon--${drill.tag}`}
+                          >
+                            <CategoryIcon size={14} stroke-width={1.65} aria-hidden="true" />
+                          </span>
+                        )}
+                      </div>
                     </div>
                   )}
 
@@ -108,11 +133,30 @@ const DRILL_TAG_UI_KEY: Record<
       </a>
     </div>
   </Dialog>
+
+  <Dialog
+    id="drill-pro-required-dialog"
+    title={t('drills_proOnly_title')}
+    description={t('drills_proOnly_body')}
+    size="md"
+  >
+    <div slot="footer" class="dialog__footer drill-pro-dialog__footer">
+      <a href={tryFreeDrillHref} class="drill-pro-dialog__cta drill-pro-dialog__cta--secondary">
+        {t('drills_proOnly_tryFree')}
+      </a>
+      <a href={pricingHref} class="drill-pro-dialog__cta drill-pro-dialog__cta--primary">
+        {t('drills_proOnly_viewPlans')}
+      </a>
+    </div>
+  </Dialog>
 </Layout>
 
 <script>
   function initDrillModalTriggers() {
-    const dialog = document.getElementById('drill-mode-dialog') as HTMLDialogElement | null
+    const modeDialog = document.getElementById('drill-mode-dialog') as HTMLDialogElement | null
+    const proDialog = document.getElementById(
+      'drill-pro-required-dialog'
+    ) as HTMLDialogElement | null
     const titleEl = document.getElementById('drill-mode-dialog-title')
     const guidedLink = document.getElementById('drill-mode-guided') as HTMLAnchorElement | null
     const examLink = document.getElementById('drill-mode-exam') as HTMLAnchorElement | null
@@ -120,6 +164,11 @@ const DRILL_TAG_UI_KEY: Record<
     document.querySelectorAll<HTMLButtonElement>('[data-drill-id]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const baseHref = btn.dataset.drillBaseHref ?? ''
+        const canAccess = btn.dataset.drillCanAccess === 'true'
+        if (!canAccess) {
+          proDialog?.showModal()
+          return
+        }
         if (titleEl) {
           titleEl.textContent = btn.dataset.drillTitle ?? ''
         }
@@ -129,7 +178,7 @@ const DRILL_TAG_UI_KEY: Record<
         if (examLink) {
           examLink.href = `${baseHref}?mode=exam`
         }
-        dialog?.showModal()
+        modeDialog?.showModal()
       })
     })
   }
@@ -270,6 +319,29 @@ const DRILL_TAG_UI_KEY: Record<
     margin-bottom: 0.25rem;
   }
 
+  .drill-card__top-left {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .drill-card__top-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .drill-card__free-badge {
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-cyan-11);
+    background: var(--color-cyan-3);
+    border: 1px solid var(--color-cyan-6);
+    border-radius: var(--radius-sm);
+    padding: 0.1rem 0.4rem;
+    line-height: 1.3;
+  }
+
   .drill-card__tag {
     flex: 1;
     min-width: 0;
@@ -396,6 +468,64 @@ const DRILL_TAG_UI_KEY: Record<
     color: var(--color-gray-10);
     margin: 0;
     line-height: 1.45;
+  }
+
+  .drill-pro-dialog__footer {
+    width: 100%;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    gap: 0.625rem;
+  }
+
+  .drill-pro-dialog__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0.5rem 0.9rem;
+    border-radius: var(--radius-sm);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--text-sm);
+    text-decoration: none;
+    white-space: nowrap;
+    flex: 0 1 auto;
+    min-width: 0;
+    transition:
+      border-color 0.15s,
+      background 0.15s,
+      color 0.15s;
+  }
+
+  .drill-pro-dialog__cta--primary {
+    border: 1px solid var(--color-cyan-7);
+    background: var(--color-cyan-9);
+    color: var(--color-gray-1);
+  }
+
+  .drill-pro-dialog__cta--primary:hover {
+    background: var(--color-cyan-10);
+  }
+
+  .drill-pro-dialog__cta--secondary {
+    border: 1px solid var(--color-gray-6);
+    background: var(--color-gray-1);
+    color: var(--color-gray-12);
+  }
+
+  .drill-pro-dialog__cta--secondary:hover {
+    border-color: var(--color-cyan-7);
+    background: var(--color-cyan-2);
+  }
+
+  @media (max-width: 380px) {
+    .drill-pro-dialog__footer {
+      flex-wrap: wrap;
+    }
+
+    .drill-pro-dialog__cta {
+      flex: 1 1 calc(50% - 0.35rem);
+      white-space: normal;
+    }
   }
 
   @media (max-width: 899px) {

@@ -1,4 +1,5 @@
 title: "Recover App Flow After Policy Lockdown"
+isDraft: true
 description: "Find which policy blocks `frontend -> backend` and re-open only required traffic."
 tag: services_networking
 environment: "minimal"

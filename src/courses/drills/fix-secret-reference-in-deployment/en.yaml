@@ -1,4 +1,5 @@
 title: "Repair Deployment Env From Secret"
+isDraft: true
 description: "Fix failed startup caused by wrong `secretKeyRef` mapping in deployment env vars."
 tag: troubleshooting
 environment: "minimal"

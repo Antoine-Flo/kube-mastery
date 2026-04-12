@@ -11,6 +11,9 @@ interface Props {
   size?: DialogSize
 }
 const { id, title, description, size = 'sm' } = Astro.props
+
+const describedByAttr =
+  description != null && description !== '' ? `${id}-desc` : undefined
 const sizeClass = `dialog__content--size-${size}`
 ---
 
@@ -19,7 +22,7 @@ const sizeClass = `dialog__content--size-${size}`
   data-dialog-id={id}
   class="dialog"
   aria-labelledby={`${id}-title`}
-  aria-describedby={description ? `${id}-desc` : undefined}
+  aria-describedby={describedByAttr}
 >
   <div
     class="dialog__positioner dialog__positioner--placement-center dialog__positioner--scroll-outside"

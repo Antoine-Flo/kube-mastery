@@ -3,13 +3,13 @@ import type { DrillFile } from './types'
 import type { DrillIndexPort } from './port'
 import { parseDrillFile } from './domain'
 
-const enRawGlob = import.meta.glob<string>(
-  '../../courses/drills/*/en.yaml',
+const enMarkdownGlob = import.meta.glob<string>(
+  '../../courses/drills/*/en.md',
   { eager: true, query: '?raw', import: 'default' }
 )
 
-const frRawGlob = import.meta.glob<string>(
-  '../../courses/drills/*/fr.yaml',
+const frMarkdownGlob = import.meta.glob<string>(
+  '../../courses/drills/*/fr.md',
   { eager: true, query: '?raw', import: 'default' }
 )
 
@@ -23,18 +23,24 @@ function extractDrillId(path: string): string | null {
 }
 
 function getDrillIds(): string[] {
-  return Object.keys(enRawGlob)
-    .map(extractDrillId)
-    .filter((id): id is string => id !== null)
-    .sort()
+  const combinedPaths = Object.keys(enMarkdownGlob)
+  const ids = new Set<string>()
+  for (const path of combinedPaths) {
+    const id = extractDrillId(path)
+    if (id) {
+      ids.add(id)
+    }
+  }
+  return Array.from(ids).sort()
 }
 
 function getDrillFile(drillId: string, lang: UiLang): DrillFile | null {
-  const glob = lang === 'fr' ? frRawGlob : enRawGlob
-  const foundKey = Object.keys(glob).find((k) => extractDrillId(k) === drillId)
-
-  if (foundKey && glob[foundKey]) {
-    return parseDrillFile(glob[foundKey])
+  const markdownGlob = lang === 'fr' ? frMarkdownGlob : enMarkdownGlob
+  const markdownKey = Object.keys(markdownGlob).find(
+    (k) => extractDrillId(k) === drillId
+  )
+  if (markdownKey && markdownGlob[markdownKey]) {
+    return parseDrillFile(markdownGlob[markdownKey])
   }
 
   if (lang === 'fr') {

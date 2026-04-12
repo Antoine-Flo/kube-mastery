@@ -1,4 +1,5 @@
 title: "Restore etcd Snapshot With Manifest Rewire"
+isDraft: true
 description: "Restore etcd data to a new path and update static manifest wiring safely."
 tag: cluster_architecture_installation
 environment: "minimal"

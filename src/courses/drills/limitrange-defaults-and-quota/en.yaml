@@ -1,4 +1,5 @@
 title: "Work Within LimitRange and ResourceQuota"
+isDraft: true
 description: "Diagnose admission errors and make pod specs compliant with namespace policies."
 tag: troubleshooting
 environment: "minimal"

@@ -1,4 +1,5 @@
 title: "Schedule a Pod Across Tainted Nodes"
+isDraft: true
 description: "Resolve Pending state by reconciling pod tolerations with node taints."
 tag: cluster_architecture_installation
 environment: "minimal"

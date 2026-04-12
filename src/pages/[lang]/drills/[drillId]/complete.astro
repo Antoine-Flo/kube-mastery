@@ -16,15 +16,18 @@ const { userId } = await getProgressContext(
   Astro.request,
   Astro.cookies
 )
-if (!userId) {
-  return Astro.redirect(
-    localePath('/auth') + '?redirect=' + encodeURIComponent(Astro.url.pathname)
-  )
-}
 
 const drillDetail = getDrillDetail(drillId, lang)
 if (!drillDetail) {
   return Astro.redirect(localePath('/drills'))
+}
+
+const allowUnauthenticated = drillDetail.isFree === true
+if (!userId && !allowUnauthenticated) {
+  const redirectTarget = `${Astro.url.pathname}${Astro.url.search}`
+  return Astro.redirect(
+    localePath('/auth') + '?redirect=' + encodeURIComponent(redirectTarget)
+  )
 }
 
 const drillsHref = localePath('/drills')

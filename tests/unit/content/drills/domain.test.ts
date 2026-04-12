@@ -71,6 +71,7 @@ describe('buildDrillList', () => {
       title: 'Inspect Nodes',
       description: 'Learn to inspect nodes.',
       totalTasks: 2,
+      isFree: false,
       tag: null
     })
   })
@@ -82,6 +83,19 @@ describe('buildDrillList', () => {
     })
     const list = buildDrillList(port, 'en')
     expect(list[0].tag).toBe('troubleshooting')
+  })
+
+  it('excludes draft drills', () => {
+    const port = createMockPort({
+      drillIds: ['published', 'wip'],
+      getDrillFile: (id) =>
+        id === 'published'
+          ? SAMPLE_FILE
+          : { ...SAMPLE_FILE, title: 'WIP', isDraft: true }
+    })
+    const list = buildDrillList(port, 'en')
+    expect(list).toHaveLength(1)
+    expect(list[0].id).toBe('published')
   })
 })
 
@@ -105,6 +119,16 @@ describe('buildDrillDetail', () => {
     expect(detail!.tasks).toHaveLength(1)
     expect(detail!.tasks[0]).toEqual(SAMPLE_TASK)
     expect(detail!.tag).toBeNull()
+    expect(detail!.isFree).toBe(false)
+  })
+
+  it('includes isFree when set on file', () => {
+    const port = createMockPort({
+      drillIds: ['inspect-nodes'],
+      getDrillFile: () => ({ ...SAMPLE_FILE, isFree: true })
+    })
+    expect(buildDrillList(port, 'en')[0].isFree).toBe(true)
+    expect(buildDrillDetail(port, 'inspect-nodes', 'en')!.isFree).toBe(true)
   })
 
   it('uses lang to fetch the correct file', () => {
@@ -119,5 +143,12 @@ describe('buildDrillDetail', () => {
 
     const frDetail = buildDrillDetail(port, 'inspect-nodes', 'fr')
     expect(frDetail!.title).toBe('Inspecter les noeuds')
+  })
+
+  it('returns null for draft drills', () => {
+    const port = createMockPort({
+      getDrillFile: () => ({ ...SAMPLE_FILE, isDraft: true })
+    })
+    expect(buildDrillDetail(port, 'inspect-nodes', 'en')).toBeNull()
   })
 })

@@ -1,4 +1,5 @@
 title: "Recover Cluster DNS After CoreDNS Drift"
+isDraft: true
 description: "Track a DNS outage to CoreDNS health or Corefile config and restore name resolution."
 tag: troubleshooting
 environment: "minimal"

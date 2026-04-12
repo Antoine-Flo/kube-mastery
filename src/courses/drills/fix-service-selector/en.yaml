@@ -1,4 +1,5 @@
 title: "Repair Service Routing Without Recreating Pods"
+isDraft: true
 description: "Find why `web-svc` has no backend targets and restore routing using a selector-only fix."
 tag: services_networking
 environment: "minimal"

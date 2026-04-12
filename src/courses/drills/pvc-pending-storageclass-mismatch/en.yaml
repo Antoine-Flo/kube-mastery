@@ -1,4 +1,5 @@
 title: "Resolve PVC Pending by Matching Storage Contracts"
+isDraft: true
 description: "Diagnose why a claim does not bind and fix class, mode, or size mismatch."
 tag: storage
 environment: "minimal"

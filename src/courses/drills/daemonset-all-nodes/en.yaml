@@ -1,4 +1,5 @@
 title: "Deploy Node Agent as DaemonSet"
+isDraft: true
 description: "Roll out a node agent DaemonSet and verify full node coverage including tainted nodes."
 tag: cluster_architecture_installation
 environment: "minimal"

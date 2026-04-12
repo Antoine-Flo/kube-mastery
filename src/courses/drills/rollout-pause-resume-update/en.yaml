@@ -1,4 +1,5 @@
 title: "Pause, Update, and Resume a Deployment Rollout"
+isDraft: true
 description: "Control rollout flow using pause/resume and validate revision changes."
 tag: services_networking
 environment: "minimal"

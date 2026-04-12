@@ -1,4 +1,5 @@
 title: "Validate RBAC Scope Boundaries"
+isDraft: true
 description: "Demonstrate why a ClusterRole bound with RoleBinding stays namespace-scoped."
 tag: cluster_architecture_installation
 environment: "minimal"

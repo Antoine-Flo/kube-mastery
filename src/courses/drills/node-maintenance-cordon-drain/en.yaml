@@ -1,4 +1,5 @@
 title: "Node Maintenance with Cordon and Drain"
+isDraft: true
 description: "Prepare a worker for maintenance, verify evacuation, then restore scheduling capacity."
 tag: cluster_architecture_installation
 environment: "minimal"

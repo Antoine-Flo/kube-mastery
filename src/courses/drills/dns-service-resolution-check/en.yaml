@@ -1,4 +1,5 @@
 title: "Debug Service Name Resolution From a Client Pod"
+isDraft: true
 description: "Trace DNS and service wiring from a client pod until backend access works by name."
 tag: services_networking
 environment: "minimal"

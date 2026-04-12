@@ -1,4 +1,5 @@
 title: "Create an etcd Snapshot Backup"
+isDraft: true
 description: "Back up etcd using etcdctl with control plane certificates."
 tag: cluster_architecture_installation
 environment: "minimal"
