@@ -1,3 +1,6 @@
+import { SUPPORTED_RESOURCE_KINDS } from '../../core/kubectl/commands/resourceCatalog.generated'
+import type { ResourceKind } from '../../core/cluster/generated/clusterResourceTypes.generated'
+
 /** Set `tag:` in drill YAML to one of these string ids (see `messages/*` for labels). */
 export const DRILL_TAG_IDS = [
   'storage',
@@ -8,35 +11,10 @@ export const DRILL_TAG_IDS = [
 
 export type DrillTagId = (typeof DRILL_TAG_IDS)[number]
 
-export const DRILL_CLUSTER_RESOURCE_KINDS = [
-  'Pod',
-  'ConfigMap',
-  'ControllerRevision',
-  'Secret',
-  'Node',
-  'ReplicaSet',
-  'Deployment',
-  'DaemonSet',
-  'StatefulSet',
-  'Service',
-  'EndpointSlice',
-  'Endpoints',
-  'Event',
-  'Ingress',
-  'IngressClass',
-  'NetworkPolicy',
-  'GatewayClass',
-  'Gateway',
-  'HTTPRoute',
-  'PersistentVolume',
-  'PersistentVolumeClaim',
-  'Namespace',
-  'Lease',
-  'StorageClass'
-] as const
+/** Same kinds as kubectl `get` (`SUPPORTED_RESOURCE_KINDS`). */
+export const DRILL_CLUSTER_RESOURCE_KINDS = SUPPORTED_RESOURCE_KINDS
 
-export type DrillClusterResourceKind =
-  (typeof DRILL_CLUSTER_RESOURCE_KINDS)[number]
+export type DrillClusterResourceKind = ResourceKind
 
 export const DRILL_ASSERTION_TYPES = [
   'clusterResourceExists',
