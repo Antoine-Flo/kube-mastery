@@ -112,7 +112,8 @@ const createHandlers = (
   options: KubectlExecutorOptions = {}
 ): Map<string, ActionHandler> => {
   const handlers = new Map<string, ActionHandler>()
-  const metricsProvider = options.metricsProvider ?? createMetricsProvider(apiServer)
+  const metricsProvider =
+    options.metricsProvider ?? createMetricsProvider(apiServer)
 
   // Direct handler mapping - logging is handled centrally by event system
   handlers.set('get', (parsed) =>
@@ -160,7 +161,9 @@ const createHandlers = (
   handlers.set('wait', (parsed) =>
     handleWait(apiServer, parsed, reconcileForWait)
   )
-  handlers.set('top-pods', (parsed) => handleTop(apiServer, metricsProvider, parsed))
+  handlers.set('top-pods', (parsed) =>
+    handleTop(apiServer, metricsProvider, parsed)
+  )
   handlers.set('top-nodes', (parsed) =>
     handleTop(apiServer, metricsProvider, parsed)
   )
@@ -218,7 +221,8 @@ export const createKubectlExecutor = (
   reconcileForWait?: (namespace?: string) => void,
   options: KubectlExecutorOptions = {}
 ) => {
-  const metricsProvider = options.metricsProvider ?? createMetricsProvider(apiServer)
+  const metricsProvider =
+    options.metricsProvider ?? createMetricsProvider(apiServer)
 
   const execute = (input: string, fileSystem?: FileSystem): ExecutionResult => {
     logger.info('COMMAND', `Kubectl: ${input}`)

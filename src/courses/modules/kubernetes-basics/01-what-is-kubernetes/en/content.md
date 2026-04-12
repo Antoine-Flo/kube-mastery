@@ -17,12 +17,12 @@ This shift is called **desired state**. Instead of saying "go to server 3 and st
 
 @@@
 flowchart TD
-    A["Declare"] --> B["Observe"]
-    B --> C{Drift?}
-    C -->|Yes| D["Act"]
-    C -->|No| E["Wait"]
-    D --> B
-    E --> B
+A["Declare"] --> B["Observe"]
+B --> C{Drift?}
+C -->|Yes| D["Act"]
+C -->|No| E["Wait"]
+D --> B
+E --> B
 @@@
 
 This reconciliation loop runs constantly. If a Pod crashes, Kubernetes starts a replacement. If a node goes offline, Kubernetes reschedules the affected Pods onto healthy nodes. You declared the goal once, and Kubernetes keeps chasing it.
@@ -50,7 +50,6 @@ You will see two entries: one node with the role `sim-control-plane`, and two wo
 **Self-healing** is the direct result of the reconciliation loop. A container that exits unexpectedly is detected within seconds. Kubernetes restarts it on the same node, or reschedules it elsewhere if the node is gone. This is not magic, it is the reconciler noticing that actual state (0 replicas running) does not match desired state (3 replicas).
 
 **Scaling** is adjusting the desired state. If you change "3 replicas" to "10 replicas", Kubernetes schedules 7 more Pods. If you scale back down, it terminates the excess ones gracefully. The cluster adapts to whatever you declare.
-
 
 :::warning
 Kubernetes manages infrastructure, not application correctness. If your container crashes because of a bug in your code, Kubernetes will restart it. It will keep restarting it. You will see it stuck in `CrashLoopBackOff` status. The orchestrator cannot fix what is broken inside the container, it can only try to keep it running.

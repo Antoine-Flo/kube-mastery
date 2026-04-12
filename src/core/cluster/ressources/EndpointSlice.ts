@@ -14,11 +14,13 @@ type EndpointSliceMetadata = Pick<
   'name' | 'namespace' | 'labels' | 'annotations' | 'creationTimestamp'
 >
 
-export type EndpointSlicePort = IoSchemas['io.k8s.api.discovery.v1.EndpointPort'] & {
-  protocol?: 'TCP' | 'UDP' | 'SCTP'
-}
+export type EndpointSlicePort =
+  IoSchemas['io.k8s.api.discovery.v1.EndpointPort'] & {
+    protocol?: 'TCP' | 'UDP' | 'SCTP'
+  }
 
-export type EndpointSliceEndpoint = IoSchemas['io.k8s.api.discovery.v1.Endpoint']
+export type EndpointSliceEndpoint =
+  IoSchemas['io.k8s.api.discovery.v1.Endpoint']
 
 export type EndpointSlice = Omit<
   K8sEndpointSlice,

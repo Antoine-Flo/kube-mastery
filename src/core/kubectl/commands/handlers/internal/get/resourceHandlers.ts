@@ -470,9 +470,9 @@ export const RESOURCE_HANDLERS: GeneratedResourceHandlerRegistry = {
         : '',
       persistentVolumeClaim.status.phase === 'Bound'
         ? formatPersistentVolumeAccessModes(
-          persistentVolumeClaim.status.accessModes ??
-            persistentVolumeClaim.spec.accessModes
-        )
+            persistentVolumeClaim.status.accessModes ??
+              persistentVolumeClaim.spec.accessModes
+          )
         : '',
       persistentVolumeClaim.spec.storageClassName ?? '',
       '<unset>',

@@ -275,7 +275,11 @@ export const createNetworkController = (
         if (!isSliceForService(endpointSlice, name)) {
           continue
         }
-        apiServer.deleteResource('EndpointSlice', endpointSlice.metadata.name, namespace)
+        apiServer.deleteResource(
+          'EndpointSlice',
+          endpointSlice.metadata.name,
+          namespace
+        )
       }
       return
     }
@@ -428,7 +432,10 @@ export const createNetworkController = (
         service?: { metadata: { namespace: string; name: string } }
       }
       if (payload.service != null) {
-        enqueueService(payload.service.metadata.namespace, payload.service.metadata.name)
+        enqueueService(
+          payload.service.metadata.namespace,
+          payload.service.metadata.name
+        )
       }
       return
     }
@@ -447,7 +454,10 @@ export const createNetworkController = (
         enqueueAllServices()
         return
       }
-      for (const service of apiServer.listResources('Service', pod.metadata.namespace)) {
+      for (const service of apiServer.listResources(
+        'Service',
+        pod.metadata.namespace
+      )) {
         if (!serviceSelectsPod(service, pod)) {
           continue
         }

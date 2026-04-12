@@ -23,7 +23,6 @@ Start by listing the nodes in your cluster:
 kubectl get nodes
 ```
 
-
 Now list all Pods across all namespaces:
 
 ```bash
@@ -87,8 +86,6 @@ kubectl explain pod.spec
 kubectl explain pod.spec.containers
 kubectl explain pod.spec.containers.resources
 ```
-
-
 
 `kubectl explain` is one of the most important tools for the CKA exam. You can write an entire manifest referencing only the built-in docs, without leaving the terminal.
 

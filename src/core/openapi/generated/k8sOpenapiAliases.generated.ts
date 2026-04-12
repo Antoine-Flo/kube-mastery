@@ -42,10 +42,10 @@ export type RuntimeResource<
   TRequiredKeys extends PropertyKey = never
 > = EnsureRequiredKeys<
   Omit<TOpenAPIResource, 'apiVersion' | 'kind' | 'metadata'> & {
-  apiVersion: TApiVersion
-  kind: TKind
-  metadata: RuntimeObjectMeta
-},
+    apiVersion: TApiVersion
+    kind: TKind
+    metadata: RuntimeObjectMeta
+  },
   TRequiredKeys
 >
 
@@ -220,13 +220,19 @@ export type K8sConfigMapStatus = K8sConfigMap extends { status?: unknown }
   ? NonNullable<K8sConfigMap['status']>
   : never
 
-export type K8sControllerRevisionMetadata = NonNullable<K8sControllerRevision['metadata']>
+export type K8sControllerRevisionMetadata = NonNullable<
+  K8sControllerRevision['metadata']
+>
 
-export type K8sControllerRevisionSpec = K8sControllerRevision extends { spec?: unknown }
+export type K8sControllerRevisionSpec = K8sControllerRevision extends {
+  spec?: unknown
+}
   ? NonNullable<K8sControllerRevision['spec']>
   : never
 
-export type K8sControllerRevisionStatus = K8sControllerRevision extends { status?: unknown }
+export type K8sControllerRevisionStatus = K8sControllerRevision extends {
+  status?: unknown
+}
   ? NonNullable<K8sControllerRevision['status']>
   : never
 
@@ -306,7 +312,9 @@ export type K8sEndpointSliceSpec = K8sEndpointSlice extends { spec?: unknown }
   ? NonNullable<K8sEndpointSlice['spec']>
   : never
 
-export type K8sEndpointSliceStatus = K8sEndpointSlice extends { status?: unknown }
+export type K8sEndpointSliceStatus = K8sEndpointSlice extends {
+  status?: unknown
+}
   ? NonNullable<K8sEndpointSlice['status']>
   : never
 
@@ -356,27 +364,41 @@ export type K8sNetworkPolicySpec = K8sNetworkPolicy extends { spec?: unknown }
   ? NonNullable<K8sNetworkPolicy['spec']>
   : never
 
-export type K8sNetworkPolicyStatus = K8sNetworkPolicy extends { status?: unknown }
+export type K8sNetworkPolicyStatus = K8sNetworkPolicy extends {
+  status?: unknown
+}
   ? NonNullable<K8sNetworkPolicy['status']>
   : never
 
-export type K8sPersistentVolumeMetadata = NonNullable<K8sPersistentVolume['metadata']>
+export type K8sPersistentVolumeMetadata = NonNullable<
+  K8sPersistentVolume['metadata']
+>
 
-export type K8sPersistentVolumeSpec = K8sPersistentVolume extends { spec?: unknown }
+export type K8sPersistentVolumeSpec = K8sPersistentVolume extends {
+  spec?: unknown
+}
   ? NonNullable<K8sPersistentVolume['spec']>
   : never
 
-export type K8sPersistentVolumeStatus = K8sPersistentVolume extends { status?: unknown }
+export type K8sPersistentVolumeStatus = K8sPersistentVolume extends {
+  status?: unknown
+}
   ? NonNullable<K8sPersistentVolume['status']>
   : never
 
-export type K8sPersistentVolumeClaimMetadata = NonNullable<K8sPersistentVolumeClaim['metadata']>
+export type K8sPersistentVolumeClaimMetadata = NonNullable<
+  K8sPersistentVolumeClaim['metadata']
+>
 
-export type K8sPersistentVolumeClaimSpec = K8sPersistentVolumeClaim extends { spec?: unknown }
+export type K8sPersistentVolumeClaimSpec = K8sPersistentVolumeClaim extends {
+  spec?: unknown
+}
   ? NonNullable<K8sPersistentVolumeClaim['spec']>
   : never
 
-export type K8sPersistentVolumeClaimStatus = K8sPersistentVolumeClaim extends { status?: unknown }
+export type K8sPersistentVolumeClaimStatus = K8sPersistentVolumeClaim extends {
+  status?: unknown
+}
   ? NonNullable<K8sPersistentVolumeClaim['status']>
   : never
 

@@ -11,7 +11,7 @@ export const parseKubectlOutputEnvelope = (
   if (!output.startsWith(KUBECTL_STDERR_PREFIX)) {
     return { payload: output }
   }
-  
+
   const firstLineBreakIndex = output.indexOf('\n')
   if (firstLineBreakIndex === -1) {
     return { payload: output }
@@ -25,7 +25,7 @@ export const parseKubectlOutputEnvelope = (
   if (encodedNotice.length === 0) {
     return { payload: output }
   }
-  
+
   let stderrNotice = ''
 
   try {

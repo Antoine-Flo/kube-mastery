@@ -37,10 +37,10 @@ All three certifications share a foundation. You need to understand what Kuberne
 
 @@@
 graph TD
-    CC["Common Core Course<br/>(this course)"]
-    CC --> KCNA["KCNA<br/>Multiple choice, Theory, Entry level"]
-    CC --> CKAD["CKAD<br/>Hands-on, 2h, App-focused"]
-    CC --> CKA["CKA<br/>Hands-on, 2h, Cluster-focused"]
+CC["Common Core Course<br/>(this course)"]
+CC --> KCNA["KCNA<br/>Multiple choice, Theory, Entry level"]
+CC --> CKAD["CKAD<br/>Hands-on, 2h, App-focused"]
+CC --> CKA["CKA<br/>Hands-on, 2h, Cluster-focused"]
 @@@
 
 Whatever certification you are aiming for, the concepts you build here apply directly. Next, the substance begins: what Kubernetes is and the problem it was built to solve.

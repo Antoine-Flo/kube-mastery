@@ -22,7 +22,10 @@ describe('podVolumeReconciler', () => {
         volumes: [
           {
             name: 'data',
-            source: { type: 'persistentVolumeClaim', claimName: 'missing-claim' }
+            source: {
+              type: 'persistentVolumeClaim',
+              claimName: 'missing-claim'
+            }
           }
         ]
       })

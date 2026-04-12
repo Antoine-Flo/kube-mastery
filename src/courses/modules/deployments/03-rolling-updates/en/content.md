@@ -15,7 +15,6 @@ If `web-app` is not running from the previous lesson, recreate it first:
 kubectl apply -f web-deployment.yaml
 ```
 
-
 Then change the image:
 
 ```bash
@@ -31,18 +30,18 @@ The Deployment controller does not modify the existing ReplicaSet. It creates a 
 
 @@@
 sequenceDiagram
-    participant DEP as Deployment controller
-    participant RS1 as ReplicaSet v1 (nginx:1.28)
-    participant RS2 as ReplicaSet v2 (nginx:1.26)
-    DEP->>RS2: create new ReplicaSet
-    RS2->>RS2: +1 Pod, wait Ready
-    RS1->>RS1: -1 Pod
-    RS2->>RS2: +1 Pod, wait Ready
-    RS1->>RS1: -1 Pod
-    RS2->>RS2: +1 Pod, wait Ready
-    RS1->>RS1: -1 Pod
-    Note over RS1: replicas: 0 (kept for rollback)
-    Note over RS2: replicas: 3 (active)
+participant DEP as Deployment controller
+participant RS1 as ReplicaSet v1 (nginx:1.28)
+participant RS2 as ReplicaSet v2 (nginx:1.26)
+DEP->>RS2: create new ReplicaSet
+RS2->>RS2: +1 Pod, wait Ready
+RS1->>RS1: -1 Pod
+RS2->>RS2: +1 Pod, wait Ready
+RS1->>RS1: -1 Pod
+RS2->>RS2: +1 Pod, wait Ready
+RS1->>RS1: -1 Pod
+Note over RS1: replicas: 0 (kept for rollback)
+Note over RS2: replicas: 3 (active)
 @@@
 
 At each step, a new Pod becomes Ready before an old one is terminated. Traffic is always served by healthy Pods. This is what "zero-downtime" means in practice: the application never fully stops.

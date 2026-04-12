@@ -13,13 +13,13 @@ When you delete a Deployment, Kubernetes does not stop at the Deployment object 
 
 @@@
 graph TD
-    DEL["kubectl delete deployment web"]
-    DEP["Deployment web\n(deleted)"]
-    RS["ReplicaSet\n(deleted, cascade)"]
-    P1["Pod 1\n(deleted, cascade)"]
-    P2["Pod 2\n(deleted, cascade)"]
-    DEL --> DEP --> RS --> P1
-    RS --> P2
+DEL["kubectl delete deployment web"]
+DEP["Deployment web\n(deleted)"]
+RS["ReplicaSet\n(deleted, cascade)"]
+P1["Pod 1\n(deleted, cascade)"]
+P2["Pod 2\n(deleted, cascade)"]
+DEL --> DEP --> RS --> P1
+RS --> P2
 @@@
 
 This ownership is stored in each object's `ownerReferences` field. The garbage collector reads those references and triggers deletions downstream. Because of this, deleting a Pod that belongs to a Deployment is pointless: the ReplicaSet notices the count is wrong and creates a replacement immediately.
@@ -84,25 +84,30 @@ kubectl delete -f web-deployment.yaml
 kubectl reads the `kind` and `name` from the file and issues the corresponding delete. This is convenient when you want to undo exactly what you applied, without remembering resource names.
 
 :::quiz What is the difference between `kubectl delete pods --all` and `kubectl delete all`?
+
 - `delete pods --all` removes all Pods in the current namespace
 - `delete all` removes Pods, Services, Deployments, and ReplicaSets
 - They are equivalent
-**Answer:** `kubectl delete pods --all` targets only Pods. `kubectl delete all` removes all common resource types (Pods, Services, Deployments, ReplicaSets) in the current namespace. Using `delete all` carelessly in a shared namespace can destroy running Services.
-:::
+  **Answer:** `kubectl delete pods --all` targets only Pods. `kubectl delete all` removes all common resource types (Pods, Services, Deployments, ReplicaSets) in the current namespace. Using `delete all` carelessly in a shared namespace can destroy running Services.
+  :::
 
 ## Observing cascade in action
 
 :::quiz Create a Deployment with 2 replicas, delete one of its Pods, then check what happened. What do you observe?
 **Try it:**
+
 ```bash
 kubectl create deployment demo --image=nginx:1.28 --replicas=2
 kubectl get pods
 ```
+
 Then copy a Pod name and run:
+
 ```bash
 kubectl delete pod <pod-name>
 kubectl get pods
 ```
+
 **Answer:** A new Pod appears to replace the deleted one. The ReplicaSet reconciles the actual state toward the desired replica count of 2. Deleting a Pod owned by a Deployment never reduces the running replica count.
 :::
 
@@ -112,4 +117,3 @@ kubectl delete deployment web
 ```
 
 Deletion in Kubernetes respects ownership. Once you understand cascade and graceful termination, cleanups become predictable. The next lesson moves to the other end of the workflow: extracting exactly the information you need from `kubectl get` using output formatting flags.
-

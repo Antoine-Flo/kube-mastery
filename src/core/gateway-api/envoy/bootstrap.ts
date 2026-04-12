@@ -10,7 +10,9 @@ import {
   ENVOY_GATEWAY_VERSION
 } from './constants'
 
-export const ENVOY_GATEWAY_SYSTEM_NAMESPACES = [ENVOY_GATEWAY_NAMESPACE] as const
+export const ENVOY_GATEWAY_SYSTEM_NAMESPACES = [
+  ENVOY_GATEWAY_NAMESPACE
+] as const
 
 export const createEnvoyGatewaySystemServices = (
   creationTimestamp: string

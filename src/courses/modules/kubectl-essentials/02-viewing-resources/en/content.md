@@ -26,7 +26,6 @@ spec:
       image: nginx:1.28
 ```
 
-
 ```bash
 kubectl apply -f demo-pod.yaml
 ```
@@ -71,11 +70,12 @@ Despite the name, `kubectl get all` does not show everything. ConfigMaps, Secret
 
 :::quiz
 You want to list all Pods that have the label `app=demo`. You have already seen the flag to use. Which command is correct?
+
 - `kubectl get pods --label=app=demo`
 - `kubectl get pods -l app=demo`
 - `kubectl get pods --filter app=demo`
-**Answer:** `-l app=demo` is the correct flag. `-l` (short for `--selector`) filters resources by label selector. The other two options are not valid kubectl flags.
-:::
+  **Answer:** `-l app=demo` is the correct flag. `-l` (short for `--selector`) filters resources by label selector. The other two options are not valid kubectl flags.
+  :::
 
 ## `kubectl describe`: the magnifying glass
 
@@ -83,9 +83,9 @@ You want to list all Pods that have the label `app=demo`. You have already seen 
 
 @@@
 graph TD
-    GET["kubectl get pods\nTabular view\nAll resources at once\nCurrent status at a glance"]
-    DESC["kubectl describe pod NAME\nDetailed view\nOne resource at a time\nEvents + conditions + full spec"]
-    GET -->|"something looks wrong"| DESC
+GET["kubectl get pods\nTabular view\nAll resources at once\nCurrent status at a glance"]
+DESC["kubectl describe pod NAME\nDetailed view\nOne resource at a time\nEvents + conditions + full spec"]
+GET -->|"something looks wrong"| DESC
 @@@
 
 `kubectl describe pod` returns a full breakdown of the object: its labels and annotations, the node it was scheduled on, the container specs, the current conditions, and most importantly, the Events section at the bottom.

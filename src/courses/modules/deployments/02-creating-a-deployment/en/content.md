@@ -93,7 +93,6 @@ spec:
               memory: '128Mi'
 ```
 
-
 ```bash
 kubectl apply -f web-deployment.yaml
 ```

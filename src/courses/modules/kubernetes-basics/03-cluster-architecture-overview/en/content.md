@@ -31,18 +31,18 @@ Looking at the `ROLES` column in `kubectl get nodes`, which statement is correct
 
 @@@
 graph TB
-    subgraph pod ["Pod"]
-        IP["Unique IP — e.g. 10.0.0.5"]
-        subgraph containers
-            C1["app container"]
-            C2["sidecar container"]
-        end
-        VOL[("Shared Volume")]
-        IP --> C1
-        IP --> C2
-        C1 --> VOL
-        C2 --> VOL
-    end
+subgraph pod ["Pod"]
+IP["Unique IP — e.g. 10.0.0.5"]
+subgraph containers
+C1["app container"]
+C2["sidecar container"]
+end
+VOL[("Shared Volume")]
+IP --> C1
+IP --> C2
+C1 --> VOL
+C2 --> VOL
+end
 @@@
 
 You might expect Kubernetes to schedule containers directly. It does not. The smallest unit Kubernetes can schedule is a **Pod**.
@@ -50,10 +50,6 @@ You might expect Kubernetes to schedule containers directly. It does not. The sm
 A Pod is a thin wrapper around one or more containers. Think of it as an isolated runtime envelope: everything inside shares the same network identity and can share storage volumes. Two containers in the same Pod communicate over `localhost` as if they were processes on the same machine. They share the same lifecycle: if the Pod is deleted, all its containers stop together.
 
 Why does Kubernetes use Pods instead of raw containers? Because many real-world applications need two processes running side by side, a web server and a logging agent, for example. Grouping them in a Pod means Kubernetes schedules them as one atomic unit onto the same node, with no networking complexity between them. Each Pod gets a unique IP address inside the cluster.
-
-
-
-
 
 :::quiz
 You delete a Pod that runs two containers. What happens to those containers?
@@ -71,25 +67,25 @@ You have a fleet of Nodes and you know that Pods run on them. Who decides which 
 
 @@@
 graph TB
-    subgraph cp [Control Plane]
-        API["kube-apiserver"]
-        ETCD["etcd"]
-        SCHED["kube-scheduler"]
-        CM["kube-controller-manager"]
-    end
-    subgraph n1 [Worker Node 1]
-        K1["kubelet"]
-        KP1["kube-proxy"]
-        P1["Pod A"]
-        P2["Pod B"]
-    end
-    subgraph n2 [Worker Node 2]
-        K2["kubelet"]
-        KP2["kube-proxy"]
-        P3["Pod C"]
-    end
-    API --> K1
-    API --> K2
+subgraph cp [Control Plane]
+API["kube-apiserver"]
+ETCD["etcd"]
+SCHED["kube-scheduler"]
+CM["kube-controller-manager"]
+end
+subgraph n1 [Worker Node 1]
+K1["kubelet"]
+KP1["kube-proxy"]
+P1["Pod A"]
+P2["Pod B"]
+end
+subgraph n2 [Worker Node 2]
+K2["kubelet"]
+KP2["kube-proxy"]
+P3["Pod C"]
+end
+API --> K1
+API --> K2
 @@@
 
 ## The Control Plane

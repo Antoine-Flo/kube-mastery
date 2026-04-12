@@ -10,4 +10,3 @@ export interface ValidationQueryPort {
   listClusterResources(kind: ResourceKind, namespace?: string): unknown[]
   readFile(path: string): Result<string>
 }
-

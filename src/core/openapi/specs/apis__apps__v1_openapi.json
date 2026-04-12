@@ -36,9 +36,7 @@
             "type": "integer"
           }
         },
-        "required": [
-          "revision"
-        ],
+        "required": ["revision"],
         "type": "object",
         "x-kubernetes-group-version-kind": [
           {
@@ -81,9 +79,7 @@
             "description": "More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata"
           }
         },
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "type": "object",
         "x-kubernetes-group-version-kind": [
           {
@@ -171,10 +167,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "type",
-          "status"
-        ],
+        "required": ["type", "status"],
         "type": "object"
       },
       "io.k8s.api.apps.v1.DaemonSetList": {
@@ -210,9 +203,7 @@
             "description": "Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata"
           }
         },
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "type": "object",
         "x-kubernetes-group-version-kind": [
           {
@@ -262,10 +253,7 @@
             "description": "An update strategy to replace existing DaemonSet pods with new pods."
           }
         },
-        "required": [
-          "selector",
-          "template"
-        ],
+        "required": ["selector", "template"],
         "type": "object"
       },
       "io.k8s.api.apps.v1.DaemonSetStatus": {
@@ -287,9 +275,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "type"
-            ],
+            "x-kubernetes-list-map-keys": ["type"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "type",
             "x-kubernetes-patch-strategy": "merge"
@@ -451,10 +437,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "type",
-          "status"
-        ],
+        "required": ["type", "status"],
         "type": "object"
       },
       "io.k8s.api.apps.v1.DeploymentList": {
@@ -490,9 +473,7 @@
             "description": "Standard list metadata."
           }
         },
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "type": "object",
         "x-kubernetes-group-version-kind": [
           {
@@ -557,10 +538,7 @@
             "description": "Template describes the pods that will be created. The only allowed template.spec.restartPolicy value is \"Always\"."
           }
         },
-        "required": [
-          "selector",
-          "template"
-        ],
+        "required": ["selector", "template"],
         "type": "object"
       },
       "io.k8s.api.apps.v1.DeploymentStatus": {
@@ -587,9 +565,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "type"
-            ],
+            "x-kubernetes-list-map-keys": ["type"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "type",
             "x-kubernetes-patch-strategy": "merge"
@@ -723,10 +699,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "type",
-          "status"
-        ],
+        "required": ["type", "status"],
         "type": "object"
       },
       "io.k8s.api.apps.v1.ReplicaSetList": {
@@ -762,9 +735,7 @@
             "description": "Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"
           }
         },
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "type": "object",
         "x-kubernetes-group-version-kind": [
           {
@@ -805,9 +776,7 @@
             "description": "Template is the object that describes the pod that will be created if insufficient replicas are detected. More info: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/#pod-template"
           }
         },
-        "required": [
-          "selector"
-        ],
+        "required": ["selector"],
         "type": "object"
       },
       "io.k8s.api.apps.v1.ReplicaSetStatus": {
@@ -829,9 +798,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "type"
-            ],
+            "x-kubernetes-list-map-keys": ["type"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "type",
             "x-kubernetes-patch-strategy": "merge"
@@ -863,9 +830,7 @@
             "type": "integer"
           }
         },
-        "required": [
-          "replicas"
-        ],
+        "required": ["replicas"],
         "type": "object"
       },
       "io.k8s.api.apps.v1.RollingUpdateDaemonSet": {
@@ -1009,10 +974,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "type",
-          "status"
-        ],
+        "required": ["type", "status"],
         "type": "object"
       },
       "io.k8s.api.apps.v1.StatefulSetList": {
@@ -1048,9 +1010,7 @@
             "description": "Standard list's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata"
           }
         },
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "type": "object",
         "x-kubernetes-group-version-kind": [
           {
@@ -1169,10 +1129,7 @@
             "x-kubernetes-list-type": "atomic"
           }
         },
-        "required": [
-          "selector",
-          "template"
-        ],
+        "required": ["selector", "template"],
         "type": "object"
       },
       "io.k8s.api.apps.v1.StatefulSetStatus": {
@@ -1200,9 +1157,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "type"
-            ],
+            "x-kubernetes-list-map-keys": ["type"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "type",
             "x-kubernetes-patch-strategy": "merge"
@@ -1242,9 +1197,7 @@
             "type": "integer"
           }
         },
-        "required": [
-          "replicas"
-        ],
+        "required": ["replicas"],
         "type": "object"
       },
       "io.k8s.api.apps.v1.StatefulSetUpdateStrategy": {
@@ -1339,9 +1292,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "replicas"
-        ],
+        "required": ["replicas"],
         "type": "object"
       },
       "io.k8s.api.core.v1.AWSElasticBlockStoreVolumeSource": {
@@ -1366,9 +1317,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "volumeID"
-        ],
+        "required": ["volumeID"],
         "type": "object"
       },
       "io.k8s.api.core.v1.Affinity": {
@@ -1414,9 +1363,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "type"
-        ],
+        "required": ["type"],
         "type": "object",
         "x-kubernetes-unions": [
           {
@@ -1461,10 +1408,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "diskName",
-          "diskURI"
-        ],
+        "required": ["diskName", "diskURI"],
         "type": "object"
       },
       "io.k8s.api.core.v1.AzureFileVolumeSource": {
@@ -1485,10 +1429,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "secretName",
-          "shareName"
-        ],
+        "required": ["secretName", "shareName"],
         "type": "object"
       },
       "io.k8s.api.core.v1.CSIVolumeSource": {
@@ -1524,9 +1465,7 @@
             "type": "object"
           }
         },
-        "required": [
-          "driver"
-        ],
+        "required": ["driver"],
         "type": "object"
       },
       "io.k8s.api.core.v1.Capabilities": {
@@ -1590,9 +1529,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "monitors"
-        ],
+        "required": ["monitors"],
         "type": "object"
       },
       "io.k8s.api.core.v1.CinderVolumeSource": {
@@ -1620,9 +1557,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "volumeID"
-        ],
+        "required": ["volumeID"],
         "type": "object"
       },
       "io.k8s.api.core.v1.ClusterTrustBundleProjection": {
@@ -1654,9 +1589,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "path"
-        ],
+        "required": ["path"],
         "type": "object"
       },
       "io.k8s.api.core.v1.ConfigMapEnvSource": {
@@ -1692,9 +1625,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "key"
-        ],
+        "required": ["key"],
         "type": "object",
         "x-kubernetes-map-type": "atomic"
       },
@@ -1791,9 +1722,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "name"
-            ],
+            "x-kubernetes-list-map-keys": ["name"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "name",
             "x-kubernetes-patch-strategy": "merge"
@@ -1851,10 +1780,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "containerPort",
-              "protocol"
-            ],
+            "x-kubernetes-list-map-keys": ["containerPort", "protocol"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "containerPort",
             "x-kubernetes-patch-strategy": "merge"
@@ -1953,9 +1879,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "devicePath"
-            ],
+            "x-kubernetes-list-map-keys": ["devicePath"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "devicePath",
             "x-kubernetes-patch-strategy": "merge"
@@ -1971,9 +1895,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "mountPath"
-            ],
+            "x-kubernetes-list-map-keys": ["mountPath"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "mountPath",
             "x-kubernetes-patch-strategy": "merge"
@@ -1983,9 +1905,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "type": "object"
       },
       "io.k8s.api.core.v1.ContainerPort": {
@@ -2016,9 +1936,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "containerPort"
-        ],
+        "required": ["containerPort"],
         "type": "object"
       },
       "io.k8s.api.core.v1.ContainerResizePolicy": {
@@ -2035,10 +1953,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "resourceName",
-          "restartPolicy"
-        ],
+        "required": ["resourceName", "restartPolicy"],
         "type": "object"
       },
       "io.k8s.api.core.v1.ContainerRestartRule": {
@@ -2057,9 +1972,7 @@
             "description": "Represents the exit codes to check on container exits."
           }
         },
-        "required": [
-          "action"
-        ],
+        "required": ["action"],
         "type": "object"
       },
       "io.k8s.api.core.v1.ContainerRestartRuleOnExitCodes": {
@@ -2080,9 +1993,7 @@
             "x-kubernetes-list-type": "set"
           }
         },
-        "required": [
-          "operator"
-        ],
+        "required": ["operator"],
         "type": "object"
       },
       "io.k8s.api.core.v1.DownwardAPIProjection": {
@@ -2134,9 +2045,7 @@
             "description": "Selects a resource of the container: only resources limits and requests (limits.cpu, limits.memory, requests.cpu and requests.memory) are currently supported."
           }
         },
-        "required": [
-          "path"
-        ],
+        "required": ["path"],
         "type": "object"
       },
       "io.k8s.api.core.v1.DownwardAPIVolumeSource": {
@@ -2228,9 +2137,7 @@
             "description": "Source for the environment variable's value. Cannot be used if value is not empty."
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "type": "object"
       },
       "io.k8s.api.core.v1.EnvVarSource": {
@@ -2311,9 +2218,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "name"
-            ],
+            "x-kubernetes-list-map-keys": ["name"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "name",
             "x-kubernetes-patch-strategy": "merge"
@@ -2371,10 +2276,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "containerPort",
-              "protocol"
-            ],
+            "x-kubernetes-list-map-keys": ["containerPort", "protocol"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "containerPort",
             "x-kubernetes-patch-strategy": "merge"
@@ -2477,9 +2379,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "devicePath"
-            ],
+            "x-kubernetes-list-map-keys": ["devicePath"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "devicePath",
             "x-kubernetes-patch-strategy": "merge"
@@ -2495,9 +2395,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "mountPath"
-            ],
+            "x-kubernetes-list-map-keys": ["mountPath"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "mountPath",
             "x-kubernetes-patch-strategy": "merge"
@@ -2507,9 +2405,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "type": "object"
       },
       "io.k8s.api.core.v1.EphemeralVolumeSource": {
@@ -2602,11 +2498,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "volumeName",
-          "path",
-          "key"
-        ],
+        "required": ["volumeName", "path", "key"],
         "type": "object",
         "x-kubernetes-map-type": "atomic"
       },
@@ -2643,9 +2535,7 @@
             "description": "secretRef is Optional: secretRef is reference to the secret object containing sensitive information to pass to the plugin scripts. This may be empty if no secret object is specified. If the secret object contains more than one secret, all secrets are passed to the plugin scripts."
           }
         },
-        "required": [
-          "driver"
-        ],
+        "required": ["driver"],
         "type": "object"
       },
       "io.k8s.api.core.v1.FlockerVolumeSource": {
@@ -2684,9 +2574,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "pdName"
-        ],
+        "required": ["pdName"],
         "type": "object"
       },
       "io.k8s.api.core.v1.GRPCAction": {
@@ -2704,9 +2592,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "port"
-        ],
+        "required": ["port"],
         "type": "object"
       },
       "io.k8s.api.core.v1.GitRepoVolumeSource": {
@@ -2726,9 +2612,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "repository"
-        ],
+        "required": ["repository"],
         "type": "object"
       },
       "io.k8s.api.core.v1.GlusterfsVolumeSource": {
@@ -2749,10 +2633,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "endpoints",
-          "path"
-        ],
+        "required": ["endpoints", "path"],
         "type": "object"
       },
       "io.k8s.api.core.v1.HTTPGetAction": {
@@ -2792,9 +2673,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "port"
-        ],
+        "required": ["port"],
         "type": "object"
       },
       "io.k8s.api.core.v1.HTTPHeader": {
@@ -2811,10 +2690,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "value"
-        ],
+        "required": ["name", "value"],
         "type": "object"
       },
       "io.k8s.api.core.v1.HostAlias": {
@@ -2835,9 +2711,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "ip"
-        ],
+        "required": ["ip"],
         "type": "object"
       },
       "io.k8s.api.core.v1.HostPathVolumeSource": {
@@ -2853,9 +2727,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "path"
-        ],
+        "required": ["path"],
         "type": "object"
       },
       "io.k8s.api.core.v1.ISCSIVolumeSource": {
@@ -2920,11 +2792,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "targetPortal",
-          "iqn",
-          "lun"
-        ],
+        "required": ["targetPortal", "iqn", "lun"],
         "type": "object"
       },
       "io.k8s.api.core.v1.ImageVolumeSource": {
@@ -2960,10 +2828,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "key",
-          "path"
-        ],
+        "required": ["key", "path"],
         "type": "object"
       },
       "io.k8s.api.core.v1.Lifecycle": {
@@ -3055,9 +2920,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "status"
-        ],
+        "required": ["status"],
         "type": "object"
       },
       "io.k8s.api.core.v1.NFSVolumeSource": {
@@ -3078,10 +2941,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "server",
-          "path"
-        ],
+        "required": ["server", "path"],
         "type": "object"
       },
       "io.k8s.api.core.v1.NodeAffinity": {
@@ -3128,9 +2988,7 @@
             "x-kubernetes-list-type": "atomic"
           }
         },
-        "required": [
-          "nodeSelectorTerms"
-        ],
+        "required": ["nodeSelectorTerms"],
         "type": "object",
         "x-kubernetes-map-type": "atomic"
       },
@@ -3157,10 +3015,7 @@
             "x-kubernetes-list-type": "atomic"
           }
         },
-        "required": [
-          "key",
-          "operator"
-        ],
+        "required": ["key", "operator"],
         "type": "object"
       },
       "io.k8s.api.core.v1.NodeSelectorTerm": {
@@ -3209,9 +3064,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "fieldPath"
-        ],
+        "required": ["fieldPath"],
         "type": "object",
         "x-kubernetes-map-type": "atomic"
       },
@@ -3301,10 +3154,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "type",
-          "status"
-        ],
+        "required": ["type", "status"],
         "type": "object"
       },
       "io.k8s.api.core.v1.PersistentVolumeClaimSpec": {
@@ -3417,9 +3267,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "type"
-            ],
+            "x-kubernetes-list-map-keys": ["type"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "type",
             "x-kubernetes-patch-strategy": "merge"
@@ -3465,9 +3313,7 @@
             "description": "The specification for the PersistentVolumeClaim. The entire content is copied unchanged into the PVC that gets created from this template. The same fields as in a PersistentVolumeClaim are also valid here."
           }
         },
-        "required": [
-          "spec"
-        ],
+        "required": ["spec"],
         "type": "object"
       },
       "io.k8s.api.core.v1.PersistentVolumeClaimVolumeSource": {
@@ -3483,9 +3329,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "claimName"
-        ],
+        "required": ["claimName"],
         "type": "object"
       },
       "io.k8s.api.core.v1.PhotonPersistentDiskVolumeSource": {
@@ -3501,9 +3345,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "pdID"
-        ],
+        "required": ["pdID"],
         "type": "object"
       },
       "io.k8s.api.core.v1.PodAffinity": {
@@ -3590,9 +3432,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "topologyKey"
-        ],
+        "required": ["topologyKey"],
         "type": "object"
       },
       "io.k8s.api.core.v1.PodAntiAffinity": {
@@ -3664,10 +3504,7 @@
             "type": "object"
           }
         },
-        "required": [
-          "signerName",
-          "keyType"
-        ],
+        "required": ["signerName", "keyType"],
         "type": "object"
       },
       "io.k8s.api.core.v1.PodDNSConfig": {
@@ -3730,9 +3567,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "type": "object"
       },
       "io.k8s.api.core.v1.PodReadinessGate": {
@@ -3744,9 +3579,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "conditionType"
-        ],
+        "required": ["conditionType"],
         "type": "object"
       },
       "io.k8s.api.core.v1.PodResourceClaim": {
@@ -3766,9 +3599,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "type": "object"
       },
       "io.k8s.api.core.v1.PodSchedulingGate": {
@@ -3780,9 +3611,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "type": "object"
       },
       "io.k8s.api.core.v1.PodSecurityContext": {
@@ -3908,9 +3737,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "name"
-            ],
+            "x-kubernetes-list-map-keys": ["name"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "name",
             "x-kubernetes-patch-strategy": "merge"
@@ -3942,9 +3769,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "name"
-            ],
+            "x-kubernetes-list-map-keys": ["name"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "name",
             "x-kubernetes-patch-strategy": "merge"
@@ -3960,9 +3785,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "ip"
-            ],
+            "x-kubernetes-list-map-keys": ["ip"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "ip",
             "x-kubernetes-patch-strategy": "merge"
@@ -4002,9 +3825,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "name"
-            ],
+            "x-kubernetes-list-map-keys": ["name"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "name",
             "x-kubernetes-patch-strategy": "merge"
@@ -4020,9 +3841,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "name"
-            ],
+            "x-kubernetes-list-map-keys": ["name"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "name",
             "x-kubernetes-patch-strategy": "merge"
@@ -4092,9 +3911,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "name"
-            ],
+            "x-kubernetes-list-map-keys": ["name"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "name",
             "x-kubernetes-patch-strategy": "merge,retainKeys"
@@ -4130,9 +3947,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "name"
-            ],
+            "x-kubernetes-list-map-keys": ["name"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "name",
             "x-kubernetes-patch-strategy": "merge"
@@ -4194,10 +4009,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "topologyKey",
-              "whenUnsatisfiable"
-            ],
+            "x-kubernetes-list-map-keys": ["topologyKey", "whenUnsatisfiable"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "topologyKey",
             "x-kubernetes-patch-strategy": "merge"
@@ -4213,9 +4025,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "name"
-            ],
+            "x-kubernetes-list-map-keys": ["name"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "name",
             "x-kubernetes-patch-strategy": "merge,retainKeys"
@@ -4229,9 +4039,7 @@
             "description": "WorkloadRef provides a reference to the Workload object that this Pod belongs to. This field is used by the scheduler to identify the PodGroup and apply the correct group scheduling policies. The Workload object referenced by this field may not exist at the time the Pod is created. This field is immutable, but a Workload object with the same name may be recreated with different policies. Doing this during pod scheduling may result in the placement not conforming to the expected policies."
           }
         },
-        "required": [
-          "containers"
-        ],
+        "required": ["containers"],
         "type": "object"
       },
       "io.k8s.api.core.v1.PodTemplateSpec": {
@@ -4275,9 +4083,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "volumeID"
-        ],
+        "required": ["volumeID"],
         "type": "object"
       },
       "io.k8s.api.core.v1.PreferredSchedulingTerm": {
@@ -4299,10 +4105,7 @@
             "type": "integer"
           }
         },
-        "required": [
-          "weight",
-          "preference"
-        ],
+        "required": ["weight", "preference"],
         "type": "object"
       },
       "io.k8s.api.core.v1.Probe": {
@@ -4427,10 +4230,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "registry",
-          "volume"
-        ],
+        "required": ["registry", "volume"],
         "type": "object"
       },
       "io.k8s.api.core.v1.RBDVolumeSource": {
@@ -4482,10 +4282,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "monitors",
-          "image"
-        ],
+        "required": ["monitors", "image"],
         "type": "object"
       },
       "io.k8s.api.core.v1.ResourceClaim": {
@@ -4501,9 +4298,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "type": "object"
       },
       "io.k8s.api.core.v1.ResourceFieldSelector": {
@@ -4527,9 +4322,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "resource"
-        ],
+        "required": ["resource"],
         "type": "object",
         "x-kubernetes-map-type": "atomic"
       },
@@ -4547,9 +4340,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "name"
-            ],
+            "x-kubernetes-list-map-keys": ["name"],
             "x-kubernetes-list-type": "map"
           },
           "limits": {
@@ -4643,11 +4434,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "gateway",
-          "system",
-          "secretRef"
-        ],
+        "required": ["gateway", "system", "secretRef"],
         "type": "object"
       },
       "io.k8s.api.core.v1.SeccompProfile": {
@@ -4663,9 +4450,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "type"
-        ],
+        "required": ["type"],
         "type": "object",
         "x-kubernetes-unions": [
           {
@@ -4709,9 +4494,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "key"
-        ],
+        "required": ["key"],
         "type": "object",
         "x-kubernetes-map-type": "atomic"
       },
@@ -4869,9 +4652,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "path"
-        ],
+        "required": ["path"],
         "type": "object"
       },
       "io.k8s.api.core.v1.SleepAction": {
@@ -4884,9 +4665,7 @@
             "type": "integer"
           }
         },
-        "required": [
-          "seconds"
-        ],
+        "required": ["seconds"],
         "type": "object"
       },
       "io.k8s.api.core.v1.StorageOSVolumeSource": {
@@ -4933,10 +4712,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "value"
-        ],
+        "required": ["name", "value"],
         "type": "object"
       },
       "io.k8s.api.core.v1.TCPSocketAction": {
@@ -4955,9 +4731,7 @@
             "description": "Number or name of the port to access on the container. Number must be in the range 1 to 65535. Name must be an IANA_SVC_NAME."
           }
         },
-        "required": [
-          "port"
-        ],
+        "required": ["port"],
         "type": "object"
       },
       "io.k8s.api.core.v1.Toleration": {
@@ -5037,11 +4811,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "maxSkew",
-          "topologyKey",
-          "whenUnsatisfiable"
-        ],
+        "required": ["maxSkew", "topologyKey", "whenUnsatisfiable"],
         "type": "object"
       },
       "io.k8s.api.core.v1.TypedLocalObjectReference": {
@@ -5062,10 +4832,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "kind",
-          "name"
-        ],
+        "required": ["kind", "name"],
         "type": "object",
         "x-kubernetes-map-type": "atomic"
       },
@@ -5091,10 +4858,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "kind",
-          "name"
-        ],
+        "required": ["kind", "name"],
         "type": "object"
       },
       "io.k8s.api.core.v1.Volume": {
@@ -5346,9 +5110,7 @@
             "description": "vsphereVolume represents a vSphere volume attached and mounted on kubelets host machine. Deprecated: VsphereVolume is deprecated. All operations for the in-tree vsphereVolume type are redirected to the csi.vsphere.vmware.com CSI driver."
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "type": "object"
       },
       "io.k8s.api.core.v1.VolumeDevice": {
@@ -5365,10 +5127,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "devicePath"
-        ],
+        "required": ["name", "devicePath"],
         "type": "object"
       },
       "io.k8s.api.core.v1.VolumeMount": {
@@ -5405,10 +5164,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "mountPath"
-        ],
+        "required": ["name", "mountPath"],
         "type": "object"
       },
       "io.k8s.api.core.v1.VolumeProjection": {
@@ -5506,9 +5262,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "volumePath"
-        ],
+        "required": ["volumePath"],
         "type": "object"
       },
       "io.k8s.api.core.v1.WeightedPodAffinityTerm": {
@@ -5530,10 +5284,7 @@
             "type": "integer"
           }
         },
-        "required": [
-          "weight",
-          "podAffinityTerm"
-        ],
+        "required": ["weight", "podAffinityTerm"],
         "type": "object"
       },
       "io.k8s.api.core.v1.WindowsSecurityContextOptions": {
@@ -5576,10 +5327,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "podGroup"
-        ],
+        "required": ["name", "podGroup"],
         "type": "object"
       },
       "io.k8s.apimachinery.pkg.api.resource.Quantity": {
@@ -5655,13 +5403,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "singularName",
-          "namespaced",
-          "kind",
-          "verbs"
-        ],
+        "required": ["name", "singularName", "namespaced", "kind", "verbs"],
         "type": "object"
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList": {
@@ -5694,10 +5436,7 @@
             "x-kubernetes-list-type": "atomic"
           }
         },
-        "required": [
-          "groupVersion",
-          "resources"
-        ],
+        "required": ["groupVersion", "resources"],
         "type": "object",
         "x-kubernetes-group-version-kind": [
           {
@@ -6122,10 +5861,7 @@
             "x-kubernetes-list-type": "atomic"
           }
         },
-        "required": [
-          "key",
-          "operator"
-        ],
+        "required": ["key", "operator"],
         "type": "object"
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta": {
@@ -6284,9 +6020,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "uid"
-            ],
+            "x-kubernetes-list-map-keys": ["uid"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "uid",
             "x-kubernetes-patch-strategy": "merge"
@@ -6338,12 +6072,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "apiVersion",
-          "kind",
-          "name",
-          "uid"
-        ],
+        "required": ["apiVersion", "kind", "name", "uid"],
         "type": "object",
         "x-kubernetes-map-type": "atomic"
       },
@@ -6499,10 +6228,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "type",
-          "object"
-        ],
+        "required": ["type", "object"],
         "type": "object",
         "x-kubernetes-group-version-kind": [
           {
@@ -6883,9 +6609,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ]
+        "tags": ["apps_v1"]
       }
     },
     "/apis/apps/v1/controllerrevisions": {
@@ -6937,9 +6661,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -7098,9 +6820,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -7259,9 +6979,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -7533,9 +7251,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -7683,9 +7399,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -7836,9 +7550,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -7962,9 +7674,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -8005,9 +7715,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -8172,9 +7880,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -8279,9 +7985,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -8452,9 +8156,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -8602,9 +8304,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -8755,9 +8455,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -8881,9 +8579,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -8924,9 +8620,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -9091,9 +8785,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -9198,9 +8890,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -9243,9 +8933,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -9410,9 +9098,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -9517,9 +9203,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -9690,9 +9374,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -9840,9 +9522,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -9993,9 +9673,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -10119,9 +9797,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -10162,9 +9838,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -10329,9 +10003,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -10436,9 +10108,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -10481,9 +10151,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "autoscaling",
@@ -10648,9 +10316,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "autoscaling",
@@ -10755,9 +10421,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "autoscaling",
@@ -10800,9 +10464,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -10967,9 +10629,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -11074,9 +10734,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -11247,9 +10905,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -11397,9 +11053,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -11550,9 +11204,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -11676,9 +11328,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -11719,9 +11369,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -11886,9 +11534,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -11993,9 +11639,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -12038,9 +11682,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "autoscaling",
@@ -12205,9 +11847,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "autoscaling",
@@ -12312,9 +11952,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "autoscaling",
@@ -12357,9 +11995,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -12524,9 +12160,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -12631,9 +12265,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -12804,9 +12436,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -12954,9 +12584,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -13107,9 +12735,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -13233,9 +12859,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -13276,9 +12900,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -13443,9 +13065,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -13550,9 +13170,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -13595,9 +13213,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "autoscaling",
@@ -13762,9 +13378,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "autoscaling",
@@ -13869,9 +13483,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "autoscaling",
@@ -13914,9 +13526,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -14081,9 +13691,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -14188,9 +13796,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -14248,9 +13854,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -14409,9 +14013,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -14570,9 +14172,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "watchlist",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -14731,9 +14331,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "watchlist",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -14892,9 +14490,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "watchlist",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -15053,9 +14649,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "watchlist",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -15224,9 +14818,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "watch",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -15405,9 +14997,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "watchlist",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -15576,9 +15166,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "watch",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -15757,9 +15345,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "watchlist",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -15928,9 +15514,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "watch",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -16109,9 +15693,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "watchlist",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -16280,9 +15862,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "watch",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -16461,9 +16041,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "watchlist",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -16632,9 +16210,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "watch",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -16813,9 +16389,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "watchlist",
         "x-kubernetes-group-version-kind": {
           "group": "apps",
@@ -16974,9 +16548,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "apps_v1"
-        ],
+        "tags": ["apps_v1"],
         "x-kubernetes-action": "watchlist",
         "x-kubernetes-group-version-kind": {
           "group": "apps",

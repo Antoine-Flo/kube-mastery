@@ -94,7 +94,10 @@ const main = (): void => {
     )
     const simulationComparable = stripDynamicAgeValuesForParity(
       normalizeForParityMatch(
-        normalizeKubectlCommandStdoutForParity(command, normalizedSimulationIo.stdout)
+        normalizeKubectlCommandStdoutForParity(
+          command,
+          normalizedSimulationIo.stdout
+        )
       )
     )
     const kindComparable = stripDynamicAgeValuesForParity(
@@ -106,7 +109,10 @@ const main = (): void => {
     const sameStdout = simulationComparable === kindComparable
     const sameStderr =
       normalizeForParityMatch(
-        normalizeKubectlCommandStderrForParity(command, normalizedSimulationIo.stderr)
+        normalizeKubectlCommandStderrForParity(
+          command,
+          normalizedSimulationIo.stderr
+        )
       ) ===
       normalizeForParityMatch(
         normalizeKubectlCommandStderrForParity(command, normalizedKindIo.stderr)
@@ -124,7 +130,9 @@ const main = (): void => {
       printResultPayload('kind', kindResult)
       if (!matched) {
         console.log('\n[normalized:simulation:stdout]')
-        console.log(simulationComparable.length > 0 ? simulationComparable : '(empty)')
+        console.log(
+          simulationComparable.length > 0 ? simulationComparable : '(empty)'
+        )
         console.log('\n[normalized:kind:stdout]')
         console.log(kindComparable.length > 0 ? kindComparable : '(empty)')
       }

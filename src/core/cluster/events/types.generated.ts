@@ -696,7 +696,8 @@ export const createClusterEventMetadata = (
   correlationId: crypto.randomUUID()
 })
 
-export const createClusterEventTimestamp = (): string => new Date().toISOString()
+export const createClusterEventTimestamp = (): string =>
+  new Date().toISOString()
 
 export const createPodCreatedEvent = (
   pod: ClusterResourceTypeByKind['Pod'],
@@ -1422,7 +1423,12 @@ export const createPersistentVolumeClaimUpdatedEvent = (
   type: 'PersistentVolumeClaimUpdated',
   timestamp: createClusterEventTimestamp(),
   metadata: createClusterEventMetadata(source),
-  payload: { name, namespace, persistentVolumeClaim, previousPersistentVolumeClaim }
+  payload: {
+    name,
+    namespace,
+    persistentVolumeClaim,
+    previousPersistentVolumeClaim
+  }
 })
 
 export const createNamespaceCreatedEvent = (

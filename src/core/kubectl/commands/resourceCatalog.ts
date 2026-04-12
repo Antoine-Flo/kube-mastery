@@ -72,7 +72,10 @@ export const resolveUniqueKubectlResourceKindAllowlist = (
 export const resolveUniqueKubectlResourceKind = (
   prefix: string
 ): KubectlResource | null => {
-  return resolveUniqueKubectlResourceKindAllowlist(prefix, KUBECTL_RESOURCE_KINDS)
+  return resolveUniqueKubectlResourceKindAllowlist(
+    prefix,
+    KUBECTL_RESOURCE_KINDS
+  )
 }
 
 export const isSupportedResourceKind = (kind: string): kind is ResourceKind => {
@@ -521,7 +524,8 @@ const validateGatewayApiReferences = (
       exists: boolean
     }> = []
     for (const parentRef of parentRefs) {
-      const parentNamespace = parentRef.namespace ?? httpRoute.metadata.namespace
+      const parentNamespace =
+        parentRef.namespace ?? httpRoute.metadata.namespace
       const gatewayResult = apiServer.findResource(
         'Gateway',
         parentRef.name,
@@ -533,7 +537,9 @@ const validateGatewayApiReferences = (
         exists: gatewayResult.ok
       })
     }
-    return success(withHTTPRouteRuntimeStatus(httpRoute, parentRefsWithResolution))
+    return success(
+      withHTTPRouteRuntimeStatus(httpRoute, parentRefsWithResolution)
+    )
   }
 
   return success(resource)

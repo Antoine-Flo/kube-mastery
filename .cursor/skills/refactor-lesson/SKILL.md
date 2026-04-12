@@ -36,6 +36,7 @@ description: Refactors a KubeMastery course lesson to apply all pedagogical prin
 ## Checking your work
 
 After writing, verify:
+
 - No `## Hands-On Practice` section remains.
 - Every `:::quiz` block has `**Answer:**` to split question from reveal.
 - At least one `:::warning` with a failure case.

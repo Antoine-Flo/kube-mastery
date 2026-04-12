@@ -55,11 +55,11 @@ Events have two types: `Normal` and `Warning`. Normal events are informational m
 
 @@@
 graph TD
-    A[Something happens<br/>in the cluster] --> B{Is it expected?}
-    B -- yes --> C[Normal Event<br/>e.g. Scheduled, Pulled]
-    B -- no --> D[Warning Event<br/>e.g. BackOff, FailedMount]
-    C --> E[kubectl get events]
-    D --> E
+A[Something happens<br/>in the cluster] --> B{Is it expected?}
+B -- yes --> C[Normal Event<br/>e.g. Scheduled, Pulled]
+B -- no --> D[Warning Event<br/>e.g. BackOff, FailedMount]
+C --> E[kubectl get events]
+D --> E
 @@@
 
 The `reason` field is a short machine-readable label. The most important ones to recognize:

@@ -24,26 +24,26 @@ import { parseLeaseManifest } from '../../cluster/ressources/Lease'
 import { parseStorageClassManifest } from '../../cluster/ressources/StorageClass'
 
 export type YamlSupportedKind =
-  | "Pod"
-  | "ConfigMap"
-  | "Secret"
-  | "Node"
-  | "ReplicaSet"
-  | "Deployment"
-  | "DaemonSet"
-  | "StatefulSet"
-  | "Service"
-  | "Event"
-  | "Ingress"
-  | "IngressClass"
-  | "NetworkPolicy"
-  | "GatewayClass"
-  | "Gateway"
-  | "HTTPRoute"
-  | "PersistentVolume"
-  | "PersistentVolumeClaim"
-  | "Lease"
-  | "StorageClass"
+  | 'Pod'
+  | 'ConfigMap'
+  | 'Secret'
+  | 'Node'
+  | 'ReplicaSet'
+  | 'Deployment'
+  | 'DaemonSet'
+  | 'StatefulSet'
+  | 'Service'
+  | 'Event'
+  | 'Ingress'
+  | 'IngressClass'
+  | 'NetworkPolicy'
+  | 'GatewayClass'
+  | 'Gateway'
+  | 'HTTPRoute'
+  | 'PersistentVolume'
+  | 'PersistentVolumeClaim'
+  | 'Lease'
+  | 'StorageClass'
 
 export type ParsedYamlResource =
   | ClusterResourceTypeByKind['Pod']
@@ -68,26 +68,26 @@ export type ParsedYamlResource =
   | ClusterResourceTypeByKind['StorageClass']
 
 export const YAML_SUPPORTED_RESOURCE_KINDS: YamlSupportedKind[] = [
-  "Pod",
-  "ConfigMap",
-  "Secret",
-  "Node",
-  "ReplicaSet",
-  "Deployment",
-  "DaemonSet",
-  "StatefulSet",
-  "Service",
-  "Event",
-  "Ingress",
-  "IngressClass",
-  "NetworkPolicy",
-  "GatewayClass",
-  "Gateway",
-  "HTTPRoute",
-  "PersistentVolume",
-  "PersistentVolumeClaim",
-  "Lease",
-  "StorageClass"
+  'Pod',
+  'ConfigMap',
+  'Secret',
+  'Node',
+  'ReplicaSet',
+  'Deployment',
+  'DaemonSet',
+  'StatefulSet',
+  'Service',
+  'Event',
+  'Ingress',
+  'IngressClass',
+  'NetworkPolicy',
+  'GatewayClass',
+  'Gateway',
+  'HTTPRoute',
+  'PersistentVolume',
+  'PersistentVolumeClaim',
+  'Lease',
+  'StorageClass'
 ]
 
 export const MANIFEST_PARSERS: Record<

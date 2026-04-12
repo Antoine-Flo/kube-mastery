@@ -187,21 +187,33 @@ const deriveGenericContainerUsage = (
   const phaseWeight = normalizePodPhaseWeight(pod)
   const requestedCpuMilli = parseCpuToMilli(container.resources?.requests?.cpu)
   const limitedCpuMilli = parseCpuToMilli(container.resources?.limits?.cpu)
-  const requestedMemoryBytes = parseMemoryToBytes(container.resources?.requests?.memory)
-  const limitedMemoryBytes = parseMemoryToBytes(container.resources?.limits?.memory)
+  const requestedMemoryBytes = parseMemoryToBytes(
+    container.resources?.requests?.memory
+  )
+  const limitedMemoryBytes = parseMemoryToBytes(
+    container.resources?.limits?.memory
+  )
 
   const cpuFromRequests = Math.floor(requestedCpuMilli * 0.08 * phaseWeight)
   const cpuFromLimits = Math.floor(limitedCpuMilli * 0.05 * phaseWeight)
-  const memoryFromRequests = Math.floor(requestedMemoryBytes * 0.55 * phaseWeight)
+  const memoryFromRequests = Math.floor(
+    requestedMemoryBytes * 0.55 * phaseWeight
+  )
   const memoryFromLimits = Math.floor(limitedMemoryBytes * 0.45 * phaseWeight)
   const minCpuForPhase =
     phaseWeight < 1 ? MIN_PENDING_POD_CPU_MILLI : MIN_RUNNING_POD_CPU_MILLI
   const minMemoryForPhase =
-    phaseWeight < 1 ? MIN_PENDING_POD_MEMORY_BYTES : MIN_RUNNING_POD_MEMORY_BYTES
+    phaseWeight < 1
+      ? MIN_PENDING_POD_MEMORY_BYTES
+      : MIN_RUNNING_POD_MEMORY_BYTES
 
   return {
     cpuMilli: Math.max(minCpuForPhase, cpuFromRequests, cpuFromLimits),
-    memoryBytes: Math.max(minMemoryForPhase, memoryFromRequests, memoryFromLimits)
+    memoryBytes: Math.max(
+      minMemoryForPhase,
+      memoryFromRequests,
+      memoryFromLimits
+    )
   }
 }
 
@@ -285,10 +297,12 @@ const toNodeMetrics = (
   }, 0)
 
   const allocatableCpuMilli = parseCpuToMilli(node.status.allocatable?.cpu)
-  const allocatableMemoryBytes = parseMemoryToBytes(node.status.allocatable?.memory)
+  const allocatableMemoryBytes = parseMemoryToBytes(
+    node.status.allocatable?.memory
+  )
   const isControlPlaneNode =
-    node.metadata.labels?.['node-role.kubernetes.io/control-plane'] !== undefined ||
-    node.metadata.name.includes('control-plane')
+    node.metadata.labels?.['node-role.kubernetes.io/control-plane'] !==
+      undefined || node.metadata.name.includes('control-plane')
   const cpuWithOverhead = isControlPlaneNode
     ? podCpuMilli + CONTROL_PLANE_NODE_SYSTEM_CPU_MILLI
     : podCpuMilli + WORKER_NODE_SYSTEM_CPU_MILLI

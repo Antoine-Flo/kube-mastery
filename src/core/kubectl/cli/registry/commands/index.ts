@@ -150,7 +150,11 @@ const createIngressCommand = createLeafCommand({
   short: 'Create an ingress from imperative flags',
   handlerId: 'create',
   flags: [
-    { kind: 'stringArray', name: 'rule', description: 'Host/path backend rule' },
+    {
+      kind: 'stringArray',
+      name: 'rule',
+      description: 'Host/path backend rule'
+    },
     { kind: 'string', name: 'class', description: 'Ingress class name' },
     {
       kind: 'string',
@@ -799,7 +803,9 @@ const topPodsCommand = createLeafCommand({
   use: 'top pods [NAME]',
   short: 'Display resource (CPU/memory) usage of pods',
   handlerId: 'top-pods',
-  flags: [{ kind: 'string', name: 'selector', short: 'l', description: 'Selector' }]
+  flags: [
+    { kind: 'string', name: 'selector', short: 'l', description: 'Selector' }
+  ]
 })
 
 const topPodCommand = createLeafCommand({
@@ -807,7 +813,9 @@ const topPodCommand = createLeafCommand({
   use: 'top pod [NAME]',
   short: 'Display resource (CPU/memory) usage of pods',
   handlerId: 'top-pods',
-  flags: [{ kind: 'string', name: 'selector', short: 'l', description: 'Selector' }]
+  flags: [
+    { kind: 'string', name: 'selector', short: 'l', description: 'Selector' }
+  ]
 })
 
 const topNodesCommand = createLeafCommand({
@@ -815,7 +823,9 @@ const topNodesCommand = createLeafCommand({
   use: 'top nodes [NAME]',
   short: 'Display resource (CPU/memory) usage of nodes',
   handlerId: 'top-nodes',
-  flags: [{ kind: 'string', name: 'selector', short: 'l', description: 'Selector' }]
+  flags: [
+    { kind: 'string', name: 'selector', short: 'l', description: 'Selector' }
+  ]
 })
 
 const topNodeCommand = createLeafCommand({
@@ -823,7 +833,9 @@ const topNodeCommand = createLeafCommand({
   use: 'top node [NAME]',
   short: 'Display resource (CPU/memory) usage of nodes',
   handlerId: 'top-nodes',
-  flags: [{ kind: 'string', name: 'selector', short: 'l', description: 'Selector' }]
+  flags: [
+    { kind: 'string', name: 'selector', short: 'l', description: 'Selector' }
+  ]
 })
 
 const topCommand = command({

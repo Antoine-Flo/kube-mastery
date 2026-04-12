@@ -15,10 +15,10 @@ kubectl get namespaces
 
 @@@
 graph TD
-    DEF["default\nWhere resources land\nwithout an explicit -n"]
-    SYS["kube-system\nCluster components\napiserver, scheduler, ..."]
-    PUB["kube-public\nReadable without auth\ncluster-info configmap"]
-    LEASE["kube-node-lease\nLease objects for\nnode heartbeats"]
+DEF["default\nWhere resources land\nwithout an explicit -n"]
+SYS["kube-system\nCluster components\napiserver, scheduler, ..."]
+PUB["kube-public\nReadable without auth\ncluster-info configmap"]
+LEASE["kube-node-lease\nLease objects for\nnode heartbeats"]
 @@@
 
 ## The `default` Namespace
@@ -35,11 +35,12 @@ kubectl get pods
 The Pod appears in `default` because no `-n` flag was given.
 
 :::quiz You create a Deployment without specifying a namespace. Where does it land?
+
 - In `kube-system`, the default namespace for workloads
 - In `default`, the namespace used when `-n` is omitted
 - Kubernetes requires you to specify a namespace before creating any resource
-**Answer:** In `default`. `kube-system` is reserved for cluster components. Kubernetes does not require an explicit namespace; it uses `default` silently.
-:::
+  **Answer:** In `default`. `kube-system` is reserved for cluster components. Kubernetes does not require an explicit namespace; it uses `default` silently.
+  :::
 
 ## The `kube-system` Namespace
 

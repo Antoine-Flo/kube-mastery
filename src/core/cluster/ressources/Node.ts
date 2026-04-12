@@ -156,7 +156,9 @@ export interface NodeConfig extends ClusterScopedNameFactoryConfigBase {
 
 const DEFAULT_NODE_INFO_STRING = ''
 
-const normalizeNodeSystemInfo = (input: NodeSystemInfoInput): NodeSystemInfo => {
+const normalizeNodeSystemInfo = (
+  input: NodeSystemInfoInput
+): NodeSystemInfo => {
   return {
     architecture: input.architecture,
     containerRuntimeVersion: input.containerRuntimeVersion,
@@ -176,10 +178,9 @@ const normalizeNodeStatus = (input: NodeStatusInput): NodeStatus => {
   return {
     ...input,
     nodeInfo: normalizeNodeSystemInfo(input.nodeInfo),
-    daemonEndpoints:
-      input.daemonEndpoints ?? {
-        kubeletEndpoint: { Port: 0 }
-      }
+    daemonEndpoints: input.daemonEndpoints ?? {
+      kubeletEndpoint: { Port: 0 }
+    }
   }
 }
 

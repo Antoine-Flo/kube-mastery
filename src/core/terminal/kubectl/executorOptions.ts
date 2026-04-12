@@ -9,7 +9,7 @@ export const buildKubectlExecutorTerminalOptions = (
   return {
     metricsProvider: context.metricsProvider,
     editorModal: context.editorModal,
-    
+
     onAsyncOutput: (message: string) => {
       if (message.length === 0) {
         return

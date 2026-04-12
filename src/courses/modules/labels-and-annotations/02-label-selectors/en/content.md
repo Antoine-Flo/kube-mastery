@@ -9,17 +9,17 @@ When you create a Deployment, you declare a template for the Pods it should run.
 
 @@@
 graph TD
-    DEP["Deployment\nselector:\n  matchLabels:\n    app: web"]
-    SVC["Service\nselector:\n  app: web"]
-    P1["Pod\napp=web"]
-    P2["Pod\napp=web"]
-    P3["Pod\napp=api"]
-    DEP -->|"manages"| P1
-    DEP -->|"manages"| P2
-    SVC -->|"routes to"| P1
-    SVC -->|"routes to"| P2
-    DEP -->|"ignores"| P3
-    SVC -->|"ignores"| P3
+DEP["Deployment\nselector:\n matchLabels:\n app: web"]
+SVC["Service\nselector:\n app: web"]
+P1["Pod\napp=web"]
+P2["Pod\napp=web"]
+P3["Pod\napp=api"]
+DEP -->|"manages"| P1
+DEP -->|"manages"| P2
+SVC -->|"routes to"| P1
+SVC -->|"routes to"| P2
+DEP -->|"ignores"| P3
+SVC -->|"ignores"| P3
 @@@
 
 Both the Deployment and the Service in the diagram share the same selector. The Deployment manages Pod lifecycle; the Service routes traffic. Neither of them knows the Pod names. They only care about labels.
@@ -46,10 +46,10 @@ And the Pod template labels must include every key-value pair in that selector:
 
 ```yaml
 # illustrative only
-  template:
-    metadata:
-      labels:
-        app: web
+template:
+  metadata:
+    labels:
+      app: web
 ```
 
 Why must they match? Because the Deployment uses the selector to find its own Pods. If the template produced Pods with different labels, the Deployment would never claim them. The API server actually validates this at creation time and rejects the object immediately if `selector.matchLabels` and `template.metadata.labels` are inconsistent.

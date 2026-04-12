@@ -6,7 +6,9 @@ import type { Resource } from '../../../kubectl/commands/types'
 export const extractMetaFromGeneratedClusterEvent = (
   event: ClusterEvent,
   parsedResource: Resource
-): { name: string; namespace: string; labels?: Record<string, string> } | undefined => {
+):
+  | { name: string; namespace: string; labels?: Record<string, string> }
+  | undefined => {
   if (parsedResource === 'pods') {
     if (event.type === 'PodDeleted') {
       return {

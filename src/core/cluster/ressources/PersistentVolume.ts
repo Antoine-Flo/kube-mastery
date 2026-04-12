@@ -16,11 +16,10 @@ export type PersistentVolumePhase =
   | 'Released'
   | 'Failed'
 
-export interface PersistentVolumeSpec
-  extends Pick<
-    K8sPersistentVolumeSpec,
-    'capacity' | 'accessModes' | 'storageClassName' | 'claimRef'
-  > {
+export interface PersistentVolumeSpec extends Pick<
+  K8sPersistentVolumeSpec,
+  'capacity' | 'accessModes' | 'storageClassName' | 'claimRef'
+> {
   capacity: {
     storage: string
   }
@@ -39,7 +38,10 @@ export interface PersistentVolumeSpec
   }
 }
 
-export type PersistentVolumeStatus = Pick<K8sPersistentVolumeStatus, 'phase'> & {
+export type PersistentVolumeStatus = Pick<
+  K8sPersistentVolumeStatus,
+  'phase'
+> & {
   phase: PersistentVolumePhase
 }
 

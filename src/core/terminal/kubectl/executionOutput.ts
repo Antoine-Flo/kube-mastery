@@ -1,9 +1,7 @@
 import type { ExecutionResult } from '../../shared/result'
 import type { CommandContext } from '../core/CommandContext'
 
-export const restorePromptAfterStreamStop = (
-  context: CommandContext
-): void => {
+export const restorePromptAfterStreamStop = (context: CommandContext): void => {
   context.output.showCursor()
   context.renderer.write(context.shellContextStack.getCurrentPrompt())
   context.renderer.focus()

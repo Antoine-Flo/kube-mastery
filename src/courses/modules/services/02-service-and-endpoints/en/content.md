@@ -19,15 +19,15 @@ kube-proxy runs on every node and watches the Endpoints object. Whenever Endpoin
 
 @@@
 graph TD
-    SVC["Service: web-svc\nselector: app=web"]
-    EP["Endpoints: web-svc\n10.244.0.5:80\n10.244.0.6:80"]
-    P1["Pod: app=web\nReady\nIP: 10.244.0.5"]
-    P2["Pod: app=web\nReady\nIP: 10.244.0.6"]
-    P3["Pod: app=web\nNot Ready\nIP: 10.244.0.7"]
-    SVC --> EP
-    EP --> P1
-    EP --> P2
-    P3 -.->|"excluded: not Ready"| EP
+SVC["Service: web-svc\nselector: app=web"]
+EP["Endpoints: web-svc\n10.244.0.5:80\n10.244.0.6:80"]
+P1["Pod: app=web\nReady\nIP: 10.244.0.5"]
+P2["Pod: app=web\nReady\nIP: 10.244.0.6"]
+P3["Pod: app=web\nNot Ready\nIP: 10.244.0.7"]
+SVC --> EP
+EP --> P1
+EP --> P2
+P3 -.->|"excluded: not Ready"| EP
 @@@
 
 Create the Service for the `web` Deployment you created in the previous lesson:
@@ -48,7 +48,6 @@ spec:
     - port: 80
       targetPort: 80
 ```
-
 
 ```bash
 kubectl apply -f web-svc.yaml
@@ -87,7 +86,7 @@ The Service spec uses two distinct port fields:
 ```yaml
 # illustrative only
 ports:
-  - port: 80       # port the Service listens on (what clients call)
+  - port: 80 # port the Service listens on (what clients call)
     targetPort: 80 # port on the Pod to forward to (what the container listens on)
 ```
 

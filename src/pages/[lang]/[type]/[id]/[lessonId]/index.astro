@@ -68,7 +68,10 @@ const terminalInteractive = isLessonTerminalInteractive({
   learnableIsFree,
   hasPaidSubscription: auth.hasPaidSubscription
 })
-const terminalLockSecondaryHref = buildTerminalLockSecondaryHref(lang, localePath)
+const terminalLockSecondaryHref = buildTerminalLockSecondaryHref(
+  lang,
+  localePath
+)
 
 const allLessons = overview.content.sections.flatMap((s) =>
   s.modules.flatMap((m) => m.lessons)
@@ -88,7 +91,8 @@ const lessonFrontmatter = (lessonEntry.frontmatter ?? {}) as LessonFrontmatter
 const lessonSeo = buildLessonSeo({
   lessonFrontmatter,
   currentLessonTitle,
-  defaultDescription: overview.shortDescription ?? overview.description ?? undefined,
+  defaultDescription:
+    overview.shortDescription ?? overview.description ?? undefined,
   overviewType: type,
   learnableId: id,
   currentLessonId: lessonId,

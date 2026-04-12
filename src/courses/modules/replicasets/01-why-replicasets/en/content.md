@@ -51,17 +51,17 @@ A ReplicaSet enforces one rule: "there must always be exactly N copies of this P
 
 @@@
 graph TD
-    RS["ReplicaSet\ndesired: 3"]
-    P1["Pod 1\nRunning"]
-    P2["Pod 2\nRunning"]
-    P3["Pod 3\nRunning"]
-    RS --> P1
-    RS --> P2
-    RS --> P3
-    CRASH["Pod 2 crashes"]
-    P4["Pod 4\n(replacement)"]
-    P2 -->|"dies"| CRASH
-    CRASH -->|"RS detects count=2\ncreates replacement"| P4
+RS["ReplicaSet\ndesired: 3"]
+P1["Pod 1\nRunning"]
+P2["Pod 2\nRunning"]
+P3["Pod 3\nRunning"]
+RS --> P1
+RS --> P2
+RS --> P3
+CRASH["Pod 2 crashes"]
+P4["Pod 4\n(replacement)"]
+P2 -->|"dies"| CRASH
+CRASH -->|"RS detects count=2\ncreates replacement"| P4
 @@@
 
 Think of a bare Pod as hiring one person for a critical role with no backup plan. When they quit, the role is empty until someone notices and hires again. A ReplicaSet is like a staffing agency with a standing contract: "keep 3 people in this role at all times. If one leaves, hire another immediately."
@@ -87,4 +87,3 @@ The adoption behavior can be surprising. If you have existing Pods with labels t
 :::
 
 A ReplicaSet is the first self-healing primitive in Kubernetes. It is simpler than a Deployment and more powerful than a bare Pod. In the next lesson, you will write one from scratch, learn the three fields that distinguish it from a Pod manifest, and see the controller act in the simulator.
-

@@ -154,10 +154,16 @@ const matchesResourceFieldSelector = <T extends ResourceWithMetadata>(
   requirement: FieldSelectorRequirement
 ): Result<boolean> => {
   if (resourceType === 'pods') {
-    return matchesPodFieldSelector(resource as PodLikeFieldResource, requirement)
+    return matchesPodFieldSelector(
+      resource as PodLikeFieldResource,
+      requirement
+    )
   }
   if (resourceType === 'events') {
-    return matchesEventFieldSelector(resource as EventLikeFieldResource, requirement)
+    return matchesEventFieldSelector(
+      resource as EventLikeFieldResource,
+      requirement
+    )
   }
   if (requirement.key === 'metadata.name') {
     return success(resource.metadata.name === requirement.value)
@@ -184,7 +190,9 @@ export const applyFieldSelector = <T extends ResourceWithMetadata>(
   if (typeof rawFieldSelectorValue !== 'string') {
     return success(resources)
   }
-  const requirementsResult = parseFieldSelectorRequirements(rawFieldSelectorValue)
+  const requirementsResult = parseFieldSelectorRequirements(
+    rawFieldSelectorValue
+  )
   if (!requirementsResult.ok) {
     return requirementsResult
   }

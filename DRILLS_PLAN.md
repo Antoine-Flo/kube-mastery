@@ -16,12 +16,12 @@ L’ancienne infrastructure s’appelait `tasks` ; le code et les routes utilise
 
 ### Scaffolding progressif (« vanishing cues »)
 
-| Phase | Format | Objectif |
-|---|---|---|
-| **Observé** | Solution complète lisible | Encoder le pattern complet |
-| **Guidé** | Solution visible, l’utilisateur retape | Activer la mémoire motrice |
-| **Partiel** | Commandes avec blancs | Forcer le rappel actif (non implémenté comme format dédié) |
-| **Libre** | Énoncé seul, aucune aide | Test de rappel total (**mode exam** dans l’app) |
+| Phase       | Format                                 | Objectif                                                   |
+| ----------- | -------------------------------------- | ---------------------------------------------------------- |
+| **Observé** | Solution complète lisible              | Encoder le pattern complet                                 |
+| **Guidé**   | Solution visible, l’utilisateur retape | Activer la mémoire motrice                                 |
+| **Partiel** | Commandes avec blancs                  | Forcer le rappel actif (non implémenté comme format dédié) |
+| **Libre**   | Énoncé seul, aucune aide               | Test de rappel total (**mode exam** dans l’app)            |
 
 ### Point d’entrée : choix de mode
 
@@ -41,13 +41,13 @@ Rejouer avec des valeurs mutées (namespace, image, labels) pour de l’interlea
 
 ### URLs et routes
 
-| Rôle | Exemple (`en`) |
-|---|---|
-| Liste d’un groupe | `/en/drills/{groupId}` |
-| Drill (choix de mode si pas de query) | `/en/drills/{groupId}/{drillId}` |
-| Drill en mode guidé | `/en/drills/{groupId}/{drillId}?mode=guided` |
-| Drill en mode exam | `/en/drills/{groupId}/{drillId}?mode=exam` |
-| Complétion (après « Terminé ») | `/en/drills/{groupId}/{drillId}/complete` |
+| Rôle                                  | Exemple (`en`)                               |
+| ------------------------------------- | -------------------------------------------- |
+| Liste d’un groupe                     | `/en/drills/{groupId}`                       |
+| Drill (choix de mode si pas de query) | `/en/drills/{groupId}/{drillId}`             |
+| Drill en mode guidé                   | `/en/drills/{groupId}/{drillId}?mode=guided` |
+| Drill en mode exam                    | `/en/drills/{groupId}/{drillId}?mode=exam`   |
+| Complétion (après « Terminé »)        | `/en/drills/{groupId}/{drillId}/complete`    |
 
 Redirections HTTP : `/en/tasks/[...path]` et `/fr/tasks/[...path]` vers les chemins équivalents sous `/drills/` (voir `astro.config.mjs`).
 
@@ -55,13 +55,13 @@ Redirections HTTP : `/en/tasks/[...path]` et `/fr/tasks/[...path]` vers les chem
 
 ### Structure des dossiers
 
-| Chemin | Rôle |
-|---|---|
-| `src/content/drills/` | Couche contenu : `facade`, `glob-adapter`, `domain`, `types`, `port`, `constants` |
-| `src/courses/drills/{groupId}/` | Données éditoriales : `group.ts`, `{drillDir}/en\|fr/content.md` |
-| `src/pages/[lang]/drills/[groupId]/` | Liste du groupe (`index.astro`) |
-| `src/pages/[lang]/drills/[groupId]/[drillId]/` | Page drill (`index.astro`) et page fin (`complete.astro`) |
-| `tests/unit/content/drills/` | Tests du domaine (ex. `domain.test.ts`) |
+| Chemin                                         | Rôle                                                                              |
+| ---------------------------------------------- | --------------------------------------------------------------------------------- |
+| `src/content/drills/`                          | Couche contenu : `facade`, `glob-adapter`, `domain`, `types`, `port`, `constants` |
+| `src/courses/drills/{groupId}/`                | Données éditoriales : `group.ts`, `{drillDir}/en\|fr/content.md`                  |
+| `src/pages/[lang]/drills/[groupId]/`           | Liste du groupe (`index.astro`)                                                   |
+| `src/pages/[lang]/drills/[groupId]/[drillId]/` | Page drill (`index.astro`) et page fin (`complete.astro`)                         |
+| `tests/unit/content/drills/`                   | Tests du domaine (ex. `domain.test.ts`)                                           |
 
 Globs Vite : préfixe de chemins `../../courses/drills/` ; segment de répertoire **`drills`** dans les chemins logiques (pas `tasks`).
 
@@ -113,9 +113,9 @@ Champs typiques : `title` (en/fr), `description`, `environment` (sélection du s
 
 Décision initiale : renommer mécaniquement `tasks` → `drills`, puis ajouter modes, solutions markdown, timer et objectifs. Le tableau ci-dessous reste une trace du mapping des symboles (état **après** renommage, pour lecture archive).
 
-| Ancien (`tasks`) | Actuel (`drills`) |
-|---|---|
-| `TaskGroupOverview`, `getTaskContent`, … | `DrillGroupOverview`, `getDrillContent`, … |
-| `localePath('/tasks/...')` | `localePath('/drills/...')` |
-| `data-task-*` | `data-drill-*` |
-| Clés `taskComplete_*`, `tasks_doneButton` | `drillComplete_*`, `drills_*` |
+| Ancien (`tasks`)                          | Actuel (`drills`)                          |
+| ----------------------------------------- | ------------------------------------------ |
+| `TaskGroupOverview`, `getTaskContent`, …  | `DrillGroupOverview`, `getDrillContent`, … |
+| `localePath('/tasks/...')`                | `localePath('/drills/...')`                |
+| `data-task-*`                             | `data-drill-*`                             |
+| Clés `taskComplete_*`, `tasks_doneButton` | `drillComplete_*`, `drills_*`              |

@@ -1,44 +1,44 @@
-title: "Schedule With PriorityClass"
+title: 'Schedule With PriorityClass'
 isDraft: true
-description: "Create a PriorityClass and run a pod using explicit scheduling priority."
+description: 'Create a PriorityClass and run a pod using explicit scheduling priority.'
 tag: cluster_architecture_installation
-environment: "minimal"
+environment: 'minimal'
 ckaTargetMinutes: 6
 tasks:
-  - task: "Create PriorityClass manifest"
+  - task: 'Create PriorityClass manifest'
     command: "kubectl create priorityclass high-priority --value=100000 --global-default=false --description='High priority workloads'"
-    explanation: "Defines scheduler priority used during contention and preemption scenarios."
+    explanation: 'Defines scheduler priority used during contention and preemption scenarios.'
     validation:
       assertions:
-        - type: "clusterFieldEquals"
-          kind: "Pod"
-          namespace: "app"
-          name: "priority-pod"
-          path: "{.spec.priorityClassName}"
-          value: "high-priority"
-          onFail: "La PriorityClass `high-priority` est absente."
+        - type: 'clusterFieldEquals'
+          kind: 'Pod'
+          namespace: 'app'
+          name: 'priority-pod'
+          path: '{.spec.priorityClassName}'
+          value: 'high-priority'
+          onFail: 'La PriorityClass `high-priority` est absente.'
 
-  - task: "Generate pod manifest using that PriorityClass"
-    command: "kubectl run priority-pod -n app --image=nginx:1.27 --dry-run=client -o yaml > priority-pod.yaml"
-    explanation: "Generate base manifest, then set `spec.priorityClassName: high-priority`."
+  - task: 'Generate pod manifest using that PriorityClass'
+    command: 'kubectl run priority-pod -n app --image=nginx:1.27 --dry-run=client -o yaml > priority-pod.yaml'
+    explanation: 'Generate base manifest, then set `spec.priorityClassName: high-priority`.'
 
-  - task: "Apply the pod manifest"
-    command: "kubectl apply -f priority-pod.yaml"
-    explanation: "Creates workload with explicit priority."
+  - task: 'Apply the pod manifest'
+    command: 'kubectl apply -f priority-pod.yaml'
+    explanation: 'Creates workload with explicit priority.'
 
-  - task: "Verify pod has expected class and numeric priority"
+  - task: 'Verify pod has expected class and numeric priority'
     command: "kubectl get pod priority-pod -n app -o jsonpath='{.spec.priorityClassName} {.spec.priority}'"
-    explanation: "Final check should return `high-priority` and a high numeric value."
+    explanation: 'Final check should return `high-priority` and a high numeric value.'
     validation:
       assertions:
-        - type: "clusterFieldEquals"
-          kind: "Pod"
-          namespace: "app"
-          name: "priority-pod"
-          path: "{.spec.priorityClassName}"
-          value: "high-priority"
+        - type: 'clusterFieldEquals'
+          kind: 'Pod'
+          namespace: 'app'
+          name: 'priority-pod'
+          path: '{.spec.priorityClassName}'
+          value: 'high-priority'
           onFail: "Le pod `priority-pod` n'utilise pas la PriorityClass attendue."
 
-  - task: "Confirm PriorityClass value and default flag"
+  - task: 'Confirm PriorityClass value and default flag'
     command: "kubectl get priorityclass high-priority -o jsonpath='{.value} {.globalDefault}'"
-    explanation: "Expected output confirms correct class value and non-default behavior."
+    explanation: 'Expected output confirms correct class value and non-default behavior.'

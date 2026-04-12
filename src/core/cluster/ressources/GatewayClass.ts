@@ -41,7 +41,9 @@ interface GatewayClassConfig extends ClusterScopedNameFactoryConfigBase {
   status?: GatewayClass['status']
 }
 
-export const createGatewayClass = (config: GatewayClassConfig): GatewayClass => {
+export const createGatewayClass = (
+  config: GatewayClassConfig
+): GatewayClass => {
   const gatewayClass: GatewayClass = {
     apiVersion: 'gateway.networking.k8s.io/v1',
     kind: 'GatewayClass',

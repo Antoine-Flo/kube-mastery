@@ -9,10 +9,10 @@ You want to create a Pod running nginx. You have two options: type a single comm
 
 @@@
 graph LR
-    IMP["Imperative\nkubectl run / create\nOne-time order\nNo file, no history"]
-    DEC["Declarative\nkubectl apply -f\nIdempotent\nFile = source of truth"]
-    GIT["Git repository\n(tracks changes over time)"]
-    DEC --> GIT
+IMP["Imperative\nkubectl run / create\nOne-time order\nNo file, no history"]
+DEC["Declarative\nkubectl apply -f\nIdempotent\nFile = source of truth"]
+GIT["Git repository\n(tracks changes over time)"]
+DEC --> GIT
 @@@
 
 ## The imperative approach
@@ -57,7 +57,6 @@ kubectl apply -f web-pod.yaml
 
 Think of it like the difference between calling a restaurant to dictate your order versus sending a pre-filled order form that the restaurant keeps on file and can re-execute identically. The imperative call is quicker, but the form is reproducible.
 
-
 ## Why `kubectl apply` is idempotent
 
 Why does running `kubectl apply` twice on the same file not cause an error? Because `kubectl apply` sends the entire manifest to the API server, which computes a diff against the object that already exists and applies only what changed. If nothing changed, Kubernetes responds with `unchanged` and does nothing.
@@ -76,11 +75,12 @@ The output reads `pod/web unchanged`. No new Pod was created, no error was throw
 
 :::quiz
 You apply a manifest for the first time and a Pod is created. You update the image field in the file and run `kubectl apply -f web-pod.yaml` again. What happens?
+
 - `kubectl apply` fails because the Pod already exists
 - `kubectl apply` updates the Pod in place if the field is mutable, or reports an error if the field is immutable
 - `kubectl apply` creates a second Pod with the updated image
-**Answer:** The second option. `kubectl apply` attempts to update the existing object. For a Pod, the image field is actually immutable after creation, so Kubernetes would reject the change with a validation error. The correct workflow in that case is `kubectl delete pod web` followed by `kubectl apply -f web-pod.yaml`. For a Deployment, `kubectl apply` triggers a clean rolling update automatically.
-:::
+  **Answer:** The second option. `kubectl apply` attempts to update the existing object. For a Pod, the image field is actually immutable after creation, so Kubernetes would reject the change with a validation error. The correct workflow in that case is `kubectl delete pod web` followed by `kubectl apply -f web-pod.yaml`. For a Deployment, `kubectl apply` triggers a clean rolling update automatically.
+  :::
 
 ## When imperative commands are appropriate
 

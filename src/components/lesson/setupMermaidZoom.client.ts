@@ -7,7 +7,9 @@ let mermaidObserverRoot: HTMLElement | null = null
 let mermaidThemeObserver: MutationObserver | null = null
 
 function ensureMermaidZoomModal() {
-  const existing = document.querySelector('.mermaid-zoom-modal') as HTMLElement | null
+  const existing = document.querySelector(
+    '.mermaid-zoom-modal'
+  ) as HTMLElement | null
   if (existing) {
     return existing
   }
@@ -35,7 +37,9 @@ function ensureMermaidZoomModal() {
 }
 
 function closeMermaidZoomModal() {
-  const modal = document.querySelector('.mermaid-zoom-modal') as HTMLElement | null
+  const modal = document.querySelector(
+    '.mermaid-zoom-modal'
+  ) as HTMLElement | null
   if (!modal) {
     return
   }
@@ -43,8 +47,12 @@ function closeMermaidZoomModal() {
   modal.classList.remove('mermaid-zoom-modal--open')
   modal.setAttribute('aria-hidden', 'true')
 
-  const content = modal.querySelector('.mermaid-zoom-modal__content') as HTMLElement | null
-  const panel = modal.querySelector('.mermaid-zoom-modal__panel') as HTMLElement | null
+  const content = modal.querySelector(
+    '.mermaid-zoom-modal__content'
+  ) as HTMLElement | null
+  const panel = modal.querySelector(
+    '.mermaid-zoom-modal__panel'
+  ) as HTMLElement | null
 
   if (content) {
     content.innerHTML = ''
@@ -62,8 +70,12 @@ function openMermaidZoomModal(sourceContainer: Element) {
   }
 
   const modal = ensureMermaidZoomModal()
-  const content = modal.querySelector('.mermaid-zoom-modal__content') as HTMLElement | null
-  const panel = modal.querySelector('.mermaid-zoom-modal__panel') as HTMLElement | null
+  const content = modal.querySelector(
+    '.mermaid-zoom-modal__content'
+  ) as HTMLElement | null
+  const panel = modal.querySelector(
+    '.mermaid-zoom-modal__panel'
+  ) as HTMLElement | null
   if (!content) {
     return
   }
@@ -80,7 +92,10 @@ function openMermaidZoomModal(sourceContainer: Element) {
   const viewportHeight = Math.max(window.innerHeight, 320)
   const panelHorizontalChrome = 28
   const panelVerticalChrome = 118
-  const availableWidth = Math.max(260, viewportWidth * 0.995 - panelHorizontalChrome)
+  const availableWidth = Math.max(
+    260,
+    viewportWidth * 0.995 - panelHorizontalChrome
+  )
   const availableHeight = Math.max(220, viewportHeight - panelVerticalChrome)
   const scaleByWidth = availableWidth / sourceWidth
   const scaleByHeight = availableHeight / sourceHeight
@@ -138,7 +153,8 @@ function setupMermaidObservers() {
     return
   }
 
-  const shouldResetObserver = !mermaidObserver || mermaidObserverRoot !== observeTarget
+  const shouldResetObserver =
+    !mermaidObserver || mermaidObserverRoot !== observeTarget
   if (shouldResetObserver) {
     if (mermaidObserver) {
       mermaidObserver.disconnect()

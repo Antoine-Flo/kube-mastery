@@ -13,21 +13,21 @@ These are the questions this lesson answers.
 
 @@@
 graph LR
-    subgraph before["Before deny-all"]
-        A["Pod A"] --> B["Pod B"]
-        A --> C["Pod C"]
-        B --> C
-    end
+subgraph before["Before deny-all"]
+A["Pod A"] --> B["Pod B"]
+A --> C["Pod C"]
+B --> C
+end
 @@@
 
 @@@
 graph LR
-    subgraph after["After deny-all + selective allow"]
-        X["Pod api"] -- "allowed" --> Y["Pod db"]
-        X -. "blocked" .-> Z["Pod cache"]
-        W["Pod frontend"] -- "allowed" --> X
-        W -. "blocked" .-> Y
-    end
+subgraph after["After deny-all + selective allow"]
+X["Pod api"] -- "allowed" --> Y["Pod db"]
+X -. "blocked" .-> Z["Pod cache"]
+W["Pod frontend"] -- "allowed" --> X
+W -. "blocked" .-> Y
+end
 @@@
 
 The deny-all pattern is a single policy that locks down an entire namespace in one shot. It uses an empty `podSelector` to match every Pod, and lists both `Ingress` and `Egress` in `policyTypes` with no rules. The result is that all inbound and outbound traffic across every Pod in the namespace is blocked.
@@ -143,9 +143,9 @@ Pod `db` has two NetworkPolicies: one allows ingress from `app=api`, another all
 
 @@@
 graph LR
-    A["Pod: app=api\nnamespace labeled team=backend"] -- "AND - allowed" --> db["Pod: db"]
-    B["Pod: app=api\nnamespace: default (no label)"] -. "blocked" .-> db
-    C["Pod: app=frontend\nnamespace labeled team=backend"] -. "blocked" .-> db
+A["Pod: app=api\nnamespace labeled team=backend"] -- "AND - allowed" --> db["Pod: db"]
+B["Pod: app=api\nnamespace: default (no label)"] -. "blocked" .-> db
+C["Pod: app=frontend\nnamespace labeled team=backend"] -. "blocked" .-> db
 @@@
 
 Namespaces and Pod labels can be combined in the same `from` entry to require both conditions simultaneously. This is the cross-namespace AND pattern: the source Pod must have the right label AND come from the right namespace.
@@ -200,15 +200,15 @@ You need to allow ingress from Pods labeled `role=scraper` that are also in a na
 Each rule in `ingress` or `egress` can specify ports by number and protocol. Both TCP and UDP are supported. Some CNI plugins also support named ports (matching the port name defined in the Pod spec), and port ranges using `endPort`:
 
 ```yaml
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              app: api
-      ports:
-        - protocol: TCP
-          port: 8000
-          endPort: 8080 # illustrative only
+ingress:
+  - from:
+      - podSelector:
+          matchLabels:
+            app: api
+    ports:
+      - protocol: TCP
+        port: 8000
+        endPort: 8080 # illustrative only
 ```
 
 This allows TCP traffic on any port from 8000 to 8080 inclusive. The `endPort` field is only valid when the CNI plugin supports it. Without `endPort`, you list each port individually.

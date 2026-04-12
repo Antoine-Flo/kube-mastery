@@ -98,13 +98,14 @@ What is the security difference between storing a value in a ConfigMap versus a 
 
 @@@
 graph LR
-    CM["ConfigMap<br/>LOG_LEVEL: debug<br/>APP_ENV: staging"]
-    SEC["Secret<br/>API_TOKEN: ●●●●"]
-    POD["Pod<br/>Container"]
+CM["ConfigMap<br/>LOG_LEVEL: debug<br/>APP_ENV: staging"]
+SEC["Secret<br/>API_TOKEN: ●●●●"]
+POD["Pod<br/>Container"]
 
     CM -->|"env: LOG_LEVEL=debug"| POD
     CM -->|"env: APP_ENV=staging"| POD
     SEC -->|"env: API_TOKEN=●●●●"| POD
+
 @@@
 
 The most common injection method is pulling specific keys into environment variables using `valueFrom`. You reference the object by name and the key you want:

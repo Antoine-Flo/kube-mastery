@@ -15,18 +15,18 @@ A Namespace is a virtual partition inside a cluster. Resources in one Namespace 
 
 @@@
 graph TB
-    subgraph default["Namespace: default"]
-        PA["payments: web"]
-        PB["payments: api"]
-    end
-    subgraph catalog["Namespace: catalog"]
-        CA["catalog: web"]
-        CB["catalog: api"]
-    end
-    subgraph ks["Namespace: kube-system"]
-        DNS["coredns"]
-        PROXY["kube-proxy"]
-    end
+subgraph default["Namespace: default"]
+PA["payments: web"]
+PB["payments: api"]
+end
+subgraph catalog["Namespace: catalog"]
+CA["catalog: web"]
+CB["catalog: api"]
+end
+subgraph ks["Namespace: kube-system"]
+DNS["coredns"]
+PROXY["kube-proxy"]
+end
 @@@
 
 List the Namespaces that already exist in your cluster:

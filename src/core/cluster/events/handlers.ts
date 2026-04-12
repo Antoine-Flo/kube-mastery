@@ -48,16 +48,16 @@ type RepoAdapter<TKey extends RepoStateKey> = {
     collection: RepoCollectionByStateKey[TKey],
     name: string,
     namespace: string,
-    updateFn: (resource: RepoResourceByStateKey<TKey>) => RepoResourceByStateKey<TKey>
+    updateFn: (
+      resource: RepoResourceByStateKey<TKey>
+    ) => RepoResourceByStateKey<TKey>
   ) => {
     ok: boolean
     collection?: RepoCollectionByStateKey[TKey]
   }
 }
 
-const createRepoHandler = <TKey extends RepoStateKey>(
-  stateKey: TKey
-) => ({
+const createRepoHandler = <TKey extends RepoStateKey>(stateKey: TKey) => ({
   created: (
     state: ClusterStateData,
     resource: RepoResourceByStateKey<TKey>
@@ -257,7 +257,12 @@ export const handleEventCreated = (
 export const handleEventDeleted = (
   state: ClusterStateData,
   event: Extract<ClusterEvent, { type: 'EventDeleted' }>
-) => repoHandlers.events.deleted(state, event.payload.name, event.payload.namespace)
+) =>
+  repoHandlers.events.deleted(
+    state,
+    event.payload.name,
+    event.payload.namespace
+  )
 
 export const handleEventUpdated = (
   state: ClusterStateData,
@@ -328,45 +333,39 @@ const GENERATED_REPO_EVENT_DEFINITIONS: {
       return [
         [
           createdType,
-          defineClusterEvent(
-            ((state, event) => {
-              return repoHandlers[stateKey].created(
-                state,
-                (event as any).payload[payloadKey]
-              )
-            }) as ClusterEventHandler<ClusterEventType>
-          )
+          defineClusterEvent(((state, event) => {
+            return repoHandlers[stateKey].created(
+              state,
+              (event as any).payload[payloadKey]
+            )
+          }) as ClusterEventHandler<ClusterEventType>)
         ],
         [
           deletedType,
-          defineClusterEvent(
-            ((state, event) => {
-              const namespace = isClusterScoped
-                ? ''
-                : ((event as any).payload.namespace as string)
-              return repoHandlers[stateKey].deleted(
-                state,
-                (event as any).payload.name,
-                namespace
-              )
-            }) as ClusterEventHandler<ClusterEventType>
-          )
+          defineClusterEvent(((state, event) => {
+            const namespace = isClusterScoped
+              ? ''
+              : ((event as any).payload.namespace as string)
+            return repoHandlers[stateKey].deleted(
+              state,
+              (event as any).payload.name,
+              namespace
+            )
+          }) as ClusterEventHandler<ClusterEventType>)
         ],
         [
           updatedType,
-          defineClusterEvent(
-            ((state, event) => {
-              const namespace = isClusterScoped
-                ? ''
-                : ((event as any).payload.namespace as string)
-              return repoHandlers[stateKey].updated(
-                state,
-                (event as any).payload.name,
-                namespace,
-                (event as any).payload[payloadKey]
-              )
-            }) as ClusterEventHandler<ClusterEventType>
-          )
+          defineClusterEvent(((state, event) => {
+            const namespace = isClusterScoped
+              ? ''
+              : ((event as any).payload.namespace as string)
+            return repoHandlers[stateKey].updated(
+              state,
+              (event as any).payload.name,
+              namespace,
+              (event as any).payload[payloadKey]
+            )
+          }) as ClusterEventHandler<ClusterEventType>)
         ]
       ]
     }

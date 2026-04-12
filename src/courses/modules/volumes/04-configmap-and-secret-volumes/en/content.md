@@ -15,13 +15,13 @@ When you mount a ConfigMap as a volume, Kubernetes takes every key in the Config
 
 @@@
 graph LR
-    CM[ConfigMap\nkey: config.yaml\nvalue: debug: true]
-    subgraph Pod
-        V[(volume mount\n/etc/app)]
-        C[container\nreads /etc/app/config.yaml]
-    end
-    CM -- projected as files --> V
-    V --> C
+CM[ConfigMap\nkey: config.yaml\nvalue: debug: true]
+subgraph Pod
+V[(volume mount\n/etc/app)]
+C[container\nreads /etc/app/config.yaml]
+end
+CM -- projected as files --> V
+V --> C
 @@@
 
 Think of it like a shared network folder that Kubernetes populates from a dictionary. Every entry in the dictionary becomes a file on the folder. Your application just reads a file like it always has.

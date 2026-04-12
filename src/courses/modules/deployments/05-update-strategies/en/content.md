@@ -13,19 +13,19 @@ A Deployment can use one of two `strategy.type` values: `RollingUpdate` and `Rec
 
 @@@
 graph LR
-    subgraph rolling [RollingUpdate]
-        R1["Old Pods: 3"]
-        R2["Transition:\n2 old + 1 new"]
-        R3["Transition:\n1 old + 2 new"]
-        R4["New Pods: 3"]
-        R1 --> R2 --> R3 --> R4
-    end
-    subgraph recreate [Recreate]
-        RC1["Old Pods: 3"]
-        RC2["All terminated\n(downtime window)"]
-        RC3["New Pods: 3"]
-        RC1 --> RC2 --> RC3
-    end
+subgraph rolling [RollingUpdate]
+R1["Old Pods: 3"]
+R2["Transition:\n2 old + 1 new"]
+R3["Transition:\n1 old + 2 new"]
+R4["New Pods: 3"]
+R1 --> R2 --> R3 --> R4
+end
+subgraph recreate [Recreate]
+RC1["Old Pods: 3"]
+RC2["All terminated\n(downtime window)"]
+RC3["New Pods: 3"]
+RC1 --> RC2 --> RC3
+end
 @@@
 
 `RollingUpdate` keeps the application running throughout. Old and new Pods coexist during the transition. Zero downtime, as long as both versions can operate in parallel.
@@ -107,9 +107,9 @@ With `maxUnavailable: 2` and `maxSurge: 0`, no extra capacity is used. Each new 
 
 ```yaml
 # illustrative only
-    rollingUpdate:
-      maxUnavailable: 2
-      maxSurge: 0
+rollingUpdate:
+  maxUnavailable: 2
+  maxSurge: 0
 ```
 
 The right values depend on your application's traffic sensitivity and the cluster's available capacity.

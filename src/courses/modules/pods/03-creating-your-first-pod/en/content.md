@@ -41,7 +41,6 @@ This is a complete, valid Pod manifest. Every field here is something you alread
 
 ## Applying the manifest
 
-
 ```bash
 kubectl apply -f first-pod.yaml
 ```

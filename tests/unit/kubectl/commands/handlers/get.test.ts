@@ -542,7 +542,9 @@ describe('kubectl get handler - events', () => {
       type: 'Warning',
       lastTimestamp: '2026-04-06T09:59:00Z'
     })
-    const state = createClusterStateData({ events: [warningEvent, normalEvent] })
+    const state = createClusterStateData({
+      events: [warningEvent, normalEvent]
+    })
     apiServer.etcd.restore(state)
 
     const result = handleGet(apiServer, createParsedCommand())
@@ -627,7 +629,9 @@ describe('kubectl get handler - events', () => {
       message: 'Back-off restarting failed container',
       type: 'Warning'
     })
-    const state = createClusterStateData({ events: [matchingEvent, otherEvent] })
+    const state = createClusterStateData({
+      events: [matchingEvent, otherEvent]
+    })
     apiServer.etcd.restore(state)
 
     const result = handleGet(
@@ -727,7 +731,9 @@ describe('kubectl get handler - events', () => {
       reason: 'Pulled',
       message: 'Successfully pulled image'
     })
-    const state = createClusterStateData({ events: [defaultEvent, kubeSystemEvent] })
+    const state = createClusterStateData({
+      events: [defaultEvent, kubeSystemEvent]
+    })
     apiServer.etcd.restore(state)
 
     const result = handleGet(
@@ -772,7 +778,9 @@ describe('kubectl get handler - events', () => {
       message: 'Back-off restarting failed container',
       type: 'Warning'
     })
-    const state = createClusterStateData({ events: [startedEvent, backoffEvent] })
+    const state = createClusterStateData({
+      events: [startedEvent, backoffEvent]
+    })
     apiServer.etcd.restore(state)
 
     const result = handleGet(
@@ -821,7 +829,9 @@ describe('kubectl get handler - pods field selectors', () => {
 
     const result = handleGet(
       apiServer,
-      createParsedCommand({ flags: { 'field-selector': 'status.phase=Running' } })
+      createParsedCommand({
+        flags: { 'field-selector': 'status.phase=Running' }
+      })
     )
 
     expect(result).toContain('api-running')
@@ -875,7 +885,9 @@ describe('kubectl get handler - pods field selectors', () => {
 
     const result = handleGet(
       apiServer,
-      createParsedCommand({ flags: { 'field-selector': 'metadata.name=target-pod' } })
+      createParsedCommand({
+        flags: { 'field-selector': 'metadata.name=target-pod' }
+      })
     )
 
     expect(result).toContain('target-pod')

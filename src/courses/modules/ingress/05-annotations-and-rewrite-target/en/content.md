@@ -11,12 +11,13 @@ Gateway API solves this by moving these behaviors into the HTTPRoute spec itself
 
 @@@
 graph LR
-    Client["Client\nGET /api/users"]
-    HR["HTTPRoute\nfilter: URLRewrite\n/api -> /"]
-    SVC["api-svc\nreceives GET /users"]
+Client["Client\nGET /api/users"]
+HR["HTTPRoute\nfilter: URLRewrite\n/api -> /"]
+SVC["api-svc\nreceives GET /users"]
 
     Client --> HR
     HR --> SVC
+
 @@@
 
 ## URL Rewrite: Strip a Path Prefix
@@ -39,7 +40,7 @@ spec:
   parentRefs:
     - name: my-gateway
   hostnames:
-    - "api.myapp.com"
+    - 'api.myapp.com'
   rules:
     - matches:
         - path:
@@ -53,12 +54,12 @@ spec:
 Now add the `URLRewrite` filter to the rule to strip the `/api` prefix before forwarding:
 
 ```yaml
-      filters:
-        - type: URLRewrite
-          urlRewrite:
-            path:
-              type: ReplacePrefixMatch
-              replacePrefixMatch: /
+filters:
+  - type: URLRewrite
+    urlRewrite:
+      path:
+        type: ReplacePrefixMatch
+        replacePrefixMatch: /
 ```
 
 The `ReplacePrefixMatch` replaces the matched prefix (`/api`) with the given value (`/`), so `/api/users` becomes `/users` at the backend, and `/api/products/42` becomes `/products/42`.
@@ -97,7 +98,7 @@ spec:
     - name: my-gateway
       sectionName: http
   hostnames:
-    - "api.myapp.com"
+    - 'api.myapp.com'
   rules:
     - filters:
         - type: RequestRedirect
@@ -133,14 +134,14 @@ The `RequestHeaderModifier` filter lets you add, set, or remove HTTP headers bef
 Add a filter to the existing api-route:
 
 ```yaml
-      filters:
-        - type: RequestHeaderModifier
-          requestHeaderModifier:
-            add:
-              - name: X-Gateway-Version
-                value: "v1"
-            remove:
-              - X-Internal-Token
+filters:
+  - type: RequestHeaderModifier
+    requestHeaderModifier:
+      add:
+        - name: X-Gateway-Version
+          value: 'v1'
+      remove:
+        - X-Internal-Token
 ```
 
 The `add` list appends a header if it does not already exist, or adds a new value alongside existing ones. The `remove` list strips the named headers entirely before the request reaches the backend. Apply the updated manifest and inspect the result:

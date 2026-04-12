@@ -134,9 +134,10 @@ const appendNetworkPolicyIngressRules = (
         const from = fromEntry as Record<string, unknown>
         lines.push(`${NP_RULE_LINE}From:`)
         const podSelector = from.podSelector as Record<string, unknown> | null
-        const namespaceSelector = from.namespaceSelector as
-          | Record<string, unknown>
-          | null
+        const namespaceSelector = from.namespaceSelector as Record<
+          string,
+          unknown
+        > | null
         const ipBlock = from.ipBlock as Record<string, unknown> | null
         if (podSelector != null && namespaceSelector != null) {
           lines.push(
@@ -210,9 +211,10 @@ const appendNetworkPolicyEgressRules = (
         const to = toEntry as Record<string, unknown>
         lines.push(`${NP_RULE_LINE}To:`)
         const podSelector = to.podSelector as Record<string, unknown> | null
-        const namespaceSelector = to.namespaceSelector as
-          | Record<string, unknown>
-          | null
+        const namespaceSelector = to.namespaceSelector as Record<
+          string,
+          unknown
+        > | null
         const ipBlock = to.ipBlock as Record<string, unknown> | null
         if (podSelector != null && namespaceSelector != null) {
           lines.push(
@@ -255,7 +257,9 @@ export const describeNetworkPolicy = (networkPolicy: NetworkPolicy): string => {
     `Created on:   ${formatDescribeDate(networkPolicy.metadata.creationTimestamp)}`
   )
   lines.push(`Labels:       ${formatLabels(networkPolicy.metadata.labels)}`)
-  lines.push(`Annotations:  ${formatLabels(networkPolicy.metadata.annotations)}`)
+  lines.push(
+    `Annotations:  ${formatLabels(networkPolicy.metadata.annotations)}`
+  )
   lines.push('Spec:')
   const podSelector = networkPolicy.spec.podSelector
   const selectorStr = formatNetworkPolicyLabelSelector(podSelector)

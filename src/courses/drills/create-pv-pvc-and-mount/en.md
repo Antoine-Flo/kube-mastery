@@ -56,14 +56,14 @@ PV is cluster-scoped, no `-n` flag needed. After apply, the PV should appear in 
 - type: clusterFieldEquals
   kind: PersistentVolume
   name: data-pv
-  path: "{.spec.capacity.storage}"
-  value: "1Gi"
+  path: '{.spec.capacity.storage}'
+  value: '1Gi'
   onFail: "La capacité de `data-pv` n'est pas `1Gi`."
 - type: clusterFieldEquals
   kind: PersistentVolume
   name: data-pv
-  path: "{.spec.storageClassName}"
-  value: "manual"
+  path: '{.spec.storageClassName}'
+  value: 'manual'
   onFail: "Le storageClassName de `data-pv` n'est pas `manual`."
 ```
 
@@ -107,8 +107,8 @@ The storageClassName and accessMode must match the PV for binding to succeed.
   kind: PersistentVolumeClaim
   namespace: storage-lab
   name: data-pvc
-  path: "{.spec.storageClassName}"
-  value: "manual"
+  path: '{.spec.storageClassName}'
+  value: 'manual'
   onFail: "Le storageClassName de `data-pvc` n'est pas `manual`."
 ```
 
@@ -130,8 +130,8 @@ A PVC binds to a PV when storageClassName, accessMode, and capacity all match.
   kind: PersistentVolumeClaim
   namespace: storage-lab
   name: data-pvc
-  path: "{.status.phase}"
-  value: "Bound"
+  path: '{.status.phase}'
+  value: 'Bound'
   onFail: "La PVC `data-pvc` n'est pas en état Bound. Vérifiez que storageClassName et accessMode correspondent exactement au PV."
 ```
 
@@ -181,15 +181,15 @@ If the pod stays Pending, inspect describe output for mount errors.
   kind: Pod
   namespace: storage-lab
   name: storage-pod
-  path: "{.spec.containers[0].volumeMounts[0].mountPath}"
-  value: "/data"
+  path: '{.spec.containers[0].volumeMounts[0].mountPath}'
+  value: '/data'
   onFail: "Le volume n'est pas monté à `/data` dans `storage-pod`. Vérifiez `volumeMounts` et `volumes` dans le manifest."
 - type: clusterFieldEquals
   kind: Pod
   namespace: storage-lab
   name: storage-pod
-  path: "{.status.phase}"
-  value: "Running"
+  path: '{.status.phase}'
+  value: 'Running'
   onFail: "Le pod `storage-pod` n'est pas Running."
 ```
 

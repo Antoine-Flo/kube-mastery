@@ -33,9 +33,9 @@ When Kubernetes creates a Pod, it writes a `/etc/resolv.conf` file inside the co
 
 @@@
 graph LR
-    Pod["Pod\n(runs nslookup web)"] --> Resolv["/etc/resolv.conf\nnameserver CoreDNS-IP\nsearch default.svc.cluster.local\n svc.cluster.local cluster.local"]
-    Resolv --> CoreDNS["CoreDNS\n(kube-system)"]
-    CoreDNS --> ClusterIP["ClusterIP\n10.96.x.x"]
+Pod["Pod\n(runs nslookup web)"] --> Resolv["/etc/resolv.conf\nnameserver CoreDNS-IP\nsearch default.svc.cluster.local\n svc.cluster.local cluster.local"]
+Resolv --> CoreDNS["CoreDNS\n(kube-system)"]
+CoreDNS --> ClusterIP["ClusterIP\n10.96.x.x"]
 @@@
 
 The `nameserver` line points to the ClusterIP of the `kube-dns` Service, which routes to the CoreDNS Pods. The `search` line lists domain suffixes to try in order when a short name is resolved. When your Pod runs `curl web`, the OS first tries `web.default.svc.cluster.local`. CoreDNS recognizes that as a known Service and returns its ClusterIP.

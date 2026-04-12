@@ -40,7 +40,8 @@ const DRILL_TAG_UI_KEY: Record<
   storage: 'drills_tag_storage',
   troubleshooting: 'drills_tag_troubleshooting',
   services_networking: 'drills_tag_services_networking',
-  cluster_architecture_installation: 'drills_tag_cluster_architecture_installation'
+  cluster_architecture_installation:
+    'drills_tag_cluster_architecture_installation'
 }
 ---
 
@@ -78,13 +79,19 @@ const DRILL_TAG_UI_KEY: Record<
                       </div>
                       <div class="drill-card__top-right">
                         {drill.isFree && (
-                          <span class="drill-card__free-badge">{t('drills_badge_free')}</span>
+                          <span class="drill-card__free-badge">
+                            {t('drills_badge_free')}
+                          </span>
                         )}
                         {drill.tag && CategoryIcon && (
                           <span
                             class={`drill-card__category-icon drill-card__category-icon--${drill.tag}`}
                           >
-                            <CategoryIcon size={14} stroke-width={1.65} aria-hidden="true" />
+                            <CategoryIcon
+                              size={14}
+                              stroke-width={1.65}
+                              aria-hidden="true"
+                            />
                           </span>
                         )}
                       </div>
@@ -103,14 +110,16 @@ const DRILL_TAG_UI_KEY: Record<
                   <div class="drill-card__footer">
                     <span class="drill-card__meta">
                       <Timer size={12} aria-hidden="true" />
-                      {drill.totalTasks} {drill.totalTasks === 1 ? t('drills_step') : t('drills_steps')}
+                      {drill.totalTasks}{' '}
+                      {drill.totalTasks === 1
+                        ? t('drills_step')
+                        : t('drills_steps')}
                     </span>
                     <span
                       class="drill-card__best"
                       data-drill-best-for={drill.id}
                       hidden
-                    >
-                    </span>
+                    ></span>
                   </div>
                 </button>
               </li>
@@ -141,10 +150,16 @@ const DRILL_TAG_UI_KEY: Record<
     size="md"
   >
     <div slot="footer" class="dialog__footer drill-pro-dialog__footer">
-      <a href={tryFreeDrillHref} class="drill-pro-dialog__cta drill-pro-dialog__cta--secondary">
+      <a
+        href={tryFreeDrillHref}
+        class="drill-pro-dialog__cta drill-pro-dialog__cta--secondary"
+      >
         {t('drills_proOnly_tryFree')}
       </a>
-      <a href={pricingHref} class="drill-pro-dialog__cta drill-pro-dialog__cta--primary">
+      <a
+        href={pricingHref}
+        class="drill-pro-dialog__cta drill-pro-dialog__cta--primary"
+      >
         {t('drills_proOnly_viewPlans')}
       </a>
     </div>
@@ -153,34 +168,42 @@ const DRILL_TAG_UI_KEY: Record<
 
 <script>
   function initDrillModalTriggers() {
-    const modeDialog = document.getElementById('drill-mode-dialog') as HTMLDialogElement | null
+    const modeDialog = document.getElementById(
+      'drill-mode-dialog'
+    ) as HTMLDialogElement | null
     const proDialog = document.getElementById(
       'drill-pro-required-dialog'
     ) as HTMLDialogElement | null
     const titleEl = document.getElementById('drill-mode-dialog-title')
-    const guidedLink = document.getElementById('drill-mode-guided') as HTMLAnchorElement | null
-    const examLink = document.getElementById('drill-mode-exam') as HTMLAnchorElement | null
+    const guidedLink = document.getElementById(
+      'drill-mode-guided'
+    ) as HTMLAnchorElement | null
+    const examLink = document.getElementById(
+      'drill-mode-exam'
+    ) as HTMLAnchorElement | null
 
-    document.querySelectorAll<HTMLButtonElement>('[data-drill-id]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const baseHref = btn.dataset.drillBaseHref ?? ''
-        const canAccess = btn.dataset.drillCanAccess === 'true'
-        if (!canAccess) {
-          proDialog?.showModal()
-          return
-        }
-        if (titleEl) {
-          titleEl.textContent = btn.dataset.drillTitle ?? ''
-        }
-        if (guidedLink) {
-          guidedLink.href = `${baseHref}?mode=guided`
-        }
-        if (examLink) {
-          examLink.href = `${baseHref}?mode=exam`
-        }
-        modeDialog?.showModal()
+    document
+      .querySelectorAll<HTMLButtonElement>('[data-drill-id]')
+      .forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const baseHref = btn.dataset.drillBaseHref ?? ''
+          const canAccess = btn.dataset.drillCanAccess === 'true'
+          if (!canAccess) {
+            proDialog?.showModal()
+            return
+          }
+          if (titleEl) {
+            titleEl.textContent = btn.dataset.drillTitle ?? ''
+          }
+          if (guidedLink) {
+            guidedLink.href = `${baseHref}?mode=guided`
+          }
+          if (examLink) {
+            examLink.href = `${baseHref}?mode=exam`
+          }
+          modeDialog?.showModal()
+        })
       })
-    })
   }
 
   initDrillModalTriggers()

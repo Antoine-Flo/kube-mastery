@@ -68,13 +68,17 @@ export const createPersistentVolumeClaimLifecycleEventStore = (
   const onPersistentVolumeClaimLifecycle = (
     event: PersistentVolumeClaimLifecycleEvent
   ): void => {
-    appendPersistentVolumeClaimEvent(event.payload.namespace, event.payload.name, {
-      type: event.payload.eventType,
-      reason: event.payload.reason,
-      source: event.payload.source,
-      message: event.payload.message,
-      timestamp: event.timestamp
-    })
+    appendPersistentVolumeClaimEvent(
+      event.payload.namespace,
+      event.payload.name,
+      {
+        type: event.payload.eventType,
+        reason: event.payload.reason,
+        source: event.payload.source,
+        message: event.payload.message,
+        timestamp: event.timestamp
+      }
+    )
   }
 
   const onPersistentVolumeClaimDeleted = (

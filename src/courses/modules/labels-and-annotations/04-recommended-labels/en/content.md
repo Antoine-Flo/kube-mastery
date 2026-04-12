@@ -13,13 +13,13 @@ Standard labels exist to solve exactly this problem. The Kubernetes project defi
 
 @@@
 graph TD
-    APP["app.kubernetes.io/name: wordpress"]
-    INST["app.kubernetes.io/instance: wordpress-prod"]
-    COMP1["app.kubernetes.io/component: frontend"]
-    COMP2["app.kubernetes.io/component: database"]
-    APP --> INST
-    INST --> COMP1
-    INST --> COMP2
+APP["app.kubernetes.io/name: wordpress"]
+INST["app.kubernetes.io/instance: wordpress-prod"]
+COMP1["app.kubernetes.io/component: frontend"]
+COMP2["app.kubernetes.io/component: database"]
+APP --> INST
+INST --> COMP1
+INST --> COMP2
 @@@
 
 The main labels and their purpose:
@@ -75,7 +75,6 @@ spec:
 kubectl apply -f wordpress-dep.yaml
 kubectl get pods --show-labels
 ```
-
 
 Now filter using the recommended labels:
 

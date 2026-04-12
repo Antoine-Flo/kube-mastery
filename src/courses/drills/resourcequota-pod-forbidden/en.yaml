@@ -1,30 +1,30 @@
-title: "Fix Pod Creation Blocked by ResourceQuota"
+title: 'Fix Pod Creation Blocked by ResourceQuota'
 isDraft: true
-description: "Diagnose a forbidden pod admission caused by namespace quota constraints."
+description: 'Diagnose a forbidden pod admission caused by namespace quota constraints.'
 tag: troubleshooting
-environment: "minimal"
+environment: 'minimal'
 ckaTargetMinutes: 7
 tasks:
-  - task: "Try to create the workload and capture the error"
-    command: "kubectl apply -f app-pod.yaml -n prod"
-    explanation: "In this scenario the pod creation is expected to fail with a quota-related forbidden message."
+  - task: 'Try to create the workload and capture the error'
+    command: 'kubectl apply -f app-pod.yaml -n prod'
+    explanation: 'In this scenario the pod creation is expected to fail with a quota-related forbidden message.'
 
-  - task: "Inspect namespace ResourceQuota"
-    command: "kubectl describe resourcequota -n prod"
-    explanation: "Shows hard limits and current usage that explain the rejection."
+  - task: 'Inspect namespace ResourceQuota'
+    command: 'kubectl describe resourcequota -n prod'
+    explanation: 'Shows hard limits and current usage that explain the rejection.'
 
-  - task: "Inspect LimitRange constraints if present"
-    command: "kubectl describe limitrange -n prod"
-    explanation: "LimitRange may enforce min/max/default requests and limits that interact with quota."
+  - task: 'Inspect LimitRange constraints if present'
+    command: 'kubectl describe limitrange -n prod'
+    explanation: 'LimitRange may enforce min/max/default requests and limits that interact with quota.'
 
-  - task: "Adjust pod resource requests/limits to fit namespace policy"
-    command: "kubectl edit -f app-pod.yaml"
-    explanation: "Adjust only the fields violating quota or limit range; avoid unrelated spec changes."
+  - task: 'Adjust pod resource requests/limits to fit namespace policy'
+    command: 'kubectl edit -f app-pod.yaml'
+    explanation: 'Adjust only the fields violating quota or limit range; avoid unrelated spec changes.'
 
-  - task: "Re-apply workload with corrected resources"
-    command: "kubectl apply -f app-pod.yaml -n prod"
-    explanation: "After adjustment, admission should succeed."
+  - task: 'Re-apply workload with corrected resources'
+    command: 'kubectl apply -f app-pod.yaml -n prod'
+    explanation: 'After adjustment, admission should succeed.'
 
-  - task: "Verify pod is admitted and starts"
-    command: "kubectl get pods -n prod"
-    explanation: "Final validation confirms quota-compliant scheduling."
+  - task: 'Verify pod is admitted and starts'
+    command: 'kubectl get pods -n prod'
+    explanation: 'Final validation confirms quota-compliant scheduling.'

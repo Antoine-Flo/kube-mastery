@@ -157,7 +157,9 @@ export const formatSelector = (selector: {
   return selectorParts.join(',')
 }
 
-export const formatIntOrString = (value: number | string | undefined): string => {
+export const formatIntOrString = (
+  value: number | string | undefined
+): string => {
   if (value === undefined) {
     return '<none>'
   }
@@ -1009,7 +1011,9 @@ export const formatPodConditionLines = (pod: Pod): string[] => {
   return lines
 }
 
-export const formatPodTolerations = (tolerations?: PodToleration[]): string[] => {
+export const formatPodTolerations = (
+  tolerations?: PodToleration[]
+): string[] => {
   if (tolerations == null || tolerations.length === 0) {
     return ['Tolerations:       <none>']
   }
@@ -1033,7 +1037,10 @@ export const formatPodTolerations = (tolerations?: PodToleration[]): string[] =>
   return lines
 }
 
-export const formatDefaultPodEvents = (pod: Pod, nodeName: string): string[] => {
+export const formatDefaultPodEvents = (
+  pod: Pod,
+  nodeName: string
+): string[] => {
   const age = formatAge(pod.metadata.creationTimestamp)
   const primaryContainer = pod.spec.containers[0]
   const containerName = primaryContainer?.name ?? 'container'
@@ -1049,7 +1056,9 @@ export const formatDefaultPodEvents = (pod: Pod, nodeName: string): string[] => 
   ]
 }
 
-export const getPrimaryContainerStatus = (pod: Pod): ContainerStatus | undefined => {
+export const getPrimaryContainerStatus = (
+  pod: Pod
+): ContainerStatus | undefined => {
   const primaryContainer = pod.spec.containers[0]
   if (primaryContainer == null) {
     return undefined

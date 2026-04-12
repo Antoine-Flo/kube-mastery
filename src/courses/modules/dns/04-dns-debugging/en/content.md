@@ -13,15 +13,15 @@ Before running any commands, it helps to have a mental model of the DNS resoluti
 
 @@@
 graph TD
-    Start["DNS resolution fails"] --> A["Is CoreDNS running?"]
-    A --> |No| FixCoreDNS["Check CoreDNS Pods in kube-system"]
-    A --> |Yes| B["Does the Service exist in the right namespace?"]
-    B --> |No| CreateSvc["Create the Service or use the correct namespace"]
-    B --> |Yes| C["Does the Service have Endpoints?"]
-    C --> |No| FixSelector["Fix selector or deploy matching Pods"]
-    C --> |Yes| D["Are you using the right name form?"]
-    D --> |No| UseFQDN["Use qualified name: svc.namespace or FQDN"]
-    D --> |Yes| Resolved["Failure is at the application or network layer"]
+Start["DNS resolution fails"] --> A["Is CoreDNS running?"]
+A --> |No| FixCoreDNS["Check CoreDNS Pods in kube-system"]
+A --> |Yes| B["Does the Service exist in the right namespace?"]
+B --> |No| CreateSvc["Create the Service or use the correct namespace"]
+B --> |Yes| C["Does the Service have Endpoints?"]
+C --> |No| FixSelector["Fix selector or deploy matching Pods"]
+C --> |Yes| D["Are you using the right name form?"]
+D --> |No| UseFQDN["Use qualified name: svc.namespace or FQDN"]
+D --> |Yes| Resolved["Failure is at the application or network layer"]
 @@@
 
 Each node corresponds to a concrete command you can run right now. Work through them in order.

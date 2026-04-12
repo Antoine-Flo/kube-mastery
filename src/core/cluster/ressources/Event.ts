@@ -64,7 +64,8 @@ const DEFAULT_SOURCE: K8sEvent['source'] = {}
 const EMPTY_REPORTING = ''
 
 interface EventConfig
-  extends NamespacedIdentityConfig,
+  extends
+    NamespacedIdentityConfig,
     Pick<ResourceFactoryMetaFields, 'creationTimestamp'> {
   involvedObject: EventInvolvedObject
   reason: string
@@ -111,8 +112,7 @@ export const createEvent = (config: EventConfig): Event => {
     source: config.source ?? DEFAULT_SOURCE,
     ...(config.eventTime !== undefined
       ? {
-          eventTime:
-            config.eventTime === null ? undefined : config.eventTime
+          eventTime: config.eventTime === null ? undefined : config.eventTime
         }
       : {}),
     ...(config.action != null ? { action: config.action } : {})
@@ -165,7 +165,9 @@ export const convertEventsV1ToCoreEvent = (event: EventsV1Event): Event => {
   const seriesLastObservedTime = event.series?.lastObservedTime
   const resolvedLastTimestamp =
     seriesLastObservedTime ??
-    (event.eventTime != null ? event.eventTime : event.metadata.creationTimestamp)
+    (event.eventTime != null
+      ? event.eventTime
+      : event.metadata.creationTimestamp)
   const resolvedFirstTimestamp =
     event.metadata.creationTimestamp.length > 0
       ? event.metadata.creationTimestamp

@@ -21,11 +21,11 @@ You will see familiar names: `coredns`, `kube-scheduler`, `kube-controller-manag
 
 @@@
 graph TD
-    A[kube-system namespace]
-    A --> B[kube-scheduler<br/>Places Pods on nodes]
-    A --> C[kube-controller-manager<br/>Reconciles state]
-    A --> D[kube-apiserver<br/>Serves the API]
-    A --> E[coredns<br/>Resolves DNS queries]
+A[kube-system namespace]
+A --> B[kube-scheduler<br/>Places Pods on nodes]
+A --> C[kube-controller-manager<br/>Reconciles state]
+A --> D[kube-apiserver<br/>Serves the API]
+A --> E[coredns<br/>Resolves DNS queries]
 @@@
 
 Each of these components writes structured logs to stdout, and kubelet captures them just like any other container. That means you can read them with `kubectl logs` and filter them with `--tail`, `--since`, and `-f`.
@@ -70,9 +70,9 @@ There is a subtle distinction worth understanding. On clusters bootstrapped with
 
 @@@
 graph LR
-    A[kubelet reads<br/>/etc/kubernetes/manifests/] --> B[Starts static Pods]
-    B --> C[Appear in<br/>kubectl get pods -n kube-system]
-    D[etcd] -. not stored here .-> B
+A[kubelet reads<br/>/etc/kubernetes/manifests/] --> B[Starts static Pods]
+B --> C[Appear in<br/>kubectl get pods -n kube-system]
+D[etcd] -. not stored here .-> B
 @@@
 
 They appear in `kubectl get pods -n kube-system` because kubelet mirrors their status into the API server, but you cannot delete or reschedule them with kubectl. Changes require editing the manifest file on the node directly.

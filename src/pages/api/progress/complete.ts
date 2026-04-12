@@ -54,8 +54,7 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
   const body = parsed as Record<string, unknown>
   const lessonId = typeof body.lessonId === 'string' ? body.lessonId : undefined
   const bodyType = body.type
-  const isDrillCompletion =
-    bodyType === 'drill' || bodyType === 'task'
+  const isDrillCompletion = bodyType === 'drill' || bodyType === 'task'
   const targetId = typeof body.targetId === 'string' ? body.targetId : undefined
 
   if (!lessonId && !(isDrillCompletion && targetId)) {
@@ -83,9 +82,12 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
       durationMs: getDurationMs(startedAt),
       errorCode: 'conflicting_target'
     })
-    return new Response('Use either lessonId or drill completion with targetId', {
-      status: 400
-    })
+    return new Response(
+      'Use either lessonId or drill completion with targetId',
+      {
+        status: 400
+      }
+    )
   }
 
   const supabase = getSupabaseServer(locals, request, cookies)

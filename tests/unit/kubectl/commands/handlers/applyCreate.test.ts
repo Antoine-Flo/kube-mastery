@@ -372,7 +372,11 @@ lastTimestamp: "2026-04-06T09:00:00.000Z"
     }
     expect(result.value).toContain('event/pod-started.12345 created')
 
-    const createdEvent = apiServer.findResource('Event', 'pod-started.12345', 'default')
+    const createdEvent = apiServer.findResource(
+      'Event',
+      'pod-started.12345',
+      'default'
+    )
     expect(createdEvent.ok).toBe(true)
     if (!createdEvent.ok) {
       return
@@ -865,7 +869,9 @@ spec:
     if (!result.ok) {
       return
     }
-    expect(result.value).toContain('ingress.networking.k8s.io/demo-ingress created')
+    expect(result.value).toContain(
+      'ingress.networking.k8s.io/demo-ingress created'
+    )
     const ingress = apiServer.findResource('Ingress', 'demo-ingress', 'default')
     expect(ingress.ok).toBe(true)
     if (!ingress.ok) {
@@ -1274,7 +1280,9 @@ spec:
         '  gatewayClassName: demo-class'
       ].join('\n')
     )
-    const parsedGatewayClass = parseCommand('kubectl create -f gateway-class.yaml')
+    const parsedGatewayClass = parseCommand(
+      'kubectl create -f gateway-class.yaml'
+    )
     expect(parsedGatewayClass.ok).toBe(true)
     if (!parsedGatewayClass.ok) {
       return
@@ -1291,7 +1299,11 @@ spec:
     if (!parsedGateway.ok) {
       return
     }
-    const createGatewayResult = handleCreate(fileSystem, apiServer, parsedGateway.value)
+    const createGatewayResult = handleCreate(
+      fileSystem,
+      apiServer,
+      parsedGateway.value
+    )
     expect(createGatewayResult.ok).toBe(true)
     const gateway = apiServer.findResource('Gateway', 'demo-gw', 'default')
     expect(gateway.ok).toBe(true)
@@ -1324,14 +1336,17 @@ spec:
     }
     const result = handleCreate(fileSystem, apiServer, parsed.value)
     expect(result.ok).toBe(true)
-    const httpRoute = apiServer.findResource('HTTPRoute', 'demo-route', 'default')
+    const httpRoute = apiServer.findResource(
+      'HTTPRoute',
+      'demo-route',
+      'default'
+    )
     expect(httpRoute.ok).toBe(true)
     if (httpRoute.ok) {
-      const parentCondition = httpRoute.value.status?.parents?.[0]?.conditions?.find(
-        (condition) => {
+      const parentCondition =
+        httpRoute.value.status?.parents?.[0]?.conditions?.find((condition) => {
           return condition.type === 'Accepted'
-        }
-      )
+        })
       expect(parentCondition?.status).toBe('False')
     }
   })

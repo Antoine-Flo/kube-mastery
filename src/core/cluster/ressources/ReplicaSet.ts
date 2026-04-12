@@ -107,7 +107,10 @@ export interface PodTemplateSpec {
 // ─── ReplicaSet Spec ──────────────────────────────────────────────────────
 
 export type ReplicaSetSpec = Omit<
-  Pick<K8sReplicaSetSpec, 'replicas' | 'minReadySeconds' | 'selector' | 'template'>,
+  Pick<
+    K8sReplicaSetSpec,
+    'replicas' | 'minReadySeconds' | 'selector' | 'template'
+  >,
   'template'
 > & {
   template: PodTemplateSpec

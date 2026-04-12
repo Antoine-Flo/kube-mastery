@@ -10,6 +10,7 @@ seoDescription: 'Understand why Kubernetes exists, what problems it solves, and 
 Welcome. Your cluster is ready and waiting. Let's make sure you can talk to it before anything else:
 
 In the terminal, run:
+
 ```bash
 kubectl get nodes
 ```
@@ -30,12 +31,12 @@ Managing containers manually at scale is a series of incidents: crashed containe
 
 > **In one line:** you declare the desired state, the cluster keeps reconciling reality until it matches.
 
-| Without an orchestrator | With Kubernetes |
-| --- | --- |
-| You restart failed containers yourself | Controllers recreate Pods to match the desired replica count |
-| You decide which machine runs each workload | The scheduler places Pods using capacity and policy |
-| IPs and wiring break whenever things move | Services expose stable DNS names and cluster IPs |
-| Rolling upgrades are a manual checklist | Deployments roll out with surge and availability rules |
+| Without an orchestrator                     | With Kubernetes                                              |
+| ------------------------------------------- | ------------------------------------------------------------ |
+| You restart failed containers yourself      | Controllers recreate Pods to match the desired replica count |
+| You decide which machine runs each workload | The scheduler places Pods using capacity and policy          |
+| IPs and wiring break whenever things move   | Services expose stable DNS names and cluster IPs             |
+| Rolling upgrades are a manual checklist     | Deployments roll out with surge and availability rules       |
 
 ## The Orchestration Problem
 

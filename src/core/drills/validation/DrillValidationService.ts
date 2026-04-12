@@ -53,8 +53,7 @@ export class DrillValidationService {
   ) {
     this.queryPort = queryPort
     this.retryTimeoutMs = options.retryTimeoutMs ?? DEFAULT_RETRY_TIMEOUT_MS
-    this.retryIntervalMs =
-      options.retryIntervalMs ?? DEFAULT_RETRY_INTERVAL_MS
+    this.retryIntervalMs = options.retryIntervalMs ?? DEFAULT_RETRY_INTERVAL_MS
     this.minSuccessDelayMs =
       options.minSuccessDelayMs ?? DEFAULT_MIN_SUCCESS_DELAY_MS
   }
@@ -70,7 +69,10 @@ export class DrillValidationService {
     while (true) {
       let failedEvaluation: Result<AssertionEvaluation> | null = null
       for (const assertion of entry.assertions) {
-        const evaluationResult = evaluateDrillAssertion(assertion, this.queryPort)
+        const evaluationResult = evaluateDrillAssertion(
+          assertion,
+          this.queryPort
+        )
         if (!evaluationResult.ok) {
           failedEvaluation = evaluationResult
           break
@@ -121,7 +123,9 @@ export class DrillValidationService {
       taskResults.push({
         index: entry.index,
         passed,
-        errorMessage: passed ? undefined : resolveErrorMessage(evaluationResult.value)
+        errorMessage: passed
+          ? undefined
+          : resolveErrorMessage(evaluationResult.value)
       })
     }
 
@@ -131,4 +135,3 @@ export class DrillValidationService {
     })
   }
 }
-

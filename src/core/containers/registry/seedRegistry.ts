@@ -108,7 +108,17 @@ export const SEED_IMAGES: ImageManifest[] = [
   {
     name: 'nginx',
     registry: 'docker.io/library',
-    tags: ['latest', '1.28', '1.27', '1.26', '1.25', '1.24', '1.23', '1.22', '1.21'],
+    tags: [
+      'latest',
+      '1.28',
+      '1.27',
+      '1.26',
+      '1.25',
+      '1.24',
+      '1.23',
+      '1.22',
+      '1.21'
+    ],
     description: 'High-performance HTTP server and reverse proxy',
     defaultPorts: [80, 443],
     logProfile: 'nginx',

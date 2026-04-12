@@ -5,7 +5,7 @@ export const isKubectlHelpRequest = (command: string): boolean => {
     .trim()
     .split(/\s+/)
     .filter((token) => token.length > 0)
-    
+
   if (tokens.length === 0 || tokens[0] !== 'kubectl') {
     return false
   }

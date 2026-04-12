@@ -90,9 +90,11 @@ const buildFlagParsingSpec = (): {
     }
   })
 
-  const shortFlagsRequiringValues = [...shortNonBooleanFlags].filter((shortFlag) => {
-    return !shortBooleanFlags.has(shortFlag)
-  })
+  const shortFlagsRequiringValues = [...shortNonBooleanFlags].filter(
+    (shortFlag) => {
+      return !shortBooleanFlags.has(shortFlag)
+    }
+  )
   for (const forcedShortFlag of forcedShortValueFlags) {
     shortFlagsRequiringValues.push(forcedShortFlag)
   }
@@ -760,8 +762,7 @@ const validateCommandSemantics = (
     return `${action} requires a resource name`
   }
   const canDescribeWithoutName =
-    action === 'describe' &&
-    (resource === 'nodes' || resource === 'events')
+    action === 'describe' && (resource === 'nodes' || resource === 'events')
   if (
     action === 'describe' &&
     !name &&

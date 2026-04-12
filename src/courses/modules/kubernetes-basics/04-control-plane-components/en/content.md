@@ -9,12 +9,12 @@ You tell the cluster you want three copies of your application running. A few se
 
 @@@
 sequenceDiagram
-    participant User as kubectl
-    participant API as kube-apiserver
-    participant ETCD as etcd
-    participant CM as kube-controller-manager
-    participant SCHED as kube-scheduler
-    participant KL as kubelet
+participant User as kubectl
+participant API as kube-apiserver
+participant ETCD as etcd
+participant CM as kube-controller-manager
+participant SCHED as kube-scheduler
+participant KL as kubelet
 
     User->>API: kubectl apply -f deployment.yaml
     API->>ETCD: store Deployment object
@@ -25,6 +25,7 @@ sequenceDiagram
     SCHED->>API: assign nodeName to each Pod
     KL->>API: watch: Pods assigned to my node
     KL->>KL: start containers
+
 @@@
 
 The control plane is not one thing. It is four components, each with a single responsibility, all communicating through a shared API.

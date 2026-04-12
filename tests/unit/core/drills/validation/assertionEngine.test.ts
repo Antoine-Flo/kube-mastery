@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { evaluateDrillAssertion } from '../../../../../src/core/drills/validation/AssertionEngine'
 import type { ValidationQueryPort } from '../../../../../src/core/drills/validation/ValidationQueryPort'
 
-function createQueryPort(overrides?: Partial<ValidationQueryPort>): ValidationQueryPort {
+function createQueryPort(
+  overrides?: Partial<ValidationQueryPort>
+): ValidationQueryPort {
   return {
     findClusterResource: () => ({
       ok: true,
@@ -210,4 +212,3 @@ describe('evaluateDrillAssertion', () => {
     expect(result.value.failure.code).toBe('filesystem_file_empty')
   })
 })
-

@@ -49,7 +49,6 @@ spec:
 
 Save and close with **Ctrl+S**. Now apply it:
 
-
 ```bash
 kubectl apply -f deployment.yaml
 ```

@@ -7,11 +7,11 @@ ckaTargetMinutes: 5
 isFree: false
 ---
 
-
 ## Inspect `nginx-svc` selector in namespace `app`.
 
 Exemple of complementary instructions. Bla bla.
 Small code block with instruciton.
+
 ```bash
 ls an-exemple
 ```
@@ -41,15 +41,15 @@ Use `--overwrite` so the command succeeds even if one label already exists.
   kind: Pod
   namespace: app
   name: nginx
-  path: "{.metadata.labels.env}"
-  value: "production"
+  path: '{.metadata.labels.env}'
+  value: 'production'
   onFail: "Le pod nginx n'a pas env=production."
 - type: clusterFieldEquals
   kind: Pod
   namespace: app
   name: nginx
-  path: "{.metadata.labels.track}"
-  value: "stable"
+  path: '{.metadata.labels.track}'
+  value: 'stable'
   onFail: "Le pod nginx n'a pas track=stable."
 ```
 
@@ -80,6 +80,6 @@ Non-empty endpoint IPs prove the selector fix restored traffic routing.
   kind: Endpoints
   namespace: app
   name: nginx-svc
-  path: "{.subsets[*].addresses[*].ip}"
+  path: '{.subsets[*].addresses[*].ip}'
   onFail: "Le service nginx-svc n'a aucun endpoint."
 ```

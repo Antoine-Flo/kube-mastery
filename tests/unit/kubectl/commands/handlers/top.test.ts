@@ -274,14 +274,10 @@ describe('kubectl top handler', () => {
 
   it('returns invalid top action error for unsupported action', () => {
     const apiServer = createApiServerFacade()
-    const result = handleTop(
-      apiServer,
-      createMetricsProvider(apiServer),
-      {
-        action: 'get' as ParsedCommand['action'],
-        flags: {}
-      } as ParsedCommand
-    )
+    const result = handleTop(apiServer, createMetricsProvider(apiServer), {
+      action: 'get' as ParsedCommand['action'],
+      flags: {}
+    } as ParsedCommand)
 
     expect(result.ok).toBe(false)
     if (result.ok) {

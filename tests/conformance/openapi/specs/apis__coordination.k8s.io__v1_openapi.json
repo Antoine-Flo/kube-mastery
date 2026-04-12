@@ -73,9 +73,7 @@
             "description": "Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata"
           }
         },
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "type": "object",
         "x-kubernetes-group-version-kind": [
           {
@@ -191,13 +189,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "singularName",
-          "namespaced",
-          "kind",
-          "verbs"
-        ],
+        "required": ["name", "singularName", "namespaced", "kind", "verbs"],
         "type": "object"
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList": {
@@ -230,10 +222,7 @@
             "x-kubernetes-list-type": "atomic"
           }
         },
-        "required": [
-          "groupVersion",
-          "resources"
-        ],
+        "required": ["groupVersion", "resources"],
         "type": "object",
         "x-kubernetes-group-version-kind": [
           {
@@ -768,9 +757,7 @@
               "default": {}
             },
             "type": "array",
-            "x-kubernetes-list-map-keys": [
-              "uid"
-            ],
+            "x-kubernetes-list-map-keys": ["uid"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "uid",
             "x-kubernetes-patch-strategy": "merge"
@@ -822,12 +809,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "apiVersion",
-          "kind",
-          "name",
-          "uid"
-        ],
+        "required": ["apiVersion", "kind", "name", "uid"],
         "type": "object",
         "x-kubernetes-map-type": "atomic"
       },
@@ -983,10 +965,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "type",
-          "object"
-        ],
+        "required": ["type", "object"],
         "type": "object",
         "x-kubernetes-group-version-kind": [
           {
@@ -1355,9 +1334,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "coordination_v1"
-        ]
+        "tags": ["coordination_v1"]
       }
     },
     "/apis/coordination.k8s.io/v1/leases": {
@@ -1409,9 +1386,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "coordination_v1"
-        ],
+        "tags": ["coordination_v1"],
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "coordination.k8s.io",
@@ -1683,9 +1658,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "coordination_v1"
-        ],
+        "tags": ["coordination_v1"],
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "coordination.k8s.io",
@@ -1833,9 +1806,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "coordination_v1"
-        ],
+        "tags": ["coordination_v1"],
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "coordination.k8s.io",
@@ -1986,9 +1957,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "coordination_v1"
-        ],
+        "tags": ["coordination_v1"],
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "coordination.k8s.io",
@@ -2112,9 +2081,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "coordination_v1"
-        ],
+        "tags": ["coordination_v1"],
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "coordination.k8s.io",
@@ -2155,9 +2122,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "coordination_v1"
-        ],
+        "tags": ["coordination_v1"],
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "coordination.k8s.io",
@@ -2322,9 +2287,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "coordination_v1"
-        ],
+        "tags": ["coordination_v1"],
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "coordination.k8s.io",
@@ -2429,9 +2392,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "coordination_v1"
-        ],
+        "tags": ["coordination_v1"],
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "coordination.k8s.io",
@@ -2489,9 +2450,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "coordination_v1"
-        ],
+        "tags": ["coordination_v1"],
         "x-kubernetes-action": "watchlist",
         "x-kubernetes-group-version-kind": {
           "group": "coordination.k8s.io",
@@ -2650,9 +2609,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "coordination_v1"
-        ],
+        "tags": ["coordination_v1"],
         "x-kubernetes-action": "watchlist",
         "x-kubernetes-group-version-kind": {
           "group": "coordination.k8s.io",
@@ -2821,9 +2778,7 @@
             "description": "Unauthorized"
           }
         },
-        "tags": [
-          "coordination_v1"
-        ],
+        "tags": ["coordination_v1"],
         "x-kubernetes-action": "watch",
         "x-kubernetes-group-version-kind": {
           "group": "coordination.k8s.io",

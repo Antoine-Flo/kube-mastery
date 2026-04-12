@@ -13,11 +13,11 @@ This is the default state of Kubernetes networking: every Pod can reach every ot
 
 @@@
 graph LR
-    frontend["Pod: frontend"] --> api["Pod: api"]
-    frontend --> db["Pod: db"]
-    api --> db
-    rogue["Pod: rogue"] --> db
-    rogue --> api
+frontend["Pod: frontend"] --> api["Pod: api"]
+frontend --> db["Pod: db"]
+api --> db
+rogue["Pod: rogue"] --> db
+rogue --> api
 @@@
 
 In the diagram above, all four Pods communicate freely. Kubernetes sets up an internal network where every Pod gets a unique IP, and that IP is reachable from any other Pod in the cluster. There is no built-in firewall between Pods. This design makes networking simple and predictable, but it means isolation is your responsibility.
@@ -46,11 +46,11 @@ A NetworkPolicy is a Kubernetes resource that declares which Pods are allowed to
 
 @@@
 graph LR
-    frontend["Pod: frontend"] --> api["Pod: api"]
-    api --> db["Pod: db"]
-    frontend -. "blocked" .-> db
-    rogue -. "blocked" .-> db
-    rogue -. "blocked" .-> api
+frontend["Pod: frontend"] --> api["Pod: api"]
+api --> db["Pod: db"]
+frontend -. "blocked" .-> db
+rogue -. "blocked" .-> db
+rogue -. "blocked" .-> api
 @@@
 
 With a NetworkPolicy applied, only `api` can reach `db`. The `frontend` and any rogue Pod are blocked. The cluster topology did not change, the Pod IPs are the same, but traffic is now filtered.

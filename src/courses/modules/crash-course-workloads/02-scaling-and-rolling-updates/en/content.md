@@ -49,7 +49,6 @@ kubectl get pods -l app=web
 
 You should now see four Pods, all running. The Deployment controller detected that the desired count changed from 2 to 4 and immediately told the ReplicaSet to create two more.
 
-
 Scaling down works identically. Setting replicas to one terminates three Pods. The survivor is chosen without preference: there is no concept of a "primary" Pod in a Deployment.
 
 Why prefer editing the manifest file over `kubectl scale`? Because if you scale imperatively and then later re-apply the manifest, the replica count in the file will override what you set. Your manifest becomes a lie. Keep the file as the source of truth and re-apply it when you want to change the count. That way your git history reflects what is actually running.
@@ -78,8 +77,8 @@ Instead of taking down all Pods simultaneously and causing an outage, Kubernetes
 
 @@@
 sequenceDiagram
-    participant RS1 as ReplicaSet v1<br/>(nginx:1.28)
-    participant RS2 as ReplicaSet v2<br/>(nginx:1.26)
+participant RS1 as ReplicaSet v1<br/>(nginx:1.28)
+participant RS2 as ReplicaSet v2<br/>(nginx:1.26)
 
     Note over RS1: replicas: 4
     Note over RS2: replicas: 0
@@ -100,6 +99,7 @@ sequenceDiagram
     RS1->>RS1: -1 Pod
     Note over RS1: replicas: 0 (kept for rollback)
     Note over RS2: replicas: 4
+
 @@@
 
 A new ReplicaSet starts for the new version. At each step, Kubernetes waits for the new Pod to become Ready before terminating an old one. Traffic is always served by healthy Pods throughout the transition.
@@ -138,7 +138,6 @@ kubectl rollout status deployment/web-app
 ```
 
 `rollout status` blocks and prints a message for each replica as it transitions.
-
 
 After the rollout completes, inspect the ReplicaSets:
 

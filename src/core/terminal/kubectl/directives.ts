@@ -89,7 +89,7 @@ const parseShellCommandDirective = (
   if (thirdSeparatorIndex === -1) {
     return undefined
   }
-  
+
   const containerName = remainderAfterPod.slice(0, thirdSeparatorIndex)
   const encodedCommand = remainderAfterPod.slice(thirdSeparatorIndex + 1)
   if (

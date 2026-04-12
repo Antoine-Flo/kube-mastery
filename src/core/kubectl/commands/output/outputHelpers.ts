@@ -412,7 +412,9 @@ export const renderStructuredPayload = (
   }
   if (directive.kind === 'yaml') {
     const normalizedYamlPayload = reorderSecretForKubectlYaml(
-      reorderConfigMapForKubectlYaml(reorderNetworkPolicyForKubectlYaml(payload))
+      reorderConfigMapForKubectlYaml(
+        reorderNetworkPolicyForKubectlYaml(payload)
+      )
     )
     const yamlOutput = yamlStringify(normalizedYamlPayload, {
       indentSeq: false,

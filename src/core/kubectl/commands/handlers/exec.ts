@@ -243,12 +243,7 @@ export const handleExec = (
         return 'Error: flag needs an argument: c'
       }
       return appendStderrNoticeIfNeeded(
-        buildShellCommandDirective(
-          podName,
-          containerName,
-          namespace,
-          script
-        ),
+        buildShellCommandDirective(podName, containerName, namespace, script),
         defaultedContainerNotice
       )
     }
@@ -307,12 +302,7 @@ export const handleExec = (
   // This will be processed by the main dispatcher
   const fullCommand = args.join(' ')
   return appendStderrNoticeIfNeeded(
-    buildShellCommandDirective(
-      podName,
-      containerName,
-      namespace,
-      fullCommand
-    ),
+    buildShellCommandDirective(podName, containerName, namespace, fullCommand),
     defaultedContainerNotice
   )
 }

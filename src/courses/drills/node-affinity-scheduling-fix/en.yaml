@@ -1,26 +1,26 @@
-title: "Fix Scheduling With Node Affinity"
+title: 'Fix Scheduling With Node Affinity'
 isDraft: true
-description: "Diagnose and correct a pod that cannot schedule due to node affinity constraints."
+description: 'Diagnose and correct a pod that cannot schedule due to node affinity constraints.'
 tag: cluster_architecture_installation
-environment: "minimal"
+environment: 'minimal'
 ckaTargetMinutes: 7
 tasks:
-  - task: "List only Pending pods in namespace `app`"
-    command: "kubectl get pods -n app --field-selector=status.phase=Pending"
-    explanation: "Focus only on unscheduled workloads to reduce noise."
+  - task: 'List only Pending pods in namespace `app`'
+    command: 'kubectl get pods -n app --field-selector=status.phase=Pending'
+    explanation: 'Focus only on unscheduled workloads to reduce noise.'
 
-  - task: "Inspect scheduling events and affinity rules"
-    command: "kubectl describe pod <pod-name> -n app"
-    explanation: "Events indicate when required node affinity terms cannot be satisfied."
+  - task: 'Inspect scheduling events and affinity rules'
+    command: 'kubectl describe pod <pod-name> -n app'
+    explanation: 'Events indicate when required node affinity terms cannot be satisfied.'
 
-  - task: "Extract required node affinity terms from the pod spec"
+  - task: 'Extract required node affinity terms from the pod spec'
     command: "kubectl get pod <pod-name> -n app -o jsonpath='{.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution}'"
-    explanation: "Read required terms directly before changing node labels."
+    explanation: 'Read required terms directly before changing node labels.'
 
-  - task: "Add missing node label to satisfy required affinity"
-    command: "kubectl label node <node-name> topology.kubernetes.io/zone=zone-a"
-    explanation: "Applying expected label is the minimal fix when workload constraints are intentional."
+  - task: 'Add missing node label to satisfy required affinity'
+    command: 'kubectl label node <node-name> topology.kubernetes.io/zone=zone-a'
+    explanation: 'Applying expected label is the minimal fix when workload constraints are intentional.'
 
-  - task: "Verify scheduling success and phase transition"
+  - task: 'Verify scheduling success and phase transition'
     command: "kubectl get pod <pod-name> -n app -o jsonpath='{.spec.nodeName} {.status.phase}'"
-    explanation: "Final output must contain a node name and a non-Pending phase."
+    explanation: 'Final output must contain a node name and a non-Pending phase.'

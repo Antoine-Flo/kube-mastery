@@ -56,8 +56,7 @@ export const buildKubectlAliasesForManifestEntry = (
 ): string[] => {
   const canonicalKey = entry.collectionKey.toLowerCase()
   const pluralWord = entry.facadePlural.toLowerCase()
-  const singularWord =
-    entry.kubectlSingularAlias ?? entry.kind.toLowerCase()
+  const singularWord = entry.kubectlSingularAlias ?? entry.kind.toLowerCase()
   const shorts = entry.kubectlShortAliases ?? []
   const list = [canonicalKey, pluralWord, singularWord, ...shorts]
   const seen = new Set<string>()
@@ -139,7 +138,10 @@ export const validateClusterResourcesManifest = (
 ): { ok: true } | { ok: false; errors: string[] } => {
   const errors: string[] = []
   if (!manifest.resources || !Array.isArray(manifest.resources)) {
-    return { ok: false, errors: ['manifest.resources must be a non-empty array'] }
+    return {
+      ok: false,
+      errors: ['manifest.resources must be a non-empty array']
+    }
   }
   if (manifest.resources.length === 0) {
     return { ok: false, errors: ['manifest.resources is empty'] }
@@ -177,7 +179,10 @@ export const validateClusterResourcesManifest = (
     if (!FACADES.includes(r.facade)) {
       errors.push(`${prefix}: invalid facade "${r.facade}"`)
     }
-    if (r.bootstrapEmpty !== 'default' && r.bootstrapEmpty !== 'systemNamespaces') {
+    if (
+      r.bootstrapEmpty !== 'default' &&
+      r.bootstrapEmpty !== 'systemNamespaces'
+    ) {
       errors.push(`${prefix}: invalid bootstrapEmpty`)
     }
     if (!r.facadeSingular || !r.facadePlural) {
@@ -223,7 +228,9 @@ export const validateClusterResourcesManifest = (
         typeof r.kubectlSingularAlias !== 'string' ||
         r.kubectlSingularAlias.length === 0
       ) {
-        errors.push(`${prefix}: kubectlSingularAlias must be a non-empty string`)
+        errors.push(
+          `${prefix}: kubectlSingularAlias must be a non-empty string`
+        )
       }
     }
     if (r.kubectlDeleteSupported !== undefined) {
@@ -242,7 +249,10 @@ export const validateClusterResourcesManifest = (
       }
     }
     if (r.kubectlKindRef !== undefined) {
-      if (typeof r.kubectlKindRef !== 'string' || r.kubectlKindRef.length === 0) {
+      if (
+        typeof r.kubectlKindRef !== 'string' ||
+        r.kubectlKindRef.length === 0
+      ) {
         errors.push(`${prefix}: kubectlKindRef must be a non-empty string`)
       }
     }
@@ -251,7 +261,9 @@ export const validateClusterResourcesManifest = (
         typeof r.kubectlKindRefPlural !== 'string' ||
         r.kubectlKindRefPlural.length === 0
       ) {
-        errors.push(`${prefix}: kubectlKindRefPlural must be a non-empty string`)
+        errors.push(
+          `${prefix}: kubectlKindRefPlural must be a non-empty string`
+        )
       }
     }
 
@@ -327,10 +339,7 @@ export const validateClusterResourcesManifest = (
           }
         }
         if (e.canonical === 'all') {
-          if (
-            e.outputApiVersion !== undefined ||
-            e.outputKind !== undefined
-          ) {
+          if (e.outputApiVersion !== undefined || e.outputKind !== undefined) {
             errors.push(
               `${p}: outputApiVersion and outputKind must not be set for canonical "all"`
             )

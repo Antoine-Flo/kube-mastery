@@ -9,16 +9,16 @@ You run `kubectl get pods` and notice a Pod sitting in `Pending` for two full mi
 
 @@@
 graph LR
-    PEND["Pending\nScheduled, pulling image"]
-    RUN["Running\nAt least one container running"]
-    SUCC["Succeeded\nAll containers exited 0"]
-    FAIL["Failed\nAt least one container exited non-zero"]
-    UNK["Unknown\nNode unreachable"]
-    PEND --> RUN
-    RUN --> SUCC
-    RUN --> FAIL
-    PEND --> FAIL
-    RUN --> UNK
+PEND["Pending\nScheduled, pulling image"]
+RUN["Running\nAt least one container running"]
+SUCC["Succeeded\nAll containers exited 0"]
+FAIL["Failed\nAt least one container exited non-zero"]
+UNK["Unknown\nNode unreachable"]
+PEND --> RUN
+RUN --> SUCC
+RUN --> FAIL
+PEND --> FAIL
+RUN --> UNK
 @@@
 
 ## The Five Phases
@@ -65,7 +65,6 @@ spec:
     - name: web
       image: nginx:1.28
 ```
-
 
 ```bash
 kubectl apply -f lifecycle-pod.yaml

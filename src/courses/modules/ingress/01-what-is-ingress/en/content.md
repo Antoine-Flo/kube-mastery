@@ -11,14 +11,14 @@ That is exactly what the Kubernetes Gateway API provides.
 
 @@@
 graph LR
-    Internet["Internet"]
-    GW["Gateway\nport 80"]
-    R1["HTTPRoute\napi.myapp.com"]
-    R2["HTTPRoute\napp.myapp.com"]
-    R3["HTTPRoute\nadmin.myapp.com"]
-    API["Service: api-svc"]
-    FE["Service: frontend-svc"]
-    ADMIN["Service: admin-svc"]
+Internet["Internet"]
+GW["Gateway\nport 80"]
+R1["HTTPRoute\napi.myapp.com"]
+R2["HTTPRoute\napp.myapp.com"]
+R3["HTTPRoute\nadmin.myapp.com"]
+API["Service: api-svc"]
+FE["Service: frontend-svc"]
+ADMIN["Service: admin-svc"]
 
     Internet --> GW
     GW --> R1
@@ -27,6 +27,7 @@ graph LR
     R1 --> API
     R2 --> FE
     R3 --> ADMIN
+
 @@@
 
 A single Gateway listens on one port and receives every inbound connection. Behind it, multiple HTTPRoute resources each decide which hostname or path maps to which backend Service. Each team can own their own HTTPRoute without touching the shared Gateway. This clean separation between infrastructure configuration and routing logic is the core structural advantage of Gateway API.

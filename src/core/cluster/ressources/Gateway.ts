@@ -81,7 +81,9 @@ const GatewayManifestSchema = z.object({
     creationTimestamp: z.string().optional()
   }),
   spec: z.object({
-    gatewayClassName: z.string().min(1, 'Gateway spec.gatewayClassName is required'),
+    gatewayClassName: z
+      .string()
+      .min(1, 'Gateway spec.gatewayClassName is required'),
     listeners: z
       .array(
         z.object({

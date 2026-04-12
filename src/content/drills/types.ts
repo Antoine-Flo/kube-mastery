@@ -35,7 +35,8 @@ export const DRILL_CLUSTER_RESOURCE_KINDS = [
   'StorageClass'
 ] as const
 
-export type DrillClusterResourceKind = (typeof DRILL_CLUSTER_RESOURCE_KINDS)[number]
+export type DrillClusterResourceKind =
+  (typeof DRILL_CLUSTER_RESOURCE_KINDS)[number]
 
 export const DRILL_ASSERTION_TYPES = [
   'clusterResourceExists',
@@ -66,45 +67,39 @@ interface DrillClusterAssertionBase extends DrillAssertionBase {
   namespace?: string
 }
 
-export interface DrillClusterResourceExistsAssertion
-  extends DrillClusterAssertionBase {
+export interface DrillClusterResourceExistsAssertion extends DrillClusterAssertionBase {
   type: 'clusterResourceExists'
   name: string
 }
 
-export interface DrillClusterFieldEqualsAssertion
-  extends DrillClusterAssertionBase {
+export interface DrillClusterFieldEqualsAssertion extends DrillClusterAssertionBase {
   type: 'clusterFieldEquals'
   name: string
   path: string
   value: string
 }
 
-export interface DrillClusterFieldContainsAssertion
-  extends DrillClusterAssertionBase {
+export interface DrillClusterFieldContainsAssertion extends DrillClusterAssertionBase {
   type: 'clusterFieldContains'
   name: string
   path: string
   value: string
 }
 
-export interface DrillClusterFieldNotEmptyAssertion
-  extends DrillClusterAssertionBase {
+export interface DrillClusterFieldNotEmptyAssertion extends DrillClusterAssertionBase {
   type: 'clusterFieldNotEmpty'
   name: string
   path: string
 }
 
-export interface DrillClusterFieldsEqualAssertion
-  extends DrillClusterAssertionBase {
+export interface DrillClusterFieldsEqualAssertion extends DrillClusterAssertionBase {
   type: 'clusterFieldsEqual'
   name: string
   leftPath: string
   rightPath: string
 }
 
-export interface DrillClusterListFieldContainsAssertion
-  extends DrillClusterAssertionBase {
+export interface DrillClusterListFieldContainsAssertion extends DrillClusterAssertionBase {
   type: 'clusterListFieldContains'
   path: string
   value: string
@@ -115,15 +110,13 @@ export interface DrillFilesystemFileExistsAssertion extends DrillAssertionBase {
   path: string
 }
 
-export interface DrillFilesystemFileContainsAssertion
-  extends DrillAssertionBase {
+export interface DrillFilesystemFileContainsAssertion extends DrillAssertionBase {
   type: 'filesystemFileContains'
   path: string
   value: string
 }
 
-export interface DrillFilesystemFileNotEmptyAssertion
-  extends DrillAssertionBase {
+export interface DrillFilesystemFileNotEmptyAssertion extends DrillAssertionBase {
   type: 'filesystemFileNotEmpty'
   path: string
 }

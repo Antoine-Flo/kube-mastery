@@ -25,7 +25,9 @@ interface IngressClassConfig extends ClusterScopedNameFactoryConfigBase {
   spec: IngressClassSpec
 }
 
-export const createIngressClass = (config: IngressClassConfig): IngressClass => {
+export const createIngressClass = (
+  config: IngressClassConfig
+): IngressClass => {
   const ingressClass: IngressClass = {
     apiVersion: 'networking.k8s.io/v1',
     kind: 'IngressClass',

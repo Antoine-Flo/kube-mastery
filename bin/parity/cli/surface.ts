@@ -98,7 +98,9 @@ export const printParityResultLine = (
   simulationExitCode: number,
   kindExitCode: number
 ): void => {
-  console.log(`[result] ${note} | sim=${simulationExitCode} kind=${kindExitCode}`)
+  console.log(
+    `[result] ${note} | sim=${simulationExitCode} kind=${kindExitCode}`
+  )
 }
 
 export const printResultPayload = (

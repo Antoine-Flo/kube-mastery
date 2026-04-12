@@ -50,8 +50,7 @@ const hashString = (value: string): string => {
   let hash = 2166136261
   for (const character of value) {
     hash ^= character.charCodeAt(0)
-    hash +=
-      (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24)
+    hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24)
   }
   return (hash >>> 0).toString(16)
 }
@@ -101,7 +100,9 @@ const isIgnoredSource = (source: string | undefined): boolean => {
   return source.startsWith('event-recorder')
 }
 
-const mapPodBoundEvent = (event: ClusterEvent): EventRecordCandidate | undefined => {
+const mapPodBoundEvent = (
+  event: ClusterEvent
+): EventRecordCandidate | undefined => {
   if (event.type !== 'PodBound') {
     return undefined
   }
@@ -463,7 +464,8 @@ const mapClusterEventToCandidate = (
   if (persistentVolumeClaimUpdatedCandidate != null) {
     return persistentVolumeClaimUpdatedCandidate
   }
-  const persistentVolumeUpdatedCandidate = mapPersistentVolumeUpdatedEvent(event)
+  const persistentVolumeUpdatedCandidate =
+    mapPersistentVolumeUpdatedEvent(event)
   if (persistentVolumeUpdatedCandidate != null) {
     return persistentVolumeUpdatedCandidate
   }
@@ -513,7 +515,11 @@ export const createEventRecorder = (
       if (currentTime - lastTimestampMs <= eventTtlMs) {
         continue
       }
-      apiServer.deleteResource('Event', event.metadata.name, event.metadata.namespace)
+      apiServer.deleteResource(
+        'Event',
+        event.metadata.name,
+        event.metadata.namespace
+      )
     }
   }
 

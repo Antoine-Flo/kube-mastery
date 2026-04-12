@@ -9,17 +9,17 @@ seoDescription: 'Learn to extract Kubernetes resource data with jsonpath, build 
 
 @@@
 graph LR
-    GET["kubectl get resource"]
-    TABLE["-o table\ndefault, human readable"]
-    WIDE["-o wide\nmore columns"]
-    YAML["-o yaml\nfull object as YAML"]
-    JSON["-o json\nfull object as JSON"]
-    JP["-o jsonpath=...\nextract one specific field"]
-    GET --> TABLE
-    GET --> WIDE
-    GET --> YAML
-    GET --> JSON
-    GET --> JP
+GET["kubectl get resource"]
+TABLE["-o table\ndefault, human readable"]
+WIDE["-o wide\nmore columns"]
+YAML["-o yaml\nfull object as YAML"]
+JSON["-o json\nfull object as JSON"]
+JP["-o jsonpath=...\nextract one specific field"]
+GET --> TABLE
+GET --> WIDE
+GET --> YAML
+GET --> JSON
+GET --> JP
 @@@
 
 Start by creating a Deployment to use throughout this lesson.
@@ -136,4 +136,3 @@ kubectl delete deployment web
 ```
 
 This module covered the essential kubectl operations: creating, reading, editing, deleting, and formatting output. These commands apply to every resource type in Kubernetes. The next module introduces namespaces, which organize all these resources into separate logical spaces and change how names and access are scoped.
-

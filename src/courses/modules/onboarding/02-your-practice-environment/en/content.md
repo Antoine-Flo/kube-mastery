@@ -7,11 +7,11 @@ seoDescription: Explore your simulated Kubernetes practice environment, availabl
 
 @@@
 graph TD
-    Terminal["Terminal<br/>kubectl, ls, cd, nano, cat, ..."]
-    FS["Virtual Filesystem<br/>YAML files, directories"]
-    Cluster["Simulated Cluster<br/>Pods, Deployments, Services, ..."]
-    Terminal --> FS
-    Terminal --> Cluster
+Terminal["Terminal<br/>kubectl, ls, cd, nano, cat, ..."]
+FS["Virtual Filesystem<br/>YAML files, directories"]
+Cluster["Simulated Cluster<br/>Pods, Deployments, Services, ..."]
+Terminal --> FS
+Terminal --> Cluster
 @@@
 
 The terminal gives you access to two separate things at once. On the filesystem side, you can navigate directories, create files, and write YAML manifests just as you would on a real Linux machine. On the cluster side, `kubectl` connects to an in-memory Kubernetes cluster where those manifests take effect.

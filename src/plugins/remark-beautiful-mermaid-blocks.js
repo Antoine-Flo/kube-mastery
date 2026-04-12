@@ -22,8 +22,7 @@ let mermaidRenderCounter = 0
 
 function throwMermaidPluginError(source, cause) {
   const firstLine = source.trim().split(/\n/)[0] ?? ''
-  const causeMessage =
-    cause instanceof Error ? cause.message : String(cause)
+  const causeMessage = cause instanceof Error ? cause.message : String(cause)
   const err = new Error(
     `[remark-beautiful-mermaid-blocks] Mermaid render failed: ${causeMessage}. First line: ${firstLine}`
   )
@@ -72,10 +71,7 @@ function extractMermaidSource(paragraphValue) {
   if (closeIndex < MERMAID_BLOCK_MARKER.length) {
     return null
   }
-  const inner = trimmed.slice(
-    MERMAID_BLOCK_MARKER.length,
-    closeIndex
-  )
+  const inner = trimmed.slice(MERMAID_BLOCK_MARKER.length, closeIndex)
   const source = inner.trim()
   if (source.length === 0) {
     return null
@@ -84,36 +80,38 @@ function extractMermaidSource(paragraphValue) {
 }
 
 function normalizeMermaidSource(source) {
-  return source
-    .replace(/\u2192/g, '-->')
-    .replace(/\u27f6/g, '-->')
-    .replace(/\u2794/g, '-->')
-    .replace(/\u21d2/g, '==>')
-    // Astro runs remark-smartypants before user remark plugins. Its second pass turns
-    // T -- "label" --> V into T — "label" —> V (em dash + curly quotes), which breaks
-    // beautiful-mermaid arrow parsing. Normalize quotes first so dash rules match.
-    .replace(/\u201c/g, '"')
-    .replace(/\u201d/g, '"')
-    .replace(/\u2018/g, "'")
-    .replace(/\u2019/g, "'")
-    .replace(/[“”]/g, '"')
-    .replace(/[‘’]/g, "'")
-    // Typographic dashes (en/em) where Mermaid expects ASCII --.
-    // Use [\w-]+ so ids like cp, n1, node-a match (not only a single letter).
-    .replace(/([\w-]+)\s+\u2014\s+"/g, '$1 -- "')
-    .replace(/([\w-]+)\s+\u2013\s+"/g, '$1 -- "')
-    .replace(/([\w-]+)\u2014"/g, '$1 -- "')
-    .replace(/([\w-]+)\u2013"/g, '$1 -- "')
-    .replace(/\u2013>/g, '-->')
-    .replace(/\u2014>/g, '-->')
-    // Labeled edges: C -- No --> D becomes C — No —> D after smartypants (second pass).
-    // Run after \u2014> fix so the closing operator is already ASCII -->.
-    .replace(/([\w-]+)\s+\u2014\s+(.+?)\s+(-->)/g, '$1 -- $2 $3')
-    .replace(/([\w-]+)\s+\u2013\s+(.+?)\s+(-->)/g, '$1 -- $2 $3')
-    // Some lessons write Mermaid labels as `A --> |No| B` (with a space).
-    // `beautiful-mermaid` is stricter and expects `A -->|No| B`.
-    .replace(/-->\s+\|/g, '-->|')
-    .trim()
+  return (
+    source
+      .replace(/\u2192/g, '-->')
+      .replace(/\u27f6/g, '-->')
+      .replace(/\u2794/g, '-->')
+      .replace(/\u21d2/g, '==>')
+      // Astro runs remark-smartypants before user remark plugins. Its second pass turns
+      // T -- "label" --> V into T — "label" —> V (em dash + curly quotes), which breaks
+      // beautiful-mermaid arrow parsing. Normalize quotes first so dash rules match.
+      .replace(/\u201c/g, '"')
+      .replace(/\u201d/g, '"')
+      .replace(/\u2018/g, "'")
+      .replace(/\u2019/g, "'")
+      .replace(/[“”]/g, '"')
+      .replace(/[‘’]/g, "'")
+      // Typographic dashes (en/em) where Mermaid expects ASCII --.
+      // Use [\w-]+ so ids like cp, n1, node-a match (not only a single letter).
+      .replace(/([\w-]+)\s+\u2014\s+"/g, '$1 -- "')
+      .replace(/([\w-]+)\s+\u2013\s+"/g, '$1 -- "')
+      .replace(/([\w-]+)\u2014"/g, '$1 -- "')
+      .replace(/([\w-]+)\u2013"/g, '$1 -- "')
+      .replace(/\u2013>/g, '-->')
+      .replace(/\u2014>/g, '-->')
+      // Labeled edges: C -- No --> D becomes C — No —> D after smartypants (second pass).
+      // Run after \u2014> fix so the closing operator is already ASCII -->.
+      .replace(/([\w-]+)\s+\u2014\s+(.+?)\s+(-->)/g, '$1 -- $2 $3')
+      .replace(/([\w-]+)\s+\u2013\s+(.+?)\s+(-->)/g, '$1 -- $2 $3')
+      // Some lessons write Mermaid labels as `A --> |No| B` (with a space).
+      // `beautiful-mermaid` is stricter and expects `A -->|No| B`.
+      .replace(/-->\s+\|/g, '-->|')
+      .trim()
+  )
 }
 
 export function kubemasteryNormalizeSvgMarkupForTests(svgMarkup) {
@@ -207,7 +205,11 @@ function replaceWithRenderedMermaidNode(
   source
 ) {
   const renderedNode = renderMermaidNode(source)
-  parentNode.children.splice(startIndex, endIndex - startIndex + 1, renderedNode)
+  parentNode.children.splice(
+    startIndex,
+    endIndex - startIndex + 1,
+    renderedNode
+  )
 }
 
 function collectBlockSource(parentNode, startIndex) {
@@ -226,7 +228,11 @@ function collectBlockSource(parentNode, startIndex) {
   let endIndex = startIndex
   let foundEnd = false
 
-  for (let index = startIndex + 1; index < parentNode.children.length; index += 1) {
+  for (
+    let index = startIndex + 1;
+    index < parentNode.children.length;
+    index += 1
+  ) {
     const node = parentNode.children[index]
     endIndex = index
 

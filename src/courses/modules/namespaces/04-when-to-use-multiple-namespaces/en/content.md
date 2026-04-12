@@ -9,13 +9,13 @@ Now that you know how to create and navigate namespaces, the real question is: w
 
 @@@
 graph TD
-    A["Pattern 1\nPer team\nfrontend / backend / data"]
-    B["Pattern 2\nPer environment\ndev / staging / production"]
-    C["Pattern 3\nPer application\none namespace per app"]
-    CAUTION["Not a substitute\nfor network security\nor full cluster isolation"]
-    A --> CAUTION
-    B --> CAUTION
-    C --> CAUTION
+A["Pattern 1\nPer team\nfrontend / backend / data"]
+B["Pattern 2\nPer environment\ndev / staging / production"]
+C["Pattern 3\nPer application\none namespace per app"]
+CAUTION["Not a substitute\nfor network security\nor full cluster isolation"]
+A --> CAUTION
+B --> CAUTION
+C --> CAUTION
 @@@
 
 ## Pattern 1: Per Team
@@ -72,19 +72,20 @@ metadata:
   namespace: my-app
 spec:
   hard:
-    pods: "20"
-    requests.cpu: "4"
+    pods: '20'
+    requests.cpu: '4'
     requests.memory: 8Gi
 ```
 
 Without a ResourceQuota, a namespace has no ceiling. One team or one application can consume all available CPU and memory in the cluster, degrading or starving every other workload.
 
 :::quiz What happens if no ResourceQuota is applied to a team's namespace?
+
 - Deployments in that namespace are limited to 10 Pods by default
 - The team can consume all available cluster resources, impacting other teams
 - Kubernetes refuses to create resources in a namespace without a quota
-**Answer:** The team can consume all available resources. Without a ResourceQuota, there is no per-namespace ceiling. A traffic spike or a misconfigured application can monopolize all CPU and memory across the cluster.
-:::
+  **Answer:** The team can consume all available resources. Without a ResourceQuota, there is no per-namespace ceiling. A traffic spike or a misconfigured application can monopolize all CPU and memory across the cluster.
+  :::
 
 ## When a Single Namespace Is Enough
 
@@ -100,7 +101,6 @@ Try this on your own: create a namespace called `my-app`, deploy an nginx Deploy
 kubectl create namespace my-app
 kubectl get pods -A
 ```
-
 
 :::quiz Why do namespaces not fully replace separate clusters for environment isolation?
 **Answer:** Namespaces share the same control plane, the same etcd database, the same physical nodes, and the same network fabric. A failure or misconfiguration at the cluster level affects all namespaces. Separate clusters provide complete isolation at the infrastructure level, which namespaces cannot offer.

@@ -1,7 +1,7 @@
 import type { PodLifecycleDescribeEvent } from '../../../api/PodLifecycleEventStore'
 import type {
   ContainerRuntimeStateDetails,
-  Pod,
+  Pod
 } from '../../../cluster/ressources/Pod'
 import { blank, section } from '../../formatters/describeHelpers'
 import { tabbedStringSync } from '../../printers/describeTabWriter'
@@ -26,7 +26,7 @@ import {
   resolveContainerLastStateDetails,
   resolveContainerStateDetails,
   sanitizeDescribeAnnotations,
-  simulatePodIP,
+  simulatePodIP
 } from '../internal/helpers'
 
 export const describePod = (

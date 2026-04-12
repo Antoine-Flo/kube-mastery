@@ -2,7 +2,10 @@
  * Map Kubernetes resource (apiVersion, kind) to OpenAPI components.schemas name.
  * Must stay aligned with bundled specs under ./specs/.
  */
-export const getOpenAPISchemaName = (apiVersion: string, kind: string): string => {
+export const getOpenAPISchemaName = (
+  apiVersion: string,
+  kind: string
+): string => {
   if (apiVersion === 'v1') {
     return `io.k8s.api.core.v1.${kind}`
   }

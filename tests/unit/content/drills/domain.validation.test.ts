@@ -171,4 +171,3 @@ kubectl get pods
     ])
   })
 })
-

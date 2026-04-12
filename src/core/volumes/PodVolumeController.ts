@@ -69,10 +69,7 @@ export const createPodVolumeController = (
       )
       return
     }
-    if (
-      event.type === 'PodCreated' ||
-      event.type === 'PodUpdated'
-    ) {
+    if (event.type === 'PodCreated' || event.type === 'PodUpdated') {
       const createdOrUpdatedPodEvent = event as {
         payload: { pod: Pod }
       }

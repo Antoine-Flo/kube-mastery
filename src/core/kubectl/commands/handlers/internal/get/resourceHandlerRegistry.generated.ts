@@ -8,23 +8,43 @@ export interface GeneratedResourceHandlerRegistry {
   configmaps: ResourceHandler<ClusterResourceTypeByCollectionKey['configMaps']>
   secrets: ResourceHandler<ClusterResourceTypeByCollectionKey['secrets']>
   nodes: ResourceHandler<ClusterResourceTypeByCollectionKey['nodes']>
-  replicasets: ResourceHandler<ClusterResourceTypeByCollectionKey['replicaSets']>
-  deployments: ResourceHandler<ClusterResourceTypeByCollectionKey['deployments']>
+  replicasets: ResourceHandler<
+    ClusterResourceTypeByCollectionKey['replicaSets']
+  >
+  deployments: ResourceHandler<
+    ClusterResourceTypeByCollectionKey['deployments']
+  >
   daemonsets: ResourceHandler<ClusterResourceTypeByCollectionKey['daemonSets']>
-  statefulsets: ResourceHandler<ClusterResourceTypeByCollectionKey['statefulSets']>
+  statefulsets: ResourceHandler<
+    ClusterResourceTypeByCollectionKey['statefulSets']
+  >
   services: ResourceHandler<ClusterResourceTypeByCollectionKey['services']>
-  endpointslices: ResourceHandler<ClusterResourceTypeByCollectionKey['endpointSlices']>
+  endpointslices: ResourceHandler<
+    ClusterResourceTypeByCollectionKey['endpointSlices']
+  >
   endpoints: ResourceHandler<ClusterResourceTypeByCollectionKey['endpoints']>
   events: ResourceHandler<ClusterResourceTypeByCollectionKey['events']>
   ingresses: ResourceHandler<ClusterResourceTypeByCollectionKey['ingresses']>
-  ingressclasses: ResourceHandler<ClusterResourceTypeByCollectionKey['ingressClasses']>
-  networkpolicies: ResourceHandler<ClusterResourceTypeByCollectionKey['networkPolicies']>
-  gatewayclasses: ResourceHandler<ClusterResourceTypeByCollectionKey['gatewayClasses']>
+  ingressclasses: ResourceHandler<
+    ClusterResourceTypeByCollectionKey['ingressClasses']
+  >
+  networkpolicies: ResourceHandler<
+    ClusterResourceTypeByCollectionKey['networkPolicies']
+  >
+  gatewayclasses: ResourceHandler<
+    ClusterResourceTypeByCollectionKey['gatewayClasses']
+  >
   gateways: ResourceHandler<ClusterResourceTypeByCollectionKey['gateways']>
   httproutes: ResourceHandler<ClusterResourceTypeByCollectionKey['httpRoutes']>
-  persistentvolumes: ResourceHandler<ClusterResourceTypeByCollectionKey['persistentVolumes']>
-  persistentvolumeclaims: ResourceHandler<ClusterResourceTypeByCollectionKey['persistentVolumeClaims']>
+  persistentvolumes: ResourceHandler<
+    ClusterResourceTypeByCollectionKey['persistentVolumes']
+  >
+  persistentvolumeclaims: ResourceHandler<
+    ClusterResourceTypeByCollectionKey['persistentVolumeClaims']
+  >
   namespaces: ResourceHandler<ClusterResourceTypeByCollectionKey['namespaces']>
   leases: ResourceHandler<ClusterResourceTypeByCollectionKey['leases']>
-  storageclasses: ResourceHandler<ClusterResourceTypeByCollectionKey['storageClasses']>
+  storageclasses: ResourceHandler<
+    ClusterResourceTypeByCollectionKey['storageClasses']
+  >
 }

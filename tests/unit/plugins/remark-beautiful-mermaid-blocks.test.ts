@@ -55,17 +55,13 @@ function assertSvgLocalUrlRefsResolve(svgInner: string): void {
       return match[1]
     })
   )
-  const urlRefs = [
-    ...svgInner.matchAll(/url\(#([^)]+)\)/g)
-  ].map((match) => {
+  const urlRefs = [...svgInner.matchAll(/url\(#([^)]+)\)/g)].map((match) => {
     return match[1]
   })
   for (const ref of urlRefs) {
     expect(idSet.has(ref), `missing id for url(#${ref})`).toBe(true)
   }
-  const hrefRefs = [
-    ...svgInner.matchAll(/href="#([^"]+)"/g)
-  ].map((match) => {
+  const hrefRefs = [...svgInner.matchAll(/href="#([^"]+)"/g)].map((match) => {
     return match[1]
   })
   for (const ref of hrefRefs) {
@@ -212,9 +208,7 @@ graph TD
 @@@
 `
     const html = processLessonMarkdown(md)
-    expect(html).toContain(
-      'Does the Service exist in the right namespace?'
-    )
+    expect(html).toContain('Does the Service exist in the right namespace?')
     expect(html).toContain('Does the Service have Endpoints?')
     expect(html).toContain('Are you using the right name form?')
     expect(html).toContain('Use qualified name: svc.namespace or FQDN')

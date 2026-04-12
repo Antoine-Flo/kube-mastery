@@ -9,15 +9,16 @@ You already know `kubectl apply`. But there are several other ways to create and
 
 @@@
 graph TD
-    CREATE["kubectl create\nImperative, fails if already exists"]
-    APPLY["kubectl apply -f\nDeclarative, idempotent, recommended"]
-    EDIT["kubectl edit\nOpens a live editor on the object"]
-    PATCH["kubectl patch\nTargeted change without an editor"]
-    SETIMG["kubectl set image\nChanges a container image specifically"]
+CREATE["kubectl create\nImperative, fails if already exists"]
+APPLY["kubectl apply -f\nDeclarative, idempotent, recommended"]
+EDIT["kubectl edit\nOpens a live editor on the object"]
+PATCH["kubectl patch\nTargeted change without an editor"]
+SETIMG["kubectl set image\nChanges a container image specifically"]
 
     CREATE -->|"one-shot creation"| APPLY
     EDIT -->|"live edit"| PATCH
     PATCH -->|"targeted update"| SETIMG
+
 @@@
 
 ## kubectl apply: the declarative foundation
@@ -45,8 +46,8 @@ spec:
         app: web
     spec:
       containers:
-      - name: web
-        image: nginx:1.28
+        - name: web
+          image: nginx:1.28
 ```
 
 ```bash
@@ -79,11 +80,12 @@ kubectl create deployment web --image=nginx:1.28 --dry-run=client -o yaml
 Nothing is created in the simulated cluster. The output is a valid Deployment manifest you can redirect into a file, adjust, then apply.
 
 :::quiz You want to generate a Service manifest without creating the resource. Which flag combination achieves this?
+
 - `--skip-create -o yaml`
 - `--dry-run=client -o yaml`
 - `--output=yaml --simulate`
-**Answer:** `--dry-run=client -o yaml` - `--dry-run=client` tells kubectl to perform all validation locally without sending anything to the API server. Combined with `-o yaml`, it prints the manifest that would have been submitted.
-:::
+  **Answer:** `--dry-run=client -o yaml` - `--dry-run=client` tells kubectl to perform all validation locally without sending anything to the API server. Combined with `-o yaml`, it prints the manifest that would have been submitted.
+  :::
 
 ## kubectl edit: direct live editing
 
@@ -113,11 +115,12 @@ This triggers a rolling update on the Deployment. The old ReplicaSet gradually s
 :::
 
 :::quiz You need to change the number of replicas for a production Deployment. What is the best approach?
+
 - Use `kubectl edit deployment <name>` and change `replicas` in the editor
 - Run `kubectl scale deployment <name> --replicas=5`
 - Edit `replicas` in the local YAML file, then run `kubectl apply -f`
-**Answer:** Edit the YAML file and apply it. This is the only approach that keeps the file as the source of truth. `kubectl edit` and `kubectl scale` both modify the cluster without touching the file, which creates drift that future applies will silently overwrite.
-:::
+  **Answer:** Edit the YAML file and apply it. This is the only approach that keeps the file as the source of truth. `kubectl edit` and `kubectl scale` both modify the cluster without touching the file, which creates drift that future applies will silently overwrite.
+  :::
 
 :::quiz Why is `kubectl apply` idempotent but `kubectl create` is not?
 **Answer:** `kubectl apply` sends the manifest to the API server, which computes the diff against the existing object and applies only what changed. If nothing changed, nothing happens. `kubectl create` is a pure creation instruction: if the object exists, it returns an error. `apply` was designed for repeatable workflows, `create` for one-shot actions.
@@ -130,4 +133,3 @@ kubectl delete configmap app-config
 ```
 
 You now have four ways to create and modify resources, each with a clear scope. The next lesson covers the other end: how deletion works, what cascade means, and how to clean up a namespace safely.
-

@@ -94,8 +94,9 @@ function getPodShortId(podName: string, ownerName: string): string {
 
 function getPodReadiness(pod: Pod): { ready: number; total: number } {
   const total = pod.spec.containers?.length ?? 0
-  const ready = (pod.status.containerStatuses ?? []).filter((s) => s.ready)
-    .length
+  const ready = (pod.status.containerStatuses ?? []).filter(
+    (s) => s.ready
+  ).length
   return { ready, total }
 }
 
@@ -699,7 +700,12 @@ function renderCluster(
 
   overlayContent.innerHTML = ''
   overlayContent.appendChild(
-    createTopBarEl(selectedLayer, namespaces, selectedNamespaces, isNamespaceFilterOpen)
+    createTopBarEl(
+      selectedLayer,
+      namespaces,
+      selectedNamespaces,
+      isNamespaceFilterOpen
+    )
   )
   if (selectedLayer === 'network') {
     renderNetworkLayer(overlayContent, env, selectedNamespaces, focus)

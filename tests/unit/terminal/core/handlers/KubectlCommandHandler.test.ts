@@ -323,7 +323,11 @@ describe('KubectlCommandHandler', () => {
         containerName: 'dns-test',
         namespace: 'default'
       })
-      const podResult = context.apiServer.findResource('Pod', 'dns-test', 'default')
+      const podResult = context.apiServer.findResource(
+        'Pod',
+        'dns-test',
+        'default'
+      )
       expect(podResult.ok).toBe(true)
     })
 

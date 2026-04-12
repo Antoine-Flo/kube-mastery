@@ -88,10 +88,10 @@ In a Pod spec, what is the purpose of the `volumes` list compared to `volumeMoun
 
 @@@
 graph LR
-    Pod1["postgres-pod\ndeleted"] --> PVC["postgres-pvc\nstill Bound"]
-    PVC --> PV["postgres-pv\ndata preserved"]
-    PV --> PVC2["postgres-pvc\nstill Bound"]
-    PVC2 --> Pod2["postgres-pod\nrecreated, sees data"]
+Pod1["postgres-pod\ndeleted"] --> PVC["postgres-pvc\nstill Bound"]
+PVC --> PV["postgres-pv\ndata preserved"]
+PV --> PVC2["postgres-pvc\nstill Bound"]
+PVC2 --> Pod2["postgres-pod\nrecreated, sees data"]
 @@@
 
 This is the core guarantee of PersistentVolumes. Delete the Pod:

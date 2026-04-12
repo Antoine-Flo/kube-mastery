@@ -17,14 +17,14 @@ A volume is a directory that is mounted into a container and that outlives the c
 
 @@@
 graph LR
-    subgraph Pod
-        C1[Container\nrestart #1]
-        C2[Container\nrestart #2]
-        V[(Volume\n/app/logs)]
-    end
-    C1 -- writes --> V
-    C2 -- reads --> V
-    V -.->|survives restart| C2
+subgraph Pod
+C1[Container\nrestart #1]
+C2[Container\nrestart #2]
+V[(Volume\n/app/logs)]
+end
+C1 -- writes --> V
+C2 -- reads --> V
+V -.->|survives restart| C2
 @@@
 
 When the container restarts, Kubernetes re-mounts the same volume directory at the same path. The files written by the previous container are still there.
@@ -94,7 +94,8 @@ spec:
   containers:
     - name: app
       image: busybox
-      command: ["sh", "-c", "while true; do date >> /app/logs/run.log; sleep 5; done"]
+      command:
+        ['sh', '-c', 'while true; do date >> /app/logs/run.log; sleep 5; done']
       volumeMounts:
         - name: log-storage
           mountPath: /app/logs

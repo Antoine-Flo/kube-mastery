@@ -1,7 +1,10 @@
 import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import type { Node } from '../../../cluster/ressources/Node'
 import type { Pod } from '../../../cluster/ressources/Pod'
-import type { MetricsProvider, NodeMetrics } from '../../../metrics/metricsProvider'
+import type {
+  MetricsProvider,
+  NodeMetrics
+} from '../../../metrics/metricsProvider'
 import { matchesLabelSelector } from '../../../shared/labelSelector'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
@@ -105,10 +108,17 @@ const filterPods = (pods: readonly Pod[], parsed: ParsedCommand): Pod[] => {
   const selector = parsed.selector
 
   return pods.filter((pod) => {
-    if (!allNamespaces && namespace != null && pod.metadata.namespace !== namespace) {
+    if (
+      !allNamespaces &&
+      namespace != null &&
+      pod.metadata.namespace !== namespace
+    ) {
       return false
     }
-    if (selector != null && !matchesLabelSelector(selector, pod.metadata.labels)) {
+    if (
+      selector != null &&
+      !matchesLabelSelector(selector, pod.metadata.labels)
+    ) {
       return false
     }
     if (parsed.name != null && pod.metadata.name !== parsed.name) {
@@ -212,17 +222,13 @@ const renderTopNodes = (
     metricsByNode.set(metric.nodeName, metric)
   }
 
-  const headers = [
-    'NAME',
-    'CPU(cores)',
-    'CPU(%)',
-    'MEMORY(bytes)',
-    'MEMORY(%)'
-  ]
+  const headers = ['NAME', 'CPU(cores)', 'CPU(%)', 'MEMORY(bytes)', 'MEMORY(%)']
   const rows = sortedNodes.map((node) => {
     const metric = getNodeMetric(metricsByNode, node.metadata.name)
     const allocatableCpu = parseCpuToMilli(node.status.allocatable?.cpu)
-    const allocatableMemory = parseMemoryToBytes(node.status.allocatable?.memory)
+    const allocatableMemory = parseMemoryToBytes(
+      node.status.allocatable?.memory
+    )
     return [
       node.metadata.name,
       formatCpu(metric.cpuMilli),

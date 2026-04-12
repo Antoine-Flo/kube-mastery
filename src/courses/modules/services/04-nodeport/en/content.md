@@ -11,24 +11,23 @@ A NodePort Service opens a static port on every node in the cluster. Any request
 
 @@@
 graph LR
-    EXT["External client\n:30080"]
-    N1["Node 1\n:30080"]
-    N2["Node 2\n:30080"]
-    SVC["Service: web-nodeport\nNodePort: 30080\nClusterIP: 10.96.0.10"]
-    P1["Pod A"]
-    P2["Pod B"]
-    EXT --> N1
-    EXT --> N2
-    N1 --> SVC
-    N2 --> SVC
-    SVC --> P1
-    SVC --> P2
+EXT["External client\n:30080"]
+N1["Node 1\n:30080"]
+N2["Node 2\n:30080"]
+SVC["Service: web-nodeport\nNodePort: 30080\nClusterIP: 10.96.0.10"]
+P1["Pod A"]
+P2["Pod B"]
+EXT --> N1
+EXT --> N2
+N1 --> SVC
+N2 --> SVC
+SVC --> P1
+SVC --> P2
 @@@
 
 One detail that surprises many people: NodePort does not replace ClusterIP, it extends it. A NodePort Service still has a ClusterIP. Internal Pods can still reach it on port 80. External clients can additionally reach it on the node port. Think of it as a superset, every capability of ClusterIP plus one more layer on top.
 
 Why does Kubernetes keep both access paths? Because internal and external traffic serve different audiences. Removing ClusterIP when NodePort is added would break every in-cluster consumer of that Service. The two paths coexist cleanly.
-
 
 Let's create one. Open the editor:
 

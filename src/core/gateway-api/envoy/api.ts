@@ -57,12 +57,25 @@ export type EnvoyGatewayStateSlice = Pick<
 
 export interface EnvoyGatewayApiSurface {
   hasController(state: EnvoyGatewayStateSlice): boolean
-  listGatewayClassesForGet(state: EnvoyGatewayStateSlice): GatewayClassSyntheticResource[]
+  listGatewayClassesForGet(
+    state: EnvoyGatewayStateSlice
+  ): GatewayClassSyntheticResource[]
   listGatewaysForGet(state: EnvoyGatewayStateSlice): GatewaySyntheticResource[]
-  listHttpRoutesForGet(state: EnvoyGatewayStateSlice): HTTPRouteSyntheticResource[]
-  getGatewayClassDescribeOutput(state: EnvoyGatewayStateSlice, name: string): string | null
-  getGatewayDescribeOutput(state: EnvoyGatewayStateSlice, name: string): string | null
-  getHttpRouteDescribeOutput(state: EnvoyGatewayStateSlice, name: string): string | null
+  listHttpRoutesForGet(
+    state: EnvoyGatewayStateSlice
+  ): HTTPRouteSyntheticResource[]
+  getGatewayClassDescribeOutput(
+    state: EnvoyGatewayStateSlice,
+    name: string
+  ): string | null
+  getGatewayDescribeOutput(
+    state: EnvoyGatewayStateSlice,
+    name: string
+  ): string | null
+  getHttpRouteDescribeOutput(
+    state: EnvoyGatewayStateSlice,
+    name: string
+  ): string | null
 }
 
 const buildStableUnsignedHash = (seed: string): number => {
@@ -117,7 +130,9 @@ const buildSyntheticMetadataIdentity = (
     controllerPod?.metadata.creationTimestamp ?? '<no-ts>',
     resourceName
   ].join('|')
-  const resourceVersion = String((buildStableUnsignedHash(seed) % 90000) + 10000)
+  const resourceVersion = String(
+    (buildStableUnsignedHash(seed) % 90000) + 10000
+  )
   const uid = toUuidFromHex(buildStableHex(seed, 32))
   return {
     resourceVersion,
@@ -125,7 +140,9 @@ const buildSyntheticMetadataIdentity = (
   }
 }
 
-export const hasEnvoyGatewayController = (state: EnvoyGatewayStateSlice): boolean => {
+export const hasEnvoyGatewayController = (
+  state: EnvoyGatewayStateSlice
+): boolean => {
   const deploymentExists = state.deployments.items.some((deployment) => {
     return (
       deployment.metadata.namespace === ENVOY_GATEWAY_NAMESPACE &&

@@ -472,7 +472,10 @@ const createResourceMutationEventsForKind = (
   const factory = EVENT_FACTORIES[kind]
   if (isClusterScopedKind(kind)) {
     return createClusterScopedMutationEvents(
-      factory.created as (resource: KindToResource<ResourceKind>, source: string) => AppEvent,
+      factory.created as (
+        resource: KindToResource<ResourceKind>,
+        source: string
+      ) => AppEvent,
       factory.updated as (
         name: string,
         resource: KindToResource<ResourceKind>,
@@ -488,7 +491,10 @@ const createResourceMutationEventsForKind = (
   }
 
   return createNamespacedMutationEvents(
-    factory.created as (resource: KindToResource<ResourceKind>, source: string) => AppEvent,
+    factory.created as (
+      resource: KindToResource<ResourceKind>,
+      source: string
+    ) => AppEvent,
     factory.updated as (
       name: string,
       namespace: string,

@@ -1,30 +1,30 @@
-title: "Debug Service Name Resolution From a Client Pod"
+title: 'Debug Service Name Resolution From a Client Pod'
 isDraft: true
-description: "Trace DNS and service wiring from a client pod until backend access works by name."
+description: 'Trace DNS and service wiring from a client pod until backend access works by name.'
 tag: services_networking
-environment: "minimal"
+environment: 'minimal'
 ckaTargetMinutes: 6
 tasks:
-  - task: "Create a temporary test pod for DNS checks"
-    command: "kubectl run dns-debug -n app --image=busybox:1.36 --restart=Never -- sleep 3600"
-    explanation: "A disposable debug pod lets you test DNS resolution from inside the cluster network."
+  - task: 'Create a temporary test pod for DNS checks'
+    command: 'kubectl run dns-debug -n app --image=busybox:1.36 --restart=Never -- sleep 3600'
+    explanation: 'A disposable debug pod lets you test DNS resolution from inside the cluster network.'
 
-  - task: "Resolve short and namespace-qualified backend names"
+  - task: 'Resolve short and namespace-qualified backend names'
     command: "kubectl exec -n app dns-debug -- sh -c 'nslookup backend && nslookup backend.app.svc.cluster.local'"
-    explanation: "Dual lookup distinguishes search-domain issues from service record issues."
+    explanation: 'Dual lookup distinguishes search-domain issues from service record issues.'
 
-  - task: "List the target service and endpoints"
-    command: "kubectl get svc,endpoints backend -n app"
-    explanation: "If name resolves but endpoints are empty, the service selector/ports are likely wrong."
+  - task: 'List the target service and endpoints'
+    command: 'kubectl get svc,endpoints backend -n app'
+    explanation: 'If name resolves but endpoints are empty, the service selector/ports are likely wrong.'
 
-  - task: "Inspect the service definition"
-    command: "kubectl describe svc backend -n app"
-    explanation: "Use this to verify selector, port, and targetPort values match the backend pods."
+  - task: 'Inspect the service definition'
+    command: 'kubectl describe svc backend -n app'
+    explanation: 'Use this to verify selector, port, and targetPort values match the backend pods.'
 
-  - task: "Validate TCP reachability and HTTP response after fixes"
+  - task: 'Validate TCP reachability and HTTP response after fixes'
     command: "kubectl exec -n app dns-debug -- sh -c 'nc -zvw3 backend 80 && wget -qO- http://backend:80'"
-    explanation: "Confirms both network path and application response via service name."
+    explanation: 'Confirms both network path and application response via service name.'
 
-  - task: "Clean up the debug pod"
-    command: "kubectl delete pod dns-debug -n app"
-    explanation: "Removes temporary troubleshooting resources after validation."
+  - task: 'Clean up the debug pod'
+    command: 'kubectl delete pod dns-debug -n app'
+    explanation: 'Removes temporary troubleshooting resources after validation.'

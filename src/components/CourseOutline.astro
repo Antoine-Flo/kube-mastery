@@ -56,9 +56,7 @@ let moduleFlatIndex = 0
               <div class="course-outline__module-lessons">
                 {module.lessons.map((lesson: OverviewLesson) =>
                   module.isLocked ? (
-                    <span
-                      class="course-outline__lesson course-outline__lesson--locked"
-                    >
+                    <span class="course-outline__lesson course-outline__lesson--locked">
                       <span
                         class="course-outline__lesson-icon course-outline__lesson-icon--pending"
                         aria-hidden="true"
@@ -241,7 +239,8 @@ let moduleFlatIndex = 0
     background-color: var(--color-gray-2);
   }
 
-  :global([data-theme='dark']) a.course-outline__lesson:active:not(.progress-current) {
+  :global([data-theme='dark'])
+    a.course-outline__lesson:active:not(.progress-current) {
     background-color: var(--color-gray-4);
   }
 
@@ -249,7 +248,8 @@ let moduleFlatIndex = 0
     background-color: var(--color-cyan-2);
   }
 
-  :global([data-theme='dark']) a.course-outline__lesson.progress-current:active {
+  :global([data-theme='dark'])
+    a.course-outline__lesson.progress-current:active {
     background-color: var(--color-cyan-5);
   }
 

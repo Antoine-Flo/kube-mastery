@@ -93,8 +93,7 @@ export const runKubectlInTerminal = (
     parsedCommand.rawPath == null &&
     isWatchEnabled(parsedCommand)
   const logsFollowEnabled = isLogsFollowEnabled(parsedCommand)
-  const rolloutStatusFollowEnabled =
-    isRolloutStatusFollowEnabled(parsedCommand)
+  const rolloutStatusFollowEnabled = isRolloutStatusFollowEnabled(parsedCommand)
 
   if (watchEnabled && parsedRedirection.outputFile != null) {
     const watchRedirectionError =
@@ -364,10 +363,7 @@ export const runKubectlInTerminal = (
       if (nextOutput === lastOutput) {
         return
       }
-      const expandedOutputs = expandRolloutStatusOutput(
-        lastOutput,
-        nextOutput
-      )
+      const expandedOutputs = expandRolloutStatusOutput(lastOutput, nextOutput)
       lastOutput = nextOutput
       if (expandedOutputs.length > 0) {
         context.output.writeOutput(expandedOutputs.join('\n'))

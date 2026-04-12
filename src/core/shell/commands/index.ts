@@ -154,6 +154,10 @@ export const createShellExecutor = (
   editorModal?: EditorModal,
   runtimeOptions: ShellRuntimeOptions = {}
 ): ShellCommandExecutor => {
-  const handlers = buildShellHandlersMap(fileSystem, editorModal, runtimeOptions)
+  const handlers = buildShellHandlersMap(
+    fileSystem,
+    editorModal,
+    runtimeOptions
+  )
   return createShellCommandExecutor(handlers)
 }

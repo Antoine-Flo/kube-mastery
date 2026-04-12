@@ -9,12 +9,12 @@ You tell Kubernetes "I want three copies of this web server running." Seconds la
 
 @@@
 graph TB
-    subgraph CP["Control Plane"]
-        API["API Server"]
-        ETCD["etcd"]
-        SCH["Scheduler"]
-        CCM["Controller Manager"]
-    end
+subgraph CP["Control Plane"]
+API["API Server"]
+ETCD["etcd"]
+SCH["Scheduler"]
+CCM["Controller Manager"]
+end
 
     subgraph N1["Worker Node 1"]
         KL1["kubelet"]
@@ -35,6 +35,7 @@ graph TB
     KL2 --> API
     KP1 --> API
     KP2 --> API
+
 @@@
 
 A Kubernetes cluster is a group of machines working together. Each machine in the cluster is called a **node**. A node can be a physical server in a data center, a virtual machine in a cloud provider, or even a container on your laptop. From Kubernetes' perspective, a node is just a machine with CPU, memory, and a network connection.
@@ -59,15 +60,16 @@ The control plane is the brain of the cluster. In a production setup it runs on 
 
 @@@
 graph TB
-    ETCD["etcd<br/>source of truth"]
-    API["API Server"]
-    SCH["Scheduler"]
-    CCM["Controller Manager"]
+ETCD["etcd<br/>source of truth"]
+API["API Server"]
+SCH["Scheduler"]
+CCM["Controller Manager"]
 
     API -->|"write state"| ETCD
     ETCD -->|"read state"| API
     SCH -->|"watch & assign"| API
     CCM -->|"watch & reconcile"| API
+
 @@@
 
 **The API Server** (`kube-apiserver`) is the single entry point for everything. Every `kubectl` command, every controller update, every kubelet heartbeat goes through the API server. It validates requests, applies authorization, and persists accepted objects to etcd. Nothing in the cluster talks to anything else directly, every component talks to the API server.
@@ -90,7 +92,7 @@ Worker nodes are the machines that run your containers. Each node runs a small s
 
 @@@
 graph LR
-    API["API Server"]
+API["API Server"]
 
     subgraph N1["Worker Node 1"]
         KL1["kubelet"] --> P1["Pod"] & P2["Pod"]
@@ -105,6 +107,7 @@ graph LR
     KL1 <-->|"status / instructions"| API
     KL2 <-->|"status / instructions"| API
     KP1 & KP2 -->|"watch services"| API
+
 @@@
 
 **The kubelet** is the agent running on every worker node. It watches the API server for Pods that have been scheduled to its node, and it ensures those Pods are running. If a container inside a Pod crashes, the kubelet restarts it. It also reports node health and container status back to the API server, which is how the control plane knows whether workloads are healthy.

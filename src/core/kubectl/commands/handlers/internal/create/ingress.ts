@@ -19,7 +19,9 @@ type ParsedIngressRule = {
   servicePort: number
 }
 
-const parseIngressRule = (value: string): ParsedIngressRule | ExecutionResult => {
+const parseIngressRule = (
+  value: string
+): ParsedIngressRule | ExecutionResult => {
   const ruleText = value.trim()
   const equalsIndex = ruleText.indexOf('=')
   if (equalsIndex <= 0 || equalsIndex === ruleText.length - 1) {

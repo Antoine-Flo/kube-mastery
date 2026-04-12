@@ -15,16 +15,17 @@ A Service does not maintain a static list of Pod IPs. Instead, it uses a **label
 
 @@@
 graph LR
-    CLIENT["Pod: frontend"]
-    SVC["Service: backend<br/>ClusterIP: 10.96.10.5<br/>Port: 80"]
-    P1["Pod: backend-abc<br/>10.0.1.3:8080"]
-    P2["Pod: backend-def<br/>10.0.2.7:8080"]
-    P3["Pod: backend-ghi<br/>10.0.1.9:8080"]
+CLIENT["Pod: frontend"]
+SVC["Service: backend<br/>ClusterIP: 10.96.10.5<br/>Port: 80"]
+P1["Pod: backend-abc<br/>10.0.1.3:8080"]
+P2["Pod: backend-def<br/>10.0.2.7:8080"]
+P3["Pod: backend-ghi<br/>10.0.1.9:8080"]
 
     CLIENT -->|"TCP :80"| SVC
     SVC -->|"load balanced"| P1
     SVC -->|"load balanced"| P2
     SVC -->|"load balanced"| P3
+
 @@@
 
 The set of Pods a Service routes to is tracked by Kubernetes using **EndpointSlices**. An EndpointSlice is an API object that holds a list of `Pod-IP:port` pairs for a given Service. You can inspect them directly:
@@ -130,7 +131,6 @@ spec:
 ```bash
 kubectl apply -f backend-service.yaml
 ```
-
 
 ## Inspecting the Service
 

@@ -3,10 +3,7 @@ import {
   type LessonFrontmatter,
   type OverviewType
 } from '../../content/overview/facade'
-import {
-  getCourses,
-  getCourseStructure
-} from '../../content/courses/facade'
+import { getCourses, getCourseStructure } from '../../content/courses/facade'
 import { getFirstNonPlaceholderLessonIdFromSections } from './lessonTerminalAccess'
 
 type Language = 'en' | 'fr'
@@ -126,7 +123,9 @@ export function buildLessonNavigationState(params: {
       ? params.localePath(
           `/${params.overviewType}/${params.learnableId}/${nextLesson.id}`
         )
-      : params.localePath(`/${params.overviewType}/${params.learnableId}/complete`),
+      : params.localePath(
+          `/${params.overviewType}/${params.learnableId}/complete`
+        ),
     isFirst: currentIndex === 0,
     isLast: currentIndex >= params.allLessons.length - 1
   }

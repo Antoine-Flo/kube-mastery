@@ -21,9 +21,14 @@ const homeCtaLabel = isEarlyStage
   : t('home_cta_join')
 
 const crashCourseOverview = getCourseOverview('crash-course', locale)
-const firstCrashCourseLesson = crashCourseOverview?.content.sections
-  .flatMap((s) => s.modules.flatMap((m) => m.lessons.filter((l) => !l.isPlaceholder).map((l) => l.id)))
-  .at(0) ?? null
+const firstCrashCourseLesson =
+  crashCourseOverview?.content.sections
+    .flatMap((s) =>
+      s.modules.flatMap((m) =>
+        m.lessons.filter((l) => !l.isPlaceholder).map((l) => l.id)
+      )
+    )
+    .at(0) ?? null
 const homeCtaHref = firstCrashCourseLesson
   ? localePath(`/courses/crash-course/${firstCrashCourseLesson}`)
   : localePath('/courses/crash-course')
@@ -61,12 +66,22 @@ try {
           <div class="cta">
             <div class="cta-buttons">
               <div class="cta-primary-column">
-                <Button href={homeCtaHref} variant="solid" color="cyan" size="xl">
+                <Button
+                  href={homeCtaHref}
+                  variant="solid"
+                  color="cyan"
+                  size="xl"
+                >
                   {homeCtaLabel}
                 </Button>
                 <span class="cta-hint">{t('home_cta_no_account')}</span>
               </div>
-              <Button href={localePath('/pricing')} variant="outline" color="gray" size="xl">
+              <Button
+                href={localePath('/pricing')}
+                variant="outline"
+                color="gray"
+                size="xl"
+              >
                 {t('home_cta_explore')}
               </Button>
             </div>
@@ -287,8 +302,15 @@ try {
           <div class="reliability-cta anim">
             <div class="cta reliability-cta-actions">
               <div class="cta-stack">
-                <p class="reliability-cta-intro">{t('home_reliability_cta_intro')}</p>
-                <Button href={localePath('/pricing')} variant="solid" color="cyan" size="xl">
+                <p class="reliability-cta-intro">
+                  {t('home_reliability_cta_intro')}
+                </p>
+                <Button
+                  href={localePath('/pricing')}
+                  variant="solid"
+                  color="cyan"
+                  size="xl"
+                >
                   {t('home_cta_explore')}
                 </Button>
               </div>

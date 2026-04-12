@@ -43,12 +43,12 @@ describe('getEffectiveNetworkPolicyTypes', () => {
   })
 
   it('infers from ingress and egress keys', () => {
-    expect(
-      [...getEffectiveNetworkPolicyTypes({ ingress: [] })].sort()
-    ).toEqual(['Ingress'])
-    expect(
-      [...getEffectiveNetworkPolicyTypes({ egress: [] })].sort()
-    ).toEqual(['Egress'])
+    expect([...getEffectiveNetworkPolicyTypes({ ingress: [] })].sort()).toEqual(
+      ['Ingress']
+    )
+    expect([...getEffectiveNetworkPolicyTypes({ egress: [] })].sort()).toEqual([
+      'Egress'
+    ])
     expect(
       [...getEffectiveNetworkPolicyTypes({ ingress: [], egress: [] })].sort()
     ).toEqual(['Egress', 'Ingress'])

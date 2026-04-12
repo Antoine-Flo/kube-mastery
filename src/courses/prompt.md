@@ -1,7 +1,7 @@
 ## Structure
 
 - 500 words minimum. 1000 words maximum.
-- Tone: friendly, professional, no jokes. No  — signs, use analogies for complex concepts.
+- Tone: friendly, professional, no jokes. No — signs, use analogies for complex concepts.
 - Use prose over bullet points. Short paragraphs.
 - End with a 2-3 sentence wrap-up only. No summary list.
 
@@ -74,15 +74,17 @@ The in-lesson terminal is **not** a real shell. Do **not** put unsupported patte
 
 **Prefer:** `kubectl` plus the built-ins that exist in the product (file ops: `pwd`, `cd`, `ls`, `cat`, `nano`, `touch`, `mkdir`, `rm`, `echo` with `>` or `>>`), `&&` for simple chaining, `help`, `env`, `clear`, `sleep`, `nslookup`, and **simplified** `curl` (in-cluster HTTP GET style simulation, not full curl flags or scripting).
 
-For the comand to execute, put bash syntax, use 
+For the comand to execute, put bash syntax, use
+
 ```bash
 kubectl get pod
 ```
-Instead of 
+
+Instead of
+
 ```
 kubectl get pod
 ```
-
 
 Authoritative reference (keep examples aligned with this page): [Supported, English](/en/supported).
 

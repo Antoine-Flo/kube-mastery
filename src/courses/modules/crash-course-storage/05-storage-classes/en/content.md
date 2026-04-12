@@ -15,15 +15,16 @@ A StorageClass is a cluster-level object that describes a category of storage: t
 
 @@@
 graph LR
-    PVC["PersistentVolumeClaim<br/>storageClassName: fast"]
-    SC["StorageClass: fast<br/>provisioner: ebs.csi.aws.com<br/>type: gp3"]
-    PV["PersistentVolume<br/>auto-provisioned<br/>Status: Bound"]
-    POD["Pod"]
+PVC["PersistentVolumeClaim<br/>storageClassName: fast"]
+SC["StorageClass: fast<br/>provisioner: ebs.csi.aws.com<br/>type: gp3"]
+PV["PersistentVolume<br/>auto-provisioned<br/>Status: Bound"]
+POD["Pod"]
 
     PVC -->|"triggers provisioning via"| SC
     SC -->|"creates"| PV
     PVC -->|"binds to"| PV
     POD -->|"mounts"| PVC
+
 @@@
 
 List the StorageClasses available in your cluster:
@@ -95,7 +96,7 @@ metadata:
 provisioner: ebs.csi.aws.com
 parameters:
   type: gp3
-  iops: "3000"
+  iops: '3000'
 reclaimPolicy: Retain
 allowVolumeExpansion: true
 ```

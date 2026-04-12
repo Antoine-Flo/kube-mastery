@@ -98,13 +98,13 @@ This lists the files in the root directory of the container. You can verify that
 
 @@@
 graph TB
-    L1["kubectl get pods\nGlobal status, READY / STATUS / RESTARTS columns"]
-    L2["kubectl describe pod NAME\nConditions, Events, detailed configuration"]
-    L3["kubectl logs NAME\nContainer output, application errors"]
-    L4["kubectl exec NAME -- command\nDirect inspection inside the container"]
-    L1 -->|"something looks wrong"| L2
-    L2 -->|"container is failing"| L3
-    L3 -->|"need to inspect internals"| L4
+L1["kubectl get pods\nGlobal status, READY / STATUS / RESTARTS columns"]
+L2["kubectl describe pod NAME\nConditions, Events, detailed configuration"]
+L3["kubectl logs NAME\nContainer output, application errors"]
+L4["kubectl exec NAME -- command\nDirect inspection inside the container"]
+L1 -->|"something looks wrong"| L2
+L2 -->|"container is failing"| L3
+L3 -->|"need to inspect internals"| L4
 @@@
 
 Why structure debugging as a funnel? Because each level is more expensive than the previous one. `kubectl get` responds in milliseconds and covers every Pod in a namespace. `kubectl logs` requires targeting a specific Pod and reading potentially large streams of data. `kubectl exec` opens a connection to a running process. Starting broad and narrowing down means you spend the minimum effort needed to find the problem.

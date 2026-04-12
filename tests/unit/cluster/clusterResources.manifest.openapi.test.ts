@@ -34,7 +34,10 @@ describe('clusterResources.manifest.yaml', () => {
       if (entry.openapiSource === 'external-crd') {
         continue
       }
-      const one = validateManifestEntryAgainstSpecs(entry, BUNDLED_OPENAPI_SPECS)
+      const one = validateManifestEntryAgainstSpecs(
+        entry,
+        BUNDLED_OPENAPI_SPECS
+      )
       expect(one.ok).toBe(true)
     }
   })

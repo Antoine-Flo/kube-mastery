@@ -13,9 +13,9 @@ This design keeps containers stateless and portable. A container that writes log
 
 @@@
 graph LR
-    A[Container<br/>stdout / stderr] --> B[kubelet<br/>log driver]
-    B --> C[Node log buffer<br/>on disk]
-    C --> D[kubectl logs]
+A[Container<br/>stdout / stderr] --> B[kubelet<br/>log driver]
+B --> C[Node log buffer<br/>on disk]
+C --> D[kubectl logs]
 @@@
 
 When your container prints a line to stdout, kubelet captures it through the container runtime's log driver and stores it in a buffer on the node. `kubectl logs` reads from that buffer and streams the output back to your terminal.
@@ -90,9 +90,9 @@ kubectl logs my-app --previous
 
 @@@
 graph LR
-    A[Container crashes] --> B[kubelet saves<br/>last log buffer]
-    B --> C[kubectl logs --previous]
-    D[Container restarts] --> E[kubectl logs<br/>current run]
+A[Container crashes] --> B[kubelet saves<br/>last log buffer]
+B --> C[kubectl logs --previous]
+D[Container restarts] --> E[kubectl logs<br/>current run]
 @@@
 
 Why does Kubernetes keep logs from the previous container? Because crash debugging is a very common task, and losing the evidence the moment a container exits would make root-cause analysis nearly impossible. Kubelet retains the log buffer from the last terminated container specifically for this reason.

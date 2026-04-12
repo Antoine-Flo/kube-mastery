@@ -12,7 +12,10 @@ import type { NamespacedFactoryConfigBase } from './resourceFactoryConfig'
 import type { LabelSelector, PodTemplateSpec } from './ReplicaSet'
 
 export type StatefulSetSpec = Omit<
-  Pick<K8sStatefulSetSpec, 'replicas' | 'selector' | 'serviceName' | 'template'>,
+  Pick<
+    K8sStatefulSetSpec,
+    'replicas' | 'selector' | 'serviceName' | 'template'
+  >,
   'selector' | 'template' | 'serviceName'
 > & {
   selector: LabelSelector

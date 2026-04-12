@@ -259,7 +259,8 @@ const handleMetadataChangeWithEvents = (
     typeof accessor.kind
   >
   const metadataKey = config.metadataType
-  const metadataForEvents = updatedResource.metadata as ResourceWithMetadata['metadata']
+  const metadataForEvents =
+    updatedResource.metadata as ResourceWithMetadata['metadata']
   const metadataValue = metadataForEvents[metadataKey] || {}
 
   // Emit appropriate event based on resource type and metadata type

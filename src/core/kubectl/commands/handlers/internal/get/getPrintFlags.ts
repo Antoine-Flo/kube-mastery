@@ -20,11 +20,7 @@
  */
 import type { OutputDirective, OutputKind } from '../../../output/outputHelpers'
 
-export type GetPrintSink =
-  | 'structured'
-  | 'name'
-  | 'custom-columns'
-  | 'table'
+export type GetPrintSink = 'structured' | 'name' | 'custom-columns' | 'table'
 
 /** Values accepted by validateOutputDirective for plain get (not go-template in sim). */
 export const GET_ALLOWED_OUTPUT_KINDS: readonly OutputKind[] = [

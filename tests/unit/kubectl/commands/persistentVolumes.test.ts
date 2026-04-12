@@ -212,11 +212,15 @@ describe('kubectl PV/PVC support', () => {
     )
 
     const executor = createKubectlExecutor(apiServer, fileSystem, logger)
-    const applyPvc = executor.execute('kubectl apply -f /home/kube/pending-no-sc.yaml')
+    const applyPvc = executor.execute(
+      'kubectl apply -f /home/kube/pending-no-sc.yaml'
+    )
     expect(applyPvc.ok).toBe(true)
     await settleReconciliation()
 
-    const describePending = executor.execute('kubectl describe pvc pending-no-sc')
+    const describePending = executor.execute(
+      'kubectl describe pvc pending-no-sc'
+    )
     expect(describePending.ok).toBe(true)
     if (describePending.ok) {
       expect(describePending.value).toContain('Status:        Pending')

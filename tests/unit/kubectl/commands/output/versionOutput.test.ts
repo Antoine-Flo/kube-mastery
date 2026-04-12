@@ -18,7 +18,9 @@ describe('versionOutput', () => {
     const text = formatVersionSimpleText(
       buildSimulatedVersionPayload({ clientOnly: true })
     )
-    expect(text).toMatch(/^Client Version: v1\.35\.0\nKustomize Version: v5\.7\.1$/)
+    expect(text).toMatch(
+      /^Client Version: v1\.35\.0\nKustomize Version: v5\.7\.1$/
+    )
   })
 
   it('formatVersionJson is parseable', () => {

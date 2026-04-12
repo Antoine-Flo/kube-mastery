@@ -9,16 +9,17 @@ You have applied a Gateway manifest and an HTTPRoute. Both resources appear when
 
 @@@
 graph LR
-    GW["Gateway resource"]
-    HR["HTTPRoute resource"]
-    GC["Envoy Gateway\nController"]
-    EP["Envoy Proxy Pod"]
-    SVC["Your Service"]
+GW["Gateway resource"]
+HR["HTTPRoute resource"]
+GC["Envoy Gateway\nController"]
+EP["Envoy Proxy Pod"]
+SVC["Your Service"]
 
     GW --> GC
     HR --> GC
     GC --> EP
     EP --> SVC
+
 @@@
 
 The controller watches Gateway and HTTPRoute resources in the cluster, translates them into proxy configuration, and applies that configuration to the Envoy data plane. The Envoy Proxy pods are what actually accept network connections and forward traffic to your Services. Without the controller, the proxy never gets configured, and traffic goes nowhere.

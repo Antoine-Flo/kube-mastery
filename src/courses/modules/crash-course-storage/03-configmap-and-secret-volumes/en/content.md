@@ -52,12 +52,12 @@ Then mount it in the container:
 
 ```yaml
 # illustrative only
-  containers:
-    - name: app
-      image: nginx:1.28
-      volumeMounts:
-        - name: config
-          mountPath: /etc/app
+containers:
+  - name: app
+    image: nginx:1.28
+    volumeMounts:
+      - name: config
+        mountPath: /etc/app
 ```
 
 The full manifest:
@@ -105,11 +105,12 @@ You update the ConfigMap with a new `log_level: debug`. Does the running Pod see
 
 @@@
 graph LR
-    CM["ConfigMap<br/>app-config<br/>key: config.yaml"]
-    VOL["Volume: config<br/>configMap: app-config"]
-    FS["/etc/app/config.yaml<br/>inside container"]
+CM["ConfigMap<br/>app-config<br/>key: config.yaml"]
+VOL["Volume: config<br/>configMap: app-config"]
+FS["/etc/app/config.yaml<br/>inside container"]
 
     CM --> VOL --> FS
+
 @@@
 
 ## Secret as a Volume

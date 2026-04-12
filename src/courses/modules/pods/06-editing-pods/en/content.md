@@ -15,10 +15,10 @@ Kubernetes enforces immutability at the Pod level to keep behavior deterministic
 
 @@@
 graph TD
-    POD["Pod (running)"]
-    POD --> IMMUT["Immutable after creation\nspec.containers image, ports, env\nspec.volumes\nspec.nodeName\nspec.serviceAccountName"]
-    POD --> LABELS["Mutable via kubectl label or patch\nmetadata.labels\nmetadata.annotations"]
-    POD --> NOTE["Containers image: mutable\nonly via force replace"]
+POD["Pod (running)"]
+POD --> IMMUT["Immutable after creation\nspec.containers image, ports, env\nspec.volumes\nspec.nodeName\nspec.serviceAccountName"]
+POD --> LABELS["Mutable via kubectl label or patch\nmetadata.labels\nmetadata.annotations"]
+POD --> NOTE["Containers image: mutable\nonly via force replace"]
 @@@
 
 The fields that are immutable after creation include most of `spec.containers` (env vars, ports, volume mounts), `spec.volumes`, `spec.nodeName`, and `spec.serviceAccountName`. Labels and annotations on `metadata` are mutable at any time through `kubectl label` or `kubectl annotate`.
@@ -39,7 +39,6 @@ Then delete the running Pod and create the new one:
 kubectl delete pod first-pod
 kubectl apply -f first-pod.yaml
 ```
-
 
 There is a gap between deletion and the new Pod reaching `Running`. For bare Pods, that gap is real: no traffic, no process. This is one of the main reasons production workloads use Deployments instead of bare Pods.
 

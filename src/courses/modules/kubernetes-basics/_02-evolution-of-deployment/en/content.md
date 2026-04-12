@@ -17,11 +17,11 @@ Provisioning was also painfully slow. Infrastructure changes required human hand
 
 @@@
 graph LR
-    BM["Bare Metal\nOne app per server\nZero isolation"]
-    VM["Virtual Machines\nMultiple apps\nIsolated OS per VM"]
-    CT["Containers\nShared kernel\nLightweight isolation"]
-    K8["Kubernetes\nOrchestrated containers\nat scale"]
-    BM --> VM --> CT --> K8
+BM["Bare Metal\nOne app per server\nZero isolation"]
+VM["Virtual Machines\nMultiple apps\nIsolated OS per VM"]
+CT["Containers\nShared kernel\nLightweight isolation"]
+K8["Kubernetes\nOrchestrated containers\nat scale"]
+BM --> VM --> CT --> K8
 @@@
 
 ## Virtual Machines: Isolation Arrives

@@ -17,9 +17,9 @@ The same happens whenever a Pod crashes and restarts through a controller: the r
 
 @@@
 sequenceDiagram
-    participant A as Pod A (client)
-    participant B1 as Pod B v1<br/>IP: 10.0.0.5
-    participant B2 as Pod B v2<br/>IP: 10.0.0.9
+participant A as Pod A (client)
+participant B1 as Pod B v1<br/>IP: 10.0.0.5
+participant B2 as Pod B v2<br/>IP: 10.0.0.9
 
     A->>B1: HTTP GET /api (10.0.0.5)
     B1-->>A: 200 OK
@@ -31,6 +31,7 @@ sequenceDiagram
 
     A->>B1: HTTP GET /api (10.0.0.5)
     Note over A: connection refused
+
 @@@
 
 Pod IPs are ephemeral by design. Kubernetes never guarantees that a Pod keeps the same IP across restarts, rescheduling events, or rolling updates. Hardcoding a Pod IP into any configuration is always wrong.
@@ -63,7 +64,6 @@ kubectl get pods -o wide -l app=backend --watch
 ```
 
 Press Ctrl+C once the rollout is done. Run `kubectl get pods -o wide -l app=backend` again. The IPs have changed. The old ones are gone and unreachable.
-
 
 :::warning
 Some people attempt to work around ephemeral IPs by targeting the node IP directly or using `hostNetwork: true` on a Pod. Both approaches break the cluster network model, create implicit coupling to specific nodes, and cause failures when Pods reschedule. The correct solution is always a Service.

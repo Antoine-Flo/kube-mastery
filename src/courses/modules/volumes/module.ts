@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Partager et persister des données dans un Pod.'
   },
-  tags: ['ckad', 'cka', 'beginner'],
+  tags: ['ckad', 'cka', 'beginner']
 }

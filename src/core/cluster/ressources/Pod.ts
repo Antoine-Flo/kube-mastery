@@ -48,7 +48,8 @@ export type PodPhase =
 type K8sProbeOpenAPI = components['schemas']['io.k8s.api.core.v1.Probe']
 type K8sHTTPGetActionOpenAPI =
   components['schemas']['io.k8s.api.core.v1.HTTPGetAction']
-type K8sExecActionOpenAPI = components['schemas']['io.k8s.api.core.v1.ExecAction']
+type K8sExecActionOpenAPI =
+  components['schemas']['io.k8s.api.core.v1.ExecAction']
 type K8sIntOrStringOpenAPI =
   components['schemas']['io.k8s.apimachinery.pkg.util.intstr.IntOrString']
 type K8sProbeCommon = Pick<

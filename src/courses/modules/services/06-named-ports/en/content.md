@@ -33,14 +33,14 @@ Step 2: using the name in the Service instead of the number:
 spec:
   ports:
     - port: 80
-      targetPort: http   # resolves to whatever port is named "http" in the container
+      targetPort: http # resolves to whatever port is named "http" in the container
 ```
 
 @@@
 graph LR
-    SVC["Service\ntargetPort: http"]
-    CONT["Container\nports:\n  - name: http\n    containerPort: 80"]
-    SVC -->|"resolves 'http' to 80"| CONT
+SVC["Service\ntargetPort: http"]
+CONT["Container\nports:\n - name: http\n containerPort: 80"]
+SVC -->|"resolves 'http' to 80"| CONT
 @@@
 
 The Service no longer stores the number 80. It stores the name `http`. The resolution from name to number happens at runtime, based on whatever `containerPort` the container currently declares under that name.
@@ -77,7 +77,6 @@ spec:
 ```bash
 kubectl apply -f named-deployment.yaml
 ```
-
 
 Now create the Service that references the port by name:
 

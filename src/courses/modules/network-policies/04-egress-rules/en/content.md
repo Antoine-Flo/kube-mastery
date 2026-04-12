@@ -15,9 +15,9 @@ An egress policy restricts traffic that leaves the Pod selected by `podSelector`
 
 @@@
 graph LR
-    api["Pod: api"] -- "allowed" --> db["Pod: db"]
-    api -. "blocked" .-> internet["External internet"]
-    api -. "blocked" .-> other["Other internal services"]
+api["Pod: api"] -- "allowed" --> db["Pod: db"]
+api -. "blocked" .-> internet["External internet"]
+api -. "blocked" .-> other["Other internal services"]
 @@@
 
 Start with the basic structure: select the Pod and declare that this policy governs egress.
@@ -52,28 +52,28 @@ If you add `Egress` to `policyTypes` and provide any egress rules, you must also
 Always include the DNS rule first, before adding any other egress rules:
 
 ```yaml
-  egress:
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: kube-system
-      ports:
-        - protocol: UDP
-          port: 53
-        - protocol: TCP
-          port: 53 # illustrative only
+egress:
+  - to:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: kube-system
+    ports:
+      - protocol: UDP
+        port: 53
+      - protocol: TCP
+        port: 53 # illustrative only
 ```
 
 Now add the rule that allows `api` to reach `db`:
 
 ```yaml
-    - to:
-        - podSelector:
-            matchLabels:
-              app: db
-      ports:
-        - protocol: TCP
-          port: 5432 # illustrative only
+- to:
+    - podSelector:
+        matchLabels:
+          app: db
+  ports:
+    - protocol: TCP
+      port: 5432 # illustrative only
 ```
 
 :::quiz
@@ -142,13 +142,13 @@ The output lists both egress rules: the DNS rule and the `db` rule. Confirm both
 Sometimes you need to allow traffic to an external CIDR but exclude specific addresses inside it. The `ipBlock` field supports an `except` list for this:
 
 ```yaml
-  egress:
-    - to:
-        - ipBlock:
-            cidr: 10.0.0.0/8
-            except:
-              - 10.0.0.5/32
-              - 10.0.0.10/32 # illustrative only
+egress:
+  - to:
+      - ipBlock:
+          cidr: 10.0.0.0/8
+          except:
+            - 10.0.0.5/32
+            - 10.0.0.10/32 # illustrative only
 ```
 
 This allows outbound traffic to the entire `10.0.0.0/8` range except those two specific IPs. Think of it as a CIDR allow with carved-out exceptions. The `except` list must be sub-ranges of the `cidr` value.

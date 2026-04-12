@@ -11,19 +11,18 @@ In cloud environments, there is a cleaner solution. The `LoadBalancer` Service t
 
 @@@
 graph LR
-    USER["User\ncurl http://1.2.3.4"]
-    LB["Cloud Load Balancer\nExternal IP: 1.2.3.4"]
-    SVC["Service: web-lb\ntype: LoadBalancer\nNodePort: 31234"]
-    P1["Pod A"]
-    P2["Pod B"]
-    USER --> LB
-    LB --> SVC
-    SVC --> P1
-    SVC --> P2
+USER["User\ncurl http://1.2.3.4"]
+LB["Cloud Load Balancer\nExternal IP: 1.2.3.4"]
+SVC["Service: web-lb\ntype: LoadBalancer\nNodePort: 31234"]
+P1["Pod A"]
+P2["Pod B"]
+USER --> LB
+LB --> SVC
+SVC --> P1
+SVC --> P2
 @@@
 
 LoadBalancer is a superset of NodePort, which is itself a superset of ClusterIP. Creating a LoadBalancer Service automatically creates a NodePort and a ClusterIP as well. The cloud load balancer routes traffic into the cluster via the NodePort. From there, the Service forwards it to the Pods as usual. Each layer adds a capability without removing the previous one.
-
 
 Let's create one:
 

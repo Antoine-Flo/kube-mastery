@@ -227,7 +227,11 @@ export const handleRun = (
     commandToExecute != null && commandToExecute.length > 0 && isAttachLike
   if (hasInlineCommand) {
     if (isInteractiveShellCommand(commandToExecute)) {
-      const createResult = apiServer.createResource('Pod', pod, runtimeNamespace)
+      const createResult = apiServer.createResource(
+        'Pod',
+        pod,
+        runtimeNamespace
+      )
       if (!createResult.ok) {
         return createResult
       }

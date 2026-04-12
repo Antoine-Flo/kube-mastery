@@ -13,16 +13,16 @@ The `restartPolicy` field lives in the Pod spec, not inside a container spec. It
 
 @@@
 graph TD
-    EXIT["Container exits"]
-    EXIT --> CODE{Exit code?}
-    CODE --> ZERO["0 (success)"]
-    CODE --> NONZERO["non-zero (failure)"]
-    ZERO --> ALW_R["Always: restart"]
-    ZERO --> ONFE["OnFailure: no restart"]
-    ZERO --> NEV_OK["Never: Pod = Succeeded"]
-    NONZERO --> ALW_R2["Always: restart"]
-    NONZERO --> ONFE_R["OnFailure: restart"]
-    NONZERO --> NEV_FAIL["Never: Pod = Failed"]
+EXIT["Container exits"]
+EXIT --> CODE{Exit code?}
+CODE --> ZERO["0 (success)"]
+CODE --> NONZERO["non-zero (failure)"]
+ZERO --> ALW_R["Always: restart"]
+ZERO --> ONFE["OnFailure: no restart"]
+ZERO --> NEV_OK["Never: Pod = Succeeded"]
+NONZERO --> ALW_R2["Always: restart"]
+NONZERO --> ONFE_R["OnFailure: restart"]
+NONZERO --> NEV_FAIL["Never: Pod = Failed"]
 @@@
 
 **Always** restarts the container every time it stops, regardless of the exit code. A clean exit with code 0? Restart. A crash with code 1? Restart. This is the default value, and it is the right choice for any long-running service.

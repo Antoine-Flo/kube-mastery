@@ -15,14 +15,15 @@ The volume starts empty and is backed by the node's local disk by default. Both 
 
 @@@
 graph LR
-    subgraph POD["Pod"]
-        A["Container: writer<br/>mountPath: /output"]
-        B["Container: reader<br/>mountPath: /input"]
-        V["emptyDir: shared-data"]
-    end
+subgraph POD["Pod"]
+A["Container: writer<br/>mountPath: /output"]
+B["Container: reader<br/>mountPath: /input"]
+V["emptyDir: shared-data"]
+end
 
     A -->|write| V
     V -->|read| B
+
 @@@
 
 The lifecycle rule is strict: the volume survives container crashes and restarts, but it is destroyed when the Pod itself is deleted. If you need this data to survive a Pod replacement or a rolling update, emptyDir is the wrong choice. Use a PersistentVolume instead.

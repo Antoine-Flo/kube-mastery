@@ -11,14 +11,14 @@ Think of a Pod as a logical host. Just as a process on a Linux machine can commu
 
 @@@
 flowchart TB
-    subgraph Pod["Pod (one schedulable unit)"]
-        direction TB
-        C["Container(s)<br/>each has name + image"]
-        N["Shared network namespace<br/>one Pod IP, localhost between containers"]
-        V["Shared volumes<br/>optional"]
-    end
-    C --> N
-    C -.-> V
+subgraph Pod["Pod (one schedulable unit)"]
+direction TB
+C["Container(s)<br/>each has name + image"]
+N["Shared network namespace<br/>one Pod IP, localhost between containers"]
+V["Shared volumes<br/>optional"]
+end
+C --> N
+C -.-> V
 @@@
 
 ## Writing the Manifest
@@ -35,11 +35,11 @@ kind: Pod
 
 @@@
 flowchart TB
-    Root["Pod manifest (YAML)"]
-    Root --> AV["apiVersion"]
-    Root --> K["kind"]
-    Root --> MD["metadata<br/>(name, labels, ...)"]
-    Root --> SP["spec<br/>(containers, ports, volumes, ...)"]
+Root["Pod manifest (YAML)"]
+Root --> AV["apiVersion"]
+Root --> K["kind"]
+Root --> MD["metadata<br/>(name, labels, ...)"]
+Root --> SP["spec<br/>(containers, ports, volumes, ...)"]
 @@@
 
 Add `metadata` with a name:
@@ -95,7 +95,6 @@ Apply it:
 kubectl apply -f my-pod.yaml
 ```
 
-
 ## Observing the Lifecycle
 
 Pods move through a sequence of phases as they start up. List your Pod and watch the phase change:
@@ -116,15 +115,15 @@ Press Ctrl+C once it reaches `Running`. The phases you might see are:
 
 @@@
 stateDiagram-v2
-    [*] --> Pending: accepted by API server
-    Pending --> Running: scheduled, at least one container starts
-    Pending --> Failed: cannot be scheduled (terminal)
-    Running --> Succeeded: all containers exit with code 0
-    Running --> Failed: fatal container exit (no more restarts)
-    Running --> Unknown: node stops reporting
-    Unknown --> Running: node visible again (sometimes)
-    Succeeded --> [*]
-    Failed --> [*]
+[*] --> Pending: accepted by API server
+Pending --> Running: scheduled, at least one container starts
+Pending --> Failed: cannot be scheduled (terminal)
+Running --> Succeeded: all containers exit with code 0
+Running --> Failed: fatal container exit (no more restarts)
+Running --> Unknown: node stops reporting
+Unknown --> Running: node visible again (sometimes)
+Succeeded --> [*]
+Failed --> [*]
 @@@
 
 :::quiz
@@ -141,11 +140,11 @@ The same Pod object in the API can be viewed at different levels of detail:
 
 @@@
 flowchart LR
-    Obj["Pod in API / etcd"]
-    Obj --> G["kubectl get pod"]
-    Obj --> W["kubectl get pod -o wide<br/>adds node + Pod IP"]
-    Obj --> Y["kubectl get pod -o yaml<br/>full object + status"]
-    Obj --> D["kubectl describe pod<br/>events + readable summary"]
+Obj["Pod in API / etcd"]
+Obj --> G["kubectl get pod"]
+Obj --> W["kubectl get pod -o wide<br/>adds node + Pod IP"]
+Obj --> Y["kubectl get pod -o yaml<br/>full object + status"]
+Obj --> D["kubectl describe pod<br/>events + readable summary"]
 @@@
 
 Get a summary of the Pod's current state:
@@ -182,10 +181,10 @@ The `-it` flags allocate an interactive terminal. The `--` separates kubectl fla
 
 @@@
 flowchart LR
-    You["Your terminal"] --> K["kubectl exec"]
-    K --> API["API Server"]
-    API --> KL["Kubelet on the node"]
-    KL --> CTR["Container process<br/>(e.g. /bin/sh)"]
+You["Your terminal"] --> K["kubectl exec"]
+K --> API["API Server"]
+API --> KL["Kubelet on the node"]
+KL --> CTR["Container process<br/>(e.g. /bin/sh)"]
 @@@
 
 Exit the shell:
@@ -234,12 +233,12 @@ The Pod is gone. There is no controller watching it, so nothing recreates it. Th
 
 @@@
 flowchart LR
-    Del["kubectl delete pod"] --> Gone["Pod removed"]
-    Gone -->|no controller| Stay["Stays deleted"]
-    subgraph Later["Later: Workloads module"]
-        Dep["Deployment"] --> RS["ReplicaSet"]
-        RS --> Pods["Pods replaced if deleted"]
-    end
+Del["kubectl delete pod"] --> Gone["Pod removed"]
+Gone -->|no controller| Stay["Stays deleted"]
+subgraph Later["Later: Workloads module"]
+Dep["Deployment"] --> RS["ReplicaSet"]
+RS --> Pods["Pods replaced if deleted"]
+end
 @@@
 
 In production, you almost never create bare Pods. You create Deployments, which manage Pods for you. But every Deployment's Pod follows the exact same lifecycle you just observed: the same manifest fields, the same phases, the same exec and logs commands. Understanding a bare Pod means understanding every workload on top of it.

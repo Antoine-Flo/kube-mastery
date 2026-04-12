@@ -26,7 +26,14 @@ describe('EventRecorder', () => {
       containers: [{ name: 'web', image: 'nginx:1.28' }]
     })
     apiServer.emitEvent(
-      createPodBoundEvent('web', 'default', 'worker-a', pod, pod, 'default-scheduler')
+      createPodBoundEvent(
+        'web',
+        'default',
+        'worker-a',
+        pod,
+        pod,
+        'default-scheduler'
+      )
     )
 
     const events = apiServer.listResources('Event')
@@ -54,10 +61,24 @@ describe('EventRecorder', () => {
       containers: [{ name: 'api', image: 'nginx:1.28' }]
     })
     apiServer.emitEvent(
-      createPodBoundEvent('api', 'default', 'worker-a', pod, pod, 'default-scheduler')
+      createPodBoundEvent(
+        'api',
+        'default',
+        'worker-a',
+        pod,
+        pod,
+        'default-scheduler'
+      )
     )
     apiServer.emitEvent(
-      createPodBoundEvent('api', 'default', 'worker-a', pod, pod, 'default-scheduler')
+      createPodBoundEvent(
+        'api',
+        'default',
+        'worker-a',
+        pod,
+        pod,
+        'default-scheduler'
+      )
     )
 
     const events = apiServer.listResources('Event')

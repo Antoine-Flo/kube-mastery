@@ -607,11 +607,15 @@ describe('PodLifecycleController runtime enrichment', () => {
 
     vi.advanceTimersByTime(10)
     vi.runOnlyPendingTimers()
-    expect(pod.status.containerStatuses?.[0]?.restartCount).toBeGreaterThanOrEqual(2)
+    expect(
+      pod.status.containerStatuses?.[0]?.restartCount
+    ).toBeGreaterThanOrEqual(2)
 
     vi.advanceTimersByTime(20)
     vi.runOnlyPendingTimers()
-    expect(pod.status.containerStatuses?.[0]?.restartCount).toBeGreaterThanOrEqual(3)
+    expect(
+      pod.status.containerStatuses?.[0]?.restartCount
+    ).toBeGreaterThanOrEqual(3)
 
     controller.stop()
   })
@@ -701,7 +705,9 @@ describe('PodLifecycleController runtime enrichment', () => {
 
     vi.advanceTimersByTime(10)
     vi.runOnlyPendingTimers()
-    expect(pod.status.containerStatuses?.[0]?.restartCount).toBeGreaterThanOrEqual(2)
+    expect(
+      pod.status.containerStatuses?.[0]?.restartCount
+    ).toBeGreaterThanOrEqual(2)
 
     controller.stop()
   })

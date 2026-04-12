@@ -50,7 +50,6 @@ Three Pods running. Now put the controller to work.
 
 ## Scaling Up
 
-
 ```bash
 kubectl scale replicaset web-rs --replicas=5
 kubectl get pods -l app=web
@@ -81,7 +80,6 @@ kubectl get pods -l app=web
 ```
 
 Now grab the name of one of the running Pods from the output, then delete it:
-
 
 ```bash
 kubectl delete pod <POD-NAME>
@@ -131,4 +129,3 @@ kubectl delete replicaset web-rs
 The ReplicaSet and all the Pods it owns are deleted together. Deleting the ReplicaSet is sufficient to clean up everything.
 
 ReplicaSets give you continuous enforcement of a desired Pod count, in both directions, for any reason the count changes. The next lesson reveals where this primitive falls short and why Deployments exist as the layer above it.
-

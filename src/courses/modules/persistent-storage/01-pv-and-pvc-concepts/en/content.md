@@ -15,10 +15,10 @@ Before looking at any commands, picture how the two sides relate to each other:
 
 @@@
 graph LR
-    Admin["Cluster Admin"] --> PV["PersistentVolume\ndisk or NFS share"]
-    PV --> Binding["Kubernetes Binding"]
-    PVC["PersistentVolumeClaim\ndev request"] --> Binding
-    Binding --> Pod["Pod"]
+Admin["Cluster Admin"] --> PV["PersistentVolume\ndisk or NFS share"]
+PV --> Binding["Kubernetes Binding"]
+PVC["PersistentVolumeClaim\ndev request"] --> Binding
+Binding --> Pod["Pod"]
 @@@
 
 A **PersistentVolume** (PV) is a piece of storage that exists in the cluster independently of any Pod. It could be a directory on a node, a cloud disk, or an NFS share. The cluster administrator creates it and declares how much space it offers and how it can be accessed.
@@ -63,9 +63,9 @@ The four possible statuses for a PV are:
 
 @@@
 graph LR
-    Available["Available\nno claim"] --> Bound["Bound\nPVC attached"]
-    Bound --> Released["Released\nPVC deleted"]
-    Released --> Failed["Failed\nerror state"]
+Available["Available\nno claim"] --> Bound["Bound\nPVC attached"]
+Bound --> Released["Released\nPVC deleted"]
+Released --> Failed["Failed\nerror state"]
 @@@
 
 A PV starts as `Available`, meaning no PVC has claimed it yet. Once a matching PVC appears and binding completes, both the PV and PVC show `Bound`. If the PVC is later deleted, the PV transitions to `Released`. If Kubernetes encounters an error during the binding or reclaim process, the PV shows `Failed`.

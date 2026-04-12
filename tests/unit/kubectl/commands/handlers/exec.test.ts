@@ -360,7 +360,7 @@ describe('kubectl exec handler', () => {
         phase: 'Running'
       })
       const state = createState([pod])
-      const script = "pwd\ncat /etc/hosts"
+      const script = 'pwd\ncat /etc/hosts'
       const parsed = createParsedCommand({
         name: 'my-pod',
         execCommand: ['/bin/sh', '-c', script]

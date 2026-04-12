@@ -15,18 +15,19 @@ Before applying anything, look at the structure a Deployment creates:
 
 @@@
 graph TB
-    DEP["Deployment<br>web-app"]
-    RS1["ReplicaSet v1<br>(replicas: 0, kept for rollback)"]
-    RS2["ReplicaSet v2<br>(replicas: 3, active)"]
-    P1["Pod"]
-    P2["Pod"]
-    P3["Pod"]
+DEP["Deployment<br>web-app"]
+RS1["ReplicaSet v1<br>(replicas: 0, kept for rollback)"]
+RS2["ReplicaSet v2<br>(replicas: 3, active)"]
+P1["Pod"]
+P2["Pod"]
+P3["Pod"]
 
     DEP --> RS1
     DEP --> RS2
     RS2 --> P1
     RS2 --> P2
     RS2 --> P3
+
 @@@
 
 A Deployment does not create Pods directly. It manages **ReplicaSets**, and ReplicaSets manage Pods. The Deployment controller watches your desired state and delegates the actual Pod count to the ReplicaSet beneath it.
@@ -133,7 +134,6 @@ kubectl rollout status deployment/web-app
 
 The `rollout status` command blocks and prints progress as each replica becomes available. Once it exits, you have three Pods running.
 
-
 Now observe the naming hierarchy in action:
 
 ```bash
@@ -166,7 +166,6 @@ kubectl get pods -l app=web --watch
 ```
 
 You will see the deleted Pod terminate and a new one appear within seconds. Press Ctrl+C once the count is back at three.
-
 
 :::quiz
 A Pod belonging to a Deployment is accidentally deleted. What happens?

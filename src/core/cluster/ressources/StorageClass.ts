@@ -53,9 +53,12 @@ export const createStorageClass = (
       ...(config.annotations != null ? { annotations: config.annotations } : {})
     },
     provisioner: config.spec.provisioner,
-    reclaimPolicy: (config.spec.reclaimPolicy ?? 'Delete') as 'Delete' | 'Retain',
-    volumeBindingMode: (config.spec.volumeBindingMode ??
-      'Immediate') as 'Immediate' | 'WaitForFirstConsumer',
+    reclaimPolicy: (config.spec.reclaimPolicy ?? 'Delete') as
+      | 'Delete'
+      | 'Retain',
+    volumeBindingMode: (config.spec.volumeBindingMode ?? 'Immediate') as
+      | 'Immediate'
+      | 'WaitForFirstConsumer',
     ...(config.spec.allowVolumeExpansion != null
       ? { allowVolumeExpansion: config.spec.allowVolumeExpansion }
       : {}),

@@ -19,9 +19,9 @@ When you create a Service, CoreDNS adds an A record mapping the Service FQDN to 
 
 @@@
 graph LR
-    FrontendPod["Pod\n(frontend ns)\nnslookup api.backend"] --> CoreDNS["CoreDNS"]
-    CoreDNS --> Record["A record\napi.backend.svc.cluster.local\n-> 10.100.x.x"]
-    Record --> ApiSvc["Service api\n(backend ns)"]
+FrontendPod["Pod\n(frontend ns)\nnslookup api.backend"] --> CoreDNS["CoreDNS"]
+CoreDNS --> Record["A record\napi.backend.svc.cluster.local\n-> 10.100.x.x"]
+Record --> ApiSvc["Service api\n(backend ns)"]
 @@@
 
 The A record is created automatically. You do not write DNS zone files. You do not restart CoreDNS. Create the Service and the name is immediately resolvable.
@@ -102,9 +102,9 @@ The third type is ExternalName. Instead of an A record pointing to an IP, CoreDN
 
 @@@
 graph LR
-    Pod["Pod\nnslookup external-api"] --> CoreDNS["CoreDNS"]
-    CoreDNS --> CNAME["CNAME\nexternal-api.default.svc.cluster.local\n-> api.example.com"]
-    CNAME --> ExternalDNS["External DNS\napi.example.com -> 1.2.3.4"]
+Pod["Pod\nnslookup external-api"] --> CoreDNS["CoreDNS"]
+CoreDNS --> CNAME["CNAME\nexternal-api.default.svc.cluster.local\n-> api.example.com"]
+CNAME --> ExternalDNS["External DNS\napi.example.com -> 1.2.3.4"]
 @@@
 
 ```yaml

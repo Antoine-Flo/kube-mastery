@@ -15,13 +15,13 @@ An `emptyDir` volume is a temporary directory that Kubernetes creates fresh when
 
 @@@
 graph LR
-    subgraph Pod
-        A[app container\n/tmp/cache]
-        S[sidecar container\n/data/cache]
-        E[(emptyDir\nvolume)]
-    end
-    A -- writes --> E
-    E -- reads --> S
+subgraph Pod
+A[app container\n/tmp/cache]
+S[sidecar container\n/data/cache]
+E[(emptyDir\nvolume)]
+end
+A -- writes --> E
+E -- reads --> S
 @@@
 
 The analogy: think of the `emptyDir` volume as a shared whiteboard in a room where both containers work. They both see it, they can both write on it, and it disappears when they leave the room (when the Pod is deleted).
@@ -60,13 +60,19 @@ spec:
   containers:
     - name: app
       image: busybox
-      command: ["sh", "-c", "while true; do echo hello > /tmp/cache/data.txt; sleep 10; done"]
+      command:
+        [
+          'sh',
+          '-c',
+          'while true; do echo hello > /tmp/cache/data.txt; sleep 10; done'
+        ]
       volumeMounts:
         - name: shared-cache
           mountPath: /tmp/cache
     - name: sidecar
       image: busybox
-      command: ["sh", "-c", "while true; do cat /data/cache/data.txt; sleep 10; done"]
+      command:
+        ['sh', '-c', 'while true; do cat /data/cache/data.txt; sleep 10; done']
       volumeMounts:
         - name: shared-cache
           mountPath: /data/cache

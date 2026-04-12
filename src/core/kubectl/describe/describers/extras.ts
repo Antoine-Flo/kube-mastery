@@ -10,30 +10,28 @@ const formatEventTimestampForDescribe = (timestamp: string): string => {
   return timestamp
 }
 
-export const describeCoreEvent = (
-  eventItem: {
-    metadata: {
-      name: string
-      namespace: string
-      labels?: Record<string, string>
-      creationTimestamp: string
-      resourceVersion?: string
-      uid?: string
-    }
-    involvedObject: {
-      apiVersion: string
-      kind: string
-      name: string
-      namespace?: string
-    }
-    reason: string
-    message: string
-    type: string
-    count: number
-    firstTimestamp: string
-    lastTimestamp: string
+export const describeCoreEvent = (eventItem: {
+  metadata: {
+    name: string
+    namespace: string
+    labels?: Record<string, string>
+    creationTimestamp: string
+    resourceVersion?: string
+    uid?: string
   }
-): string => {
+  involvedObject: {
+    apiVersion: string
+    kind: string
+    name: string
+    namespace?: string
+  }
+  reason: string
+  message: string
+  type: string
+  count: number
+  firstTimestamp: string
+  lastTimestamp: string
+}): string => {
   const involvedNamespace =
     eventItem.involvedObject.namespace ?? eventItem.metadata.namespace
   const labels = eventItem.metadata.labels
@@ -45,7 +43,9 @@ export const describeCoreEvent = (
           .join(',')
   const resourceVersion = eventItem.metadata.resourceVersion ?? '<unknown>'
   const uid = eventItem.metadata.uid ?? '<unknown>'
-  const firstTimestamp = formatEventTimestampForDescribe(eventItem.firstTimestamp)
+  const firstTimestamp = formatEventTimestampForDescribe(
+    eventItem.firstTimestamp
+  )
   const lastTimestamp = formatEventTimestampForDescribe(eventItem.lastTimestamp)
   const creationTimestamp = formatEventTimestampForDescribe(
     eventItem.metadata.creationTimestamp

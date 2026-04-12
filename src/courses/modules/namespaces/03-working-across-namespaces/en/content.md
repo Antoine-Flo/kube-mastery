@@ -52,16 +52,15 @@ kubectl get pods -A
 
 The `-A` output now shows Pods from both `team-a` and `team-b` alongside the system Pods. Notice how the same command gives you the full cluster view without changing anything.
 
-
 ## Cross-Namespace DNS
 
 @@@
 graph LR
-    POD_A["Pod in namespace: frontend\nwants to call 'api'"]
-    DNS["CoreDNS\nresolves FQDN"]
-    SVC["Service: api\nnamespace: backend"]
-    POD_A -->|"api.backend.svc.cluster.local"| DNS
-    DNS --> SVC
+POD_A["Pod in namespace: frontend\nwants to call 'api'"]
+DNS["CoreDNS\nresolves FQDN"]
+SVC["Service: api\nnamespace: backend"]
+POD_A -->|"api.backend.svc.cluster.local"| DNS
+DNS --> SVC
 @@@
 
 Within the same namespace, a Pod can call a Service by its short name. A Pod in `frontend` calling a Service named `web` that also lives in `frontend` just uses `web`. CoreDNS automatically resolves it.

@@ -4,7 +4,13 @@ import type { DrillIndexPort } from './port'
 import { buildDrillList, buildDrillDetail } from './domain'
 import { createDrillGlobAdapter } from './glob-adapter'
 
-export type { DrillListItem, DrillDetail, DrillTask, DrillValidation, DrillTagId } from './types'
+export type {
+  DrillListItem,
+  DrillDetail,
+  DrillTask,
+  DrillValidation,
+  DrillTagId
+} from './types'
 
 let adapter: DrillIndexPort | null = null
 
@@ -19,6 +25,9 @@ export function getDrills(lang: UiLang): DrillListItem[] {
   return buildDrillList(getAdapter(), lang)
 }
 
-export function getDrillDetail(drillId: string, lang: UiLang): DrillDetail | null {
+export function getDrillDetail(
+  drillId: string,
+  lang: UiLang
+): DrillDetail | null {
   return buildDrillDetail(getAdapter(), drillId, lang)
 }

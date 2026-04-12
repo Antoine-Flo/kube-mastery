@@ -50,13 +50,13 @@ A readiness probe answers a different question: "Is this container ready to rece
 
 @@@
 graph TD
-    RUN["Container Running"]
-    LP["Liveness probe<br/>fails failureThreshold times"]
-    RP["Readiness probe<br/>fails"]
-    KILL["Container killed<br/>and restarted"]
-    REMOVE["Removed from<br/>Service traffic<br/>(not restarted)"]
-    PASS["Readiness probe<br/>passes again"]
-    BACK["Re-added to<br/>Service traffic"]
+RUN["Container Running"]
+LP["Liveness probe<br/>fails failureThreshold times"]
+RP["Readiness probe<br/>fails"]
+KILL["Container killed<br/>and restarted"]
+REMOVE["Removed from<br/>Service traffic<br/>(not restarted)"]
+PASS["Readiness probe<br/>passes again"]
+BACK["Re-added to<br/>Service traffic"]
 
     RUN --> LP
     RUN --> RP
@@ -64,6 +64,7 @@ graph TD
     RP --> REMOVE
     REMOVE --> PASS
     PASS --> BACK
+
 @@@
 
 The diagram shows the two independent branches: liveness failure leads to a container restart, readiness failure leads to traffic removal. A container can fail its readiness probe while passing its liveness probe: it is alive but temporarily unable to serve requests, perhaps because it is waiting on a dependency or warming up a cache.
@@ -138,7 +139,6 @@ spec:
 kubectl apply -f probed-deployment.yaml
 kubectl rollout status deployment/probed-app
 ```
-
 
 Inspect the probe configuration on a running Pod:
 

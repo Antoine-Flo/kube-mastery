@@ -12,11 +12,10 @@ import type { NamespacedFactoryConfigBase } from './resourceFactoryConfig'
 
 export type PersistentVolumeClaimPhase = 'Pending' | 'Bound' | 'Lost'
 
-export interface PersistentVolumeClaimSpec
-  extends Pick<
-    K8sPersistentVolumeClaimSpec,
-    'accessModes' | 'resources' | 'storageClassName' | 'volumeName'
-  > {
+export interface PersistentVolumeClaimSpec extends Pick<
+  K8sPersistentVolumeClaimSpec,
+  'accessModes' | 'resources' | 'storageClassName' | 'volumeName'
+> {
   accessModes: Array<
     'ReadWriteOnce' | 'ReadOnlyMany' | 'ReadWriteMany' | 'ReadWriteOncePod'
   >

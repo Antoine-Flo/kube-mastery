@@ -1,9 +1,5 @@
 import { evaluateKubectlJsonPathValues } from '../../kubectl/commands/output/jsonpath/jsonPathEvaluator'
-import {
-  error,
-  success,
-  type Result
-} from '../../shared/result'
+import { error, success, type Result } from '../../shared/result'
 import type { DrillAssertion } from '../../../content/drills/types'
 import type { ValidationQueryPort } from './ValidationQueryPort'
 
@@ -29,7 +25,10 @@ export type AssertionEvaluation =
   | { passed: false; failure: AssertionFailure }
 
 const valuesToComparableString = (values: unknown[]): string => {
-  return values.map((value) => String(value ?? '')).join(' ').trim()
+  return values
+    .map((value) => String(value ?? ''))
+    .join(' ')
+    .trim()
 }
 
 const extractComparableValue = (
@@ -257,4 +256,3 @@ export function evaluateDrillAssertion(
 
   return error('Unsupported assertion type')
 }
-

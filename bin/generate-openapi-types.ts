@@ -54,7 +54,10 @@ const buildAliasesFile = (
   const availableSchemas = new Set(Object.keys(merged.components.schemas))
   const mappedResources = manifest.resources
     .map((resource) => {
-      const schemaName = getOpenAPISchemaName(resource.apiVersion, resource.kind)
+      const schemaName = getOpenAPISchemaName(
+        resource.apiVersion,
+        resource.kind
+      )
       if (!availableSchemas.has(schemaName)) {
         return null
       }

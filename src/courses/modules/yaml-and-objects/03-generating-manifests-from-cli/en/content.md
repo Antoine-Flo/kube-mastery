@@ -25,11 +25,11 @@ Look at the output. Every field is correctly named, correctly indented, and uses
 
 @@@
 graph LR
-    GEN["kubectl ... --dry-run=client -o yaml"]
-    FILE["pod.yaml\n(generated template)"]
-    EDIT["nano pod.yaml\n(customize)"]
-    APPLY["kubectl apply -f pod.yaml\n(create in cluster)"]
-    GEN -->|"> pod.yaml"| FILE --> EDIT --> APPLY
+GEN["kubectl ... --dry-run=client -o yaml"]
+FILE["pod.yaml\n(generated template)"]
+EDIT["nano pod.yaml\n(customize)"]
+APPLY["kubectl apply -f pod.yaml\n(create in cluster)"]
+GEN -->|"> pod.yaml"| FILE --> EDIT --> APPLY
 @@@
 
 The workflow is always the same: generate the template, save it to a file, edit what you need, apply. This pattern eliminates an entire class of syntax errors before they ever reach the API server.
@@ -113,4 +113,3 @@ What is the difference between `kubectl run` and `kubectl create deployment` whe
 You have now seen how to generate both a Pod and a Deployment manifest. Without looking back at the commands above, generate a Deployment manifest for an image called `myapp:1.0` with the deployment named `backend`, and save it to a file called `backend.yaml`. You have everything you need.
 
 In the next lesson, you will look at how Kubernetes enforces naming rules for objects and why those rules have direct consequences for DNS-based service discovery inside the cluster.
-

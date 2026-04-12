@@ -79,57 +79,177 @@ import {
 } from '../events/types'
 
 export const repos = {
-  pods: createResourceRepository<ClusterResourceTypeByCollectionKey['pods']>('Pod'),
-  configMaps: createResourceRepository<ClusterResourceTypeByCollectionKey['configMaps']>('ConfigMap'),
-  controllerRevisions: createResourceRepository<ClusterResourceTypeByCollectionKey['controllerRevisions']>('ControllerRevision'),
-  secrets: createResourceRepository<ClusterResourceTypeByCollectionKey['secrets']>('Secret'),
-  nodes: createResourceRepository<ClusterResourceTypeByCollectionKey['nodes']>('Node'),
-  replicaSets: createResourceRepository<ClusterResourceTypeByCollectionKey['replicaSets']>('ReplicaSet'),
-  deployments: createResourceRepository<ClusterResourceTypeByCollectionKey['deployments']>('Deployment'),
-  daemonSets: createResourceRepository<ClusterResourceTypeByCollectionKey['daemonSets']>('DaemonSet'),
-  statefulSets: createResourceRepository<ClusterResourceTypeByCollectionKey['statefulSets']>('StatefulSet'),
-  services: createResourceRepository<ClusterResourceTypeByCollectionKey['services']>('Service'),
-  endpointSlices: createResourceRepository<ClusterResourceTypeByCollectionKey['endpointSlices']>('EndpointSlice'),
-  endpoints: createResourceRepository<ClusterResourceTypeByCollectionKey['endpoints']>('Endpoints'),
-  events: createResourceRepository<ClusterResourceTypeByCollectionKey['events']>('Event'),
-  ingresses: createResourceRepository<ClusterResourceTypeByCollectionKey['ingresses']>('Ingress'),
-  ingressClasses: createResourceRepository<ClusterResourceTypeByCollectionKey['ingressClasses']>('IngressClass'),
-  networkPolicies: createResourceRepository<ClusterResourceTypeByCollectionKey['networkPolicies']>('NetworkPolicy'),
-  gatewayClasses: createResourceRepository<ClusterResourceTypeByCollectionKey['gatewayClasses']>('GatewayClass'),
-  gateways: createResourceRepository<ClusterResourceTypeByCollectionKey['gateways']>('Gateway'),
-  httpRoutes: createResourceRepository<ClusterResourceTypeByCollectionKey['httpRoutes']>('HTTPRoute'),
-  persistentVolumes: createResourceRepository<ClusterResourceTypeByCollectionKey['persistentVolumes']>('PersistentVolume'),
-  persistentVolumeClaims: createResourceRepository<ClusterResourceTypeByCollectionKey['persistentVolumeClaims']>('PersistentVolumeClaim'),
-  namespaces: createResourceRepository<ClusterResourceTypeByCollectionKey['namespaces']>('Namespace'),
-  leases: createResourceRepository<ClusterResourceTypeByCollectionKey['leases']>('Lease'),
-  storageClasses: createResourceRepository<ClusterResourceTypeByCollectionKey['storageClasses']>('StorageClass')
+  pods: createResourceRepository<ClusterResourceTypeByCollectionKey['pods']>(
+    'Pod'
+  ),
+  configMaps:
+    createResourceRepository<ClusterResourceTypeByCollectionKey['configMaps']>(
+      'ConfigMap'
+    ),
+  controllerRevisions:
+    createResourceRepository<
+      ClusterResourceTypeByCollectionKey['controllerRevisions']
+    >('ControllerRevision'),
+  secrets:
+    createResourceRepository<ClusterResourceTypeByCollectionKey['secrets']>(
+      'Secret'
+    ),
+  nodes:
+    createResourceRepository<ClusterResourceTypeByCollectionKey['nodes']>(
+      'Node'
+    ),
+  replicaSets:
+    createResourceRepository<ClusterResourceTypeByCollectionKey['replicaSets']>(
+      'ReplicaSet'
+    ),
+  deployments:
+    createResourceRepository<ClusterResourceTypeByCollectionKey['deployments']>(
+      'Deployment'
+    ),
+  daemonSets:
+    createResourceRepository<ClusterResourceTypeByCollectionKey['daemonSets']>(
+      'DaemonSet'
+    ),
+  statefulSets:
+    createResourceRepository<
+      ClusterResourceTypeByCollectionKey['statefulSets']
+    >('StatefulSet'),
+  services:
+    createResourceRepository<ClusterResourceTypeByCollectionKey['services']>(
+      'Service'
+    ),
+  endpointSlices:
+    createResourceRepository<
+      ClusterResourceTypeByCollectionKey['endpointSlices']
+    >('EndpointSlice'),
+  endpoints:
+    createResourceRepository<ClusterResourceTypeByCollectionKey['endpoints']>(
+      'Endpoints'
+    ),
+  events:
+    createResourceRepository<ClusterResourceTypeByCollectionKey['events']>(
+      'Event'
+    ),
+  ingresses:
+    createResourceRepository<ClusterResourceTypeByCollectionKey['ingresses']>(
+      'Ingress'
+    ),
+  ingressClasses:
+    createResourceRepository<
+      ClusterResourceTypeByCollectionKey['ingressClasses']
+    >('IngressClass'),
+  networkPolicies:
+    createResourceRepository<
+      ClusterResourceTypeByCollectionKey['networkPolicies']
+    >('NetworkPolicy'),
+  gatewayClasses:
+    createResourceRepository<
+      ClusterResourceTypeByCollectionKey['gatewayClasses']
+    >('GatewayClass'),
+  gateways:
+    createResourceRepository<ClusterResourceTypeByCollectionKey['gateways']>(
+      'Gateway'
+    ),
+  httpRoutes:
+    createResourceRepository<ClusterResourceTypeByCollectionKey['httpRoutes']>(
+      'HTTPRoute'
+    ),
+  persistentVolumes:
+    createResourceRepository<
+      ClusterResourceTypeByCollectionKey['persistentVolumes']
+    >('PersistentVolume'),
+  persistentVolumeClaims: createResourceRepository<
+    ClusterResourceTypeByCollectionKey['persistentVolumeClaims']
+  >('PersistentVolumeClaim'),
+  namespaces:
+    createResourceRepository<ClusterResourceTypeByCollectionKey['namespaces']>(
+      'Namespace'
+    ),
+  leases:
+    createResourceRepository<ClusterResourceTypeByCollectionKey['leases']>(
+      'Lease'
+    ),
+  storageClasses:
+    createResourceRepository<
+      ClusterResourceTypeByCollectionKey['storageClasses']
+    >('StorageClass')
 } as const
 
 export const resourceOps = {
-  pods: createResourceOperations<ClusterResourceTypeByCollectionKey['pods']>(repos.pods, 'pods'),
-  configMaps: createResourceOperations<ClusterResourceTypeByCollectionKey['configMaps']>(repos.configMaps, 'configMaps'),
-  controllerRevisions: createResourceOperations<ClusterResourceTypeByCollectionKey['controllerRevisions']>(repos.controllerRevisions, 'controllerRevisions'),
-  secrets: createResourceOperations<ClusterResourceTypeByCollectionKey['secrets']>(repos.secrets, 'secrets'),
-  nodes: createResourceOperations<ClusterResourceTypeByCollectionKey['nodes']>(repos.nodes, 'nodes'),
-  replicaSets: createResourceOperations<ClusterResourceTypeByCollectionKey['replicaSets']>(repos.replicaSets, 'replicaSets'),
-  deployments: createResourceOperations<ClusterResourceTypeByCollectionKey['deployments']>(repos.deployments, 'deployments'),
-  daemonSets: createResourceOperations<ClusterResourceTypeByCollectionKey['daemonSets']>(repos.daemonSets, 'daemonSets'),
-  statefulSets: createResourceOperations<ClusterResourceTypeByCollectionKey['statefulSets']>(repos.statefulSets, 'statefulSets'),
-  services: createResourceOperations<ClusterResourceTypeByCollectionKey['services']>(repos.services, 'services'),
-  endpointSlices: createResourceOperations<ClusterResourceTypeByCollectionKey['endpointSlices']>(repos.endpointSlices, 'endpointSlices'),
-  endpoints: createResourceOperations<ClusterResourceTypeByCollectionKey['endpoints']>(repos.endpoints, 'endpoints'),
-  events: createResourceOperations<ClusterResourceTypeByCollectionKey['events']>(repos.events, 'events'),
-  ingresses: createResourceOperations<ClusterResourceTypeByCollectionKey['ingresses']>(repos.ingresses, 'ingresses'),
-  ingressClasses: createResourceOperations<ClusterResourceTypeByCollectionKey['ingressClasses']>(repos.ingressClasses, 'ingressClasses'),
-  networkPolicies: createResourceOperations<ClusterResourceTypeByCollectionKey['networkPolicies']>(repos.networkPolicies, 'networkPolicies'),
-  gatewayClasses: createResourceOperations<ClusterResourceTypeByCollectionKey['gatewayClasses']>(repos.gatewayClasses, 'gatewayClasses'),
-  gateways: createResourceOperations<ClusterResourceTypeByCollectionKey['gateways']>(repos.gateways, 'gateways'),
-  httpRoutes: createResourceOperations<ClusterResourceTypeByCollectionKey['httpRoutes']>(repos.httpRoutes, 'httpRoutes'),
-  persistentVolumes: createResourceOperations<ClusterResourceTypeByCollectionKey['persistentVolumes']>(repos.persistentVolumes, 'persistentVolumes'),
-  persistentVolumeClaims: createResourceOperations<ClusterResourceTypeByCollectionKey['persistentVolumeClaims']>(repos.persistentVolumeClaims, 'persistentVolumeClaims'),
-  namespaces: createResourceOperations<ClusterResourceTypeByCollectionKey['namespaces']>(repos.namespaces, 'namespaces'),
-  leases: createResourceOperations<ClusterResourceTypeByCollectionKey['leases']>(repos.leases, 'leases'),
-  storageClasses: createResourceOperations<ClusterResourceTypeByCollectionKey['storageClasses']>(repos.storageClasses, 'storageClasses')
+  pods: createResourceOperations<ClusterResourceTypeByCollectionKey['pods']>(
+    repos.pods,
+    'pods'
+  ),
+  configMaps: createResourceOperations<
+    ClusterResourceTypeByCollectionKey['configMaps']
+  >(repos.configMaps, 'configMaps'),
+  controllerRevisions: createResourceOperations<
+    ClusterResourceTypeByCollectionKey['controllerRevisions']
+  >(repos.controllerRevisions, 'controllerRevisions'),
+  secrets: createResourceOperations<
+    ClusterResourceTypeByCollectionKey['secrets']
+  >(repos.secrets, 'secrets'),
+  nodes: createResourceOperations<ClusterResourceTypeByCollectionKey['nodes']>(
+    repos.nodes,
+    'nodes'
+  ),
+  replicaSets: createResourceOperations<
+    ClusterResourceTypeByCollectionKey['replicaSets']
+  >(repos.replicaSets, 'replicaSets'),
+  deployments: createResourceOperations<
+    ClusterResourceTypeByCollectionKey['deployments']
+  >(repos.deployments, 'deployments'),
+  daemonSets: createResourceOperations<
+    ClusterResourceTypeByCollectionKey['daemonSets']
+  >(repos.daemonSets, 'daemonSets'),
+  statefulSets: createResourceOperations<
+    ClusterResourceTypeByCollectionKey['statefulSets']
+  >(repos.statefulSets, 'statefulSets'),
+  services: createResourceOperations<
+    ClusterResourceTypeByCollectionKey['services']
+  >(repos.services, 'services'),
+  endpointSlices: createResourceOperations<
+    ClusterResourceTypeByCollectionKey['endpointSlices']
+  >(repos.endpointSlices, 'endpointSlices'),
+  endpoints: createResourceOperations<
+    ClusterResourceTypeByCollectionKey['endpoints']
+  >(repos.endpoints, 'endpoints'),
+  events: createResourceOperations<
+    ClusterResourceTypeByCollectionKey['events']
+  >(repos.events, 'events'),
+  ingresses: createResourceOperations<
+    ClusterResourceTypeByCollectionKey['ingresses']
+  >(repos.ingresses, 'ingresses'),
+  ingressClasses: createResourceOperations<
+    ClusterResourceTypeByCollectionKey['ingressClasses']
+  >(repos.ingressClasses, 'ingressClasses'),
+  networkPolicies: createResourceOperations<
+    ClusterResourceTypeByCollectionKey['networkPolicies']
+  >(repos.networkPolicies, 'networkPolicies'),
+  gatewayClasses: createResourceOperations<
+    ClusterResourceTypeByCollectionKey['gatewayClasses']
+  >(repos.gatewayClasses, 'gatewayClasses'),
+  gateways: createResourceOperations<
+    ClusterResourceTypeByCollectionKey['gateways']
+  >(repos.gateways, 'gateways'),
+  httpRoutes: createResourceOperations<
+    ClusterResourceTypeByCollectionKey['httpRoutes']
+  >(repos.httpRoutes, 'httpRoutes'),
+  persistentVolumes: createResourceOperations<
+    ClusterResourceTypeByCollectionKey['persistentVolumes']
+  >(repos.persistentVolumes, 'persistentVolumes'),
+  persistentVolumeClaims: createResourceOperations<
+    ClusterResourceTypeByCollectionKey['persistentVolumeClaims']
+  >(repos.persistentVolumeClaims, 'persistentVolumeClaims'),
+  namespaces: createResourceOperations<
+    ClusterResourceTypeByCollectionKey['namespaces']
+  >(repos.namespaces, 'namespaces'),
+  leases: createResourceOperations<
+    ClusterResourceTypeByCollectionKey['leases']
+  >(repos.leases, 'leases'),
+  storageClasses: createResourceOperations<
+    ClusterResourceTypeByCollectionKey['storageClasses']
+  >(repos.storageClasses, 'storageClasses')
 }
 
 export const RESOURCE_KIND_BY_COLLECTION_KEY = {
@@ -217,7 +337,10 @@ export const CLUSTER_SCOPED_RESOURCE_KINDS = [
 export const RESOURCE_FACADE_NAMES_BY_KIND = {
   Pod: { singular: 'Pod', plural: 'Pods' },
   ConfigMap: { singular: 'ConfigMap', plural: 'ConfigMaps' },
-  ControllerRevision: { singular: 'ControllerRevision', plural: 'ControllerRevisions' },
+  ControllerRevision: {
+    singular: 'ControllerRevision',
+    plural: 'ControllerRevisions'
+  },
   Secret: { singular: 'Secret', plural: 'Secrets' },
   Node: { singular: 'Node', plural: 'Nodes' },
   ReplicaSet: { singular: 'ReplicaSet', plural: 'ReplicaSets' },
@@ -234,8 +357,14 @@ export const RESOURCE_FACADE_NAMES_BY_KIND = {
   GatewayClass: { singular: 'GatewayClass', plural: 'GatewayClasses' },
   Gateway: { singular: 'Gateway', plural: 'Gateways' },
   HTTPRoute: { singular: 'HTTPRoute', plural: 'HTTPRoutes' },
-  PersistentVolume: { singular: 'PersistentVolume', plural: 'PersistentVolumes' },
-  PersistentVolumeClaim: { singular: 'PersistentVolumeClaim', plural: 'PersistentVolumeClaims' },
+  PersistentVolume: {
+    singular: 'PersistentVolume',
+    plural: 'PersistentVolumes'
+  },
+  PersistentVolumeClaim: {
+    singular: 'PersistentVolumeClaim',
+    plural: 'PersistentVolumeClaims'
+  },
   Namespace: { singular: 'Namespace', plural: 'Namespaces' },
   Lease: { singular: 'Lease', plural: 'Leases' },
   StorageClass: { singular: 'StorageClass', plural: 'StorageClasses' }

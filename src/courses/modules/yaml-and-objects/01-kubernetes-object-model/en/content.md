@@ -5,19 +5,18 @@ seoDescription: 'Understand the Kubernetes object model, how every resource is a
 
 # The Kubernetes Object Model
 
-
 In Kubernetes, every resource you interact with, a Pod, a Deployment, a Service, is an **object**. An object is a structured declaration stored persistently in etcd, the cluster's database. It is not a command that fires and disappears. It is a record of intent that Kubernetes monitors and reconciles at all times.
 
 This is why you say "I have a Deployment" and not "I ran a Deployment". The Deployment exists as a record, and Kubernetes continuously works to make the world match that record.
 
 @@@
 graph TD
-    OBJ["Kubernetes Object"]
-    OBJ --> AV["apiVersion\nwhich API group and version"]
-    OBJ --> K["kind\nwhich resource type"]
-    OBJ --> M["metadata\nname, namespace, labels"]
-    OBJ --> SPEC["spec\ndesired state (you write this)"]
-    OBJ --> STATUS["status\ncurrent state (Kubernetes writes this)"]
+OBJ["Kubernetes Object"]
+OBJ --> AV["apiVersion\nwhich API group and version"]
+OBJ --> K["kind\nwhich resource type"]
+OBJ --> M["metadata\nname, namespace, labels"]
+OBJ --> SPEC["spec\ndesired state (you write this)"]
+OBJ --> STATUS["status\ncurrent state (Kubernetes writes this)"]
 @@@
 
 Every Kubernetes object has these five top-level fields. They are not optional. The API server will reject any manifest that is missing one of the required ones.
@@ -99,4 +98,3 @@ In the YAML output, find the `status` section. Which field tells you the current
 :::
 
 Once you understand that every resource is an object with these five fields, the rest of Kubernetes becomes much more readable. In the next lesson, you will look at a live manifest in full detail and trace how the reconciliation loop moves `status` toward `spec`.
-

@@ -13,10 +13,10 @@ Getting these choices wrong is one of the most common causes of `Pending` Pods a
 
 @@@
 graph TD
-    RWO["ReadWriteOnce\nRWO\none node, read-write"]
-    ROX["ReadOnlyMany\nROX\nmany nodes, read-only"]
-    RWX["ReadWriteMany\nRWX\nmany nodes, read-write"]
-    RWOP["ReadWriteOncePod\nRWOP\none Pod only, read-write"]
+RWO["ReadWriteOnce\nRWO\none node, read-write"]
+ROX["ReadOnlyMany\nROX\nmany nodes, read-only"]
+RWX["ReadWriteMany\nRWX\nmany nodes, read-write"]
+RWOP["ReadWriteOncePod\nRWOP\none Pod only, read-write"]
 @@@
 
 `ReadWriteOnce` is the most common mode. A single node can mount the volume for both reading and writing. Multiple Pods running on the same node can share it, but Pods on different nodes cannot. This is the right choice for databases, queues, and any workload that runs as a single writer on one node.
@@ -55,10 +55,10 @@ When a PVC is deleted, Kubernetes looks at the bound PV's `persistentVolumeRecla
 
 @@@
 graph LR
-    Bound["PV Bound"] --> PVCDeleted["PVC deleted"]
-    PVCDeleted --> Retain["Retain\nPV stays Released\ndata preserved\nadmin must act"]
-    PVCDeleted --> Delete["Delete\nPV object removed\nunderlying storage destroyed"]
-    PVCDeleted --> Recycle["Recycle\ndeprecated\ndo not use"]
+Bound["PV Bound"] --> PVCDeleted["PVC deleted"]
+PVCDeleted --> Retain["Retain\nPV stays Released\ndata preserved\nadmin must act"]
+PVCDeleted --> Delete["Delete\nPV object removed\nunderlying storage destroyed"]
+PVCDeleted --> Recycle["Recycle\ndeprecated\ndo not use"]
 @@@
 
 `Retain` is the safest option. When the PVC is deleted, the PV moves to `Released` and stays there. The data on disk is completely untouched. An administrator must review the data, clean it up if needed, and manually remove the `claimRef` from the PV before it can accept a new claim. Use `Retain` for production databases and any data you cannot afford to lose.

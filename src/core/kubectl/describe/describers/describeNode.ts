@@ -11,7 +11,7 @@ import {
   formatNodeResourceList,
   formatNodeSystemInfo,
   formatNodeTaints,
-  getNonTerminatedPodsOnNode,
+  getNonTerminatedPodsOnNode
 } from '../internal/helpers'
 
 const KUBE_NODE_LEASE_NAMESPACE = 'kube-node-lease'
@@ -27,8 +27,7 @@ const formatNodeLeaseSection = (
     )
   })
   const holderIdentity =
-    lease?.spec.holderIdentity != null &&
-    lease.spec.holderIdentity.length > 0
+    lease?.spec.holderIdentity != null && lease.spec.holderIdentity.length > 0
       ? lease.spec.holderIdentity
       : '<unset>'
   const acquireTime =
@@ -62,7 +61,10 @@ export const describeNode = (node: Node, state?: ClusterStateData): string => {
   lines.push(
     `Unschedulable:      ${node.spec.unschedulable === true ? 'true' : 'false'}`
   )
-  const leaseSection = formatNodeLeaseSection(node.metadata.name, state).trimEnd()
+  const leaseSection = formatNodeLeaseSection(
+    node.metadata.name,
+    state
+  ).trimEnd()
   for (const line of leaseSection.split('\n')) {
     lines.push(line)
   }

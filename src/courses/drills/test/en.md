@@ -23,7 +23,7 @@ Creates an isolated namespace for this test drill.
 - type: clusterResourceExists
   kind: Namespace
   name: drill-test
-  onFail: "Namespace `drill-test` is missing."
+  onFail: 'Namespace `drill-test` is missing.'
 ```
 
 ## Create pod `web` with image `nginx:1.27` in namespace `drill-test`
@@ -43,7 +43,7 @@ Creates a simple pod with a known image.
   kind: Pod
   namespace: drill-test
   name: web
-  onFail: "Pod `web` was not found in namespace `drill-test`."
+  onFail: 'Pod `web` was not found in namespace `drill-test`.'
 ```
 
 ## Wait until pod `web` is Ready in namespace `drill-test`
@@ -64,8 +64,8 @@ Ensures the pod reaches the Ready state before checks.
   namespace: drill-test
   name: web
   path: '{.status.conditions[?(@.type=="Ready")].status}'
-  value: "True"
-  onFail: "Pod `web` is not Ready."
+  value: 'True'
+  onFail: 'Pod `web` is not Ready.'
 ```
 
 ## Optional clean up

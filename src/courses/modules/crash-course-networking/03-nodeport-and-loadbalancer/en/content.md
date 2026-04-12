@@ -15,12 +15,12 @@ A NodePort Service works by reserving a port in the range `30000-32767` on every
 
 @@@
 graph LR
-    EXT["External client"]
-    N1["Node 1<br/>:30080"]
-    N2["Node 2<br/>:30080"]
-    SVC["Service<br/>ClusterIP: 10.96.4.2<br/>Port: 80"]
-    P1["Pod A"]
-    P2["Pod B"]
+EXT["External client"]
+N1["Node 1<br/>:30080"]
+N2["Node 2<br/>:30080"]
+SVC["Service<br/>ClusterIP: 10.96.4.2<br/>Port: 80"]
+P1["Pod A"]
+P2["Pod B"]
 
     EXT -->|"HTTP :30080"| N1
     EXT -->|"HTTP :30080"| N2
@@ -28,6 +28,7 @@ graph LR
     N2 --> SVC
     SVC --> P1
     SVC --> P2
+
 @@@
 
 The port is the same on every node. A client can hit any node and reach any Pod, regardless of which node the Pod is actually running on. kube-proxy handles the forwarding across nodes internally.
@@ -147,13 +148,13 @@ In a cloud cluster, the `EXTERNAL-IP` column fills in once the cloud provider ha
 
 @@@
 graph LR
-    INT["Internet"]
-    LB["Cloud Load Balancer<br/>Public IP: 34.90.1.5"]
-    N1["Node 1<br/>:31234"]
-    N2["Node 2<br/>:31234"]
-    SVC["Service ClusterIP"]
-    P1["Pod"]
-    P2["Pod"]
+INT["Internet"]
+LB["Cloud Load Balancer<br/>Public IP: 34.90.1.5"]
+N1["Node 1<br/>:31234"]
+N2["Node 2<br/>:31234"]
+SVC["Service ClusterIP"]
+P1["Pod"]
+P2["Pod"]
 
     INT --> LB
     LB --> N1
@@ -162,6 +163,7 @@ graph LR
     N2 --> SVC
     SVC --> P1
     SVC --> P2
+
 @@@
 
 ## Choosing the Right Type

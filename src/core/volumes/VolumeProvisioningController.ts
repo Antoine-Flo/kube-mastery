@@ -82,7 +82,9 @@ export const createVolumeProvisioningController = (
       event.type === 'PersistentVolumeClaimUpdated'
     ) {
       const payload = event.payload as {
-        persistentVolumeClaim?: { metadata: { namespace: string; name: string } }
+        persistentVolumeClaim?: {
+          metadata: { namespace: string; name: string }
+        }
       }
       if (payload.persistentVolumeClaim != null) {
         enqueueClaim(

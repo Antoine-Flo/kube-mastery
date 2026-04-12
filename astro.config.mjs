@@ -63,7 +63,7 @@ export default defineConfig({
     },
     build: {
       // Merge Vite CSS chunks into one file when a separate asset is still emitted (e.g. integrations).
-      cssCodeSplit: false,
+      cssCodeSplit: false
     },
     optimizeDeps: {
       include: [
@@ -85,7 +85,7 @@ export default defineConfig({
     '/': '/en',
     '/terms-of-service': '/en/terms-of-service',
     '/privacy-policy': '/en/privacy-policy',
-    '/courses': '/en/courses',
+    '/courses': '/en/courses'
   },
 
   adapter: cloudflare()

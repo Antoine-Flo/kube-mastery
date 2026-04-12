@@ -13,13 +13,13 @@ A `hostPath` volume mounts a path from the **node's filesystem** directly into t
 
 @@@
 graph LR
-    N[Node filesystem\n/var/log/pods]
-    subgraph Pod
-        V[(hostPath volume)]
-        C[log-collector container\n/host-logs]
-    end
-    N -- mounted as --> V
-    V --> C
+N[Node filesystem\n/var/log/pods]
+subgraph Pod
+V[(hostPath volume)]
+C[log-collector container\n/host-logs]
+end
+N -- mounted as --> V
+V --> C
 @@@
 
 Think of it like mounting a network drive. The drive exists independently of the machine you plug it into. The container accesses the node's directory through the mount point, but the data lives on the node.
@@ -56,7 +56,7 @@ spec:
   containers:
     - name: collector
       image: busybox
-      command: ["sh", "-c", "ls /host-logs && sleep 3600"]
+      command: ['sh', '-c', 'ls /host-logs && sleep 3600']
       volumeMounts:
         - name: node-logs
           mountPath: /host-logs

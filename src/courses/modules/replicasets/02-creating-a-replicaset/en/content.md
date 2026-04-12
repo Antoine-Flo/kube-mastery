@@ -90,7 +90,6 @@ spec:
               memory: '128Mi'
 ```
 
-
 ```bash
 kubectl apply -f web-rs.yaml
 ```
@@ -132,4 +131,3 @@ A mismatch between `selector.matchLabels` and `template.metadata.labels` causes 
 ## What You Have Now
 
 Three Pods running nginx, all managed by a single ReplicaSet. If any Pod disappears, the controller creates a replacement. The next lesson makes that self-healing visible by deliberately deleting Pods and watching the simulator respond. You will also see how scaling works and what happens when a standalone Pod with matching labels shows up unexpectedly.
-

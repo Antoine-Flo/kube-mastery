@@ -23,7 +23,7 @@ export const buildLogsFollowDeltaOutput = (
   if (previousOutput.length === 0) {
     return nextOutput
   }
-  
+
   const previousLines = previousOutput
     .split('\n')
     .filter((line) => line.length > 0)

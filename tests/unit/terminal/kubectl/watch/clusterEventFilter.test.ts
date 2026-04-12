@@ -31,7 +31,11 @@ const minimalTemplate = () => ({
 
 const appSelector = { matchLabels: { app: 'demo' } }
 
-const mkPod = (name: string, namespace: string, labels?: Record<string, string>) => {
+const mkPod = (
+  name: string,
+  namespace: string,
+  labels?: Record<string, string>
+) => {
   return createPod({
     name,
     namespace,
@@ -274,13 +278,13 @@ describe('extractMetaFromClusterEvent', () => {
       timestamp: EVENT_TS,
       payload: { persistentVolumeClaim: pvc }
     }
-    expect(extractMetaFromClusterEvent(pvcEvent, 'persistentvolumeclaims')).toEqual(
-      {
-        name: 'data',
-        namespace: 'app',
-        labels: { vol: 'yes' }
-      }
-    )
+    expect(
+      extractMetaFromClusterEvent(pvcEvent, 'persistentvolumeclaims')
+    ).toEqual({
+      name: 'data',
+      namespace: 'app',
+      labels: { vol: 'yes' }
+    })
 
     const pv = createPersistentVolume({
       name: 'pv-1',

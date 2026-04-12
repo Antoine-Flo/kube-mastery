@@ -250,9 +250,7 @@ describe('VolumeBindingController', () => {
     controller.stop()
   })
 
-  it(
-    'keeps pre-bound claim pending when volume is already bound to another claim',
-    async () => {
+  it('keeps pre-bound claim pending when volume is already bound to another claim', async () => {
     const apiServer = createApiServerFacade()
     const volumeState = createVolumeState()
     const controller = createVolumeBindingController(apiServer, volumeState)
@@ -308,8 +306,8 @@ describe('VolumeBindingController', () => {
       })
     )
 
-      controller.start()
-      await settleReconciliation()
+    controller.start()
+    await settleReconciliation()
 
     const ownerResult = apiServer.findResource(
       'PersistentVolumeClaim',
@@ -354,12 +352,9 @@ describe('VolumeBindingController', () => {
     ).toBeUndefined()
 
     controller.stop()
-    }
-  )
+  })
 
-  it(
-    'deletes bound persistent volume when reclaim policy is Delete and claim is removed',
-    async () => {
+  it('deletes bound persistent volume when reclaim policy is Delete and claim is removed', async () => {
     const apiServer = createApiServerFacade()
     const volumeState = createVolumeState()
     const controller = createVolumeBindingController(apiServer, volumeState)
@@ -399,18 +394,17 @@ describe('VolumeBindingController', () => {
     const backingStore = getPersistentVolumeBackingStore()
     backingStore.getOrCreate(persistentVolume)
 
-      controller.start()
-      await settleReconciliation()
-      apiServer.deleteResource('PersistentVolumeClaim', 'pvc-delete', 'default')
-      await settleReconciliation()
+    controller.start()
+    await settleReconciliation()
+    apiServer.deleteResource('PersistentVolumeClaim', 'pvc-delete', 'default')
+    await settleReconciliation()
 
     const pvResult = apiServer.findResource('PersistentVolume', 'pv-delete')
     expect(pvResult.ok).toBe(false)
     expect(backingStore.get('pv-delete')).toBeUndefined()
 
     controller.stop()
-    }
-  )
+  })
 
   it('keeps a wait-for-first-consumer claim bound after consumer is gone', async () => {
     const apiServer = createApiServerFacade()

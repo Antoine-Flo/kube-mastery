@@ -1,4 +1,7 @@
-import type { Ingress, IngressBackend } from '../../../cluster/ressources/Ingress'
+import type {
+  Ingress,
+  IngressBackend
+} from '../../../cluster/ressources/Ingress'
 import { formatLabels } from '../internal/helpers'
 
 const formatIngressBackendDescribe = (backend: IngressBackend): string => {
@@ -66,16 +69,16 @@ export const describeIngress = (ingress: Ingress): string => {
     lines.push('TLS:')
     for (const tls of tlsEntries) {
       const hostsJoined =
-        tls.hosts != null && tls.hosts.length > 0
-          ? tls.hosts.join(', ')
-          : '*'
+        tls.hosts != null && tls.hosts.length > 0 ? tls.hosts.join(', ') : '*'
       const secret = tls.secretName ?? ''
       const secretLabel = secret.length > 0 ? secret : '<no secret>'
       lines.push(`  ${secretLabel} terminates ${hostsJoined}`)
     }
   }
 
-  lines.push(`Annotations:        ${formatLabels(ingress.metadata.annotations)}`)
+  lines.push(
+    `Annotations:        ${formatLabels(ingress.metadata.annotations)}`
+  )
   lines.push(`Events:             <none>`)
   return lines.join('\n')
 }

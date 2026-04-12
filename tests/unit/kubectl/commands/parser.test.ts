@@ -163,7 +163,9 @@ describe('kubectl parser - create deployment', () => {
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.error).toContain('create ingress requires at least one --rule')
+      expect(result.error).toContain(
+        'create ingress requires at least one --rule'
+      )
     }
   })
 
@@ -786,7 +788,9 @@ describe('kubectl parser - get and delete flag positions', () => {
   })
 
   it('should parse get with comma-separated resources', () => {
-    const result = parseCommand('kubectl get pod,svc,configmap,secret -n parity-e2e')
+    const result = parseCommand(
+      'kubectl get pod,svc,configmap,secret -n parity-e2e'
+    )
 
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -1744,7 +1748,9 @@ describe('kubectl parser - unknown flags', () => {
   })
 
   it('should parse top pods with namespace and selector', () => {
-    const result = parseCommand('kubectl top pods -n kube-system -l k8s-app=kube-dns')
+    const result = parseCommand(
+      'kubectl top pods -n kube-system -l k8s-app=kube-dns'
+    )
 
     expect(result.ok).toBe(true)
     if (!result.ok) {

@@ -13,8 +13,7 @@ type EndpointsMetadata = Pick<
   'name' | 'namespace' | 'labels' | 'annotations' | 'creationTimestamp'
 >
 
-export type EndpointsAddress =
-  IoSchemas['io.k8s.api.core.v1.EndpointAddress']
+export type EndpointsAddress = IoSchemas['io.k8s.api.core.v1.EndpointAddress']
 
 export type EndpointsPort = IoSchemas['io.k8s.api.core.v1.EndpointPort'] & {
   protocol?: 'TCP' | 'UDP' | 'SCTP'

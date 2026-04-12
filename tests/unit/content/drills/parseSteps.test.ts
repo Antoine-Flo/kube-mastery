@@ -54,8 +54,12 @@ Then inspect the output.
     expect(result!.tasks).toHaveLength(1)
     expect(result!.tasks[0].task).toBe('First task')
     expect(result!.tasks[0].command).toBe('kubectl get pods -n app')
-    expect(result!.tasks[0].instructionMarkdown).toBe('Optional instruction text.')
-    expect(result!.tasks[0].solutionMarkdown).toContain('kubectl get pods -n app')
+    expect(result!.tasks[0].instructionMarkdown).toBe(
+      'Optional instruction text.'
+    )
+    expect(result!.tasks[0].solutionMarkdown).toContain(
+      'kubectl get pods -n app'
+    )
     expect(result!.tasks[0].validation?.assertions).toHaveLength(1)
   })
 

@@ -9,8 +9,8 @@ Suppose you want to attach some metadata to a Deployment: the name of the team t
 
 @@@
 graph LR
-    LABELS["Labels\nkey=value\nUsed for selection\n63-char value limit\nKubernetes reads them"]
-    ANN["Annotations\nkey=value\nNot used for selection\nLarger values OK\nTools and operators read them"]
+LABELS["Labels\nkey=value\nUsed for selection\n63-char value limit\nKubernetes reads them"]
+ANN["Annotations\nkey=value\nNot used for selection\nLarger values OK\nTools and operators read them"]
 @@@
 
 Annotations are key-value pairs like labels, but with two important differences. First, Kubernetes itself never uses annotations for selection: no controller reads an annotation to decide which Pods to manage or which endpoints to route traffic to. Second, annotations can hold much larger values, including multi-line strings and JSON blobs. Labels cap at 63 characters per value. Annotations can hold up to 256 KB total per object.

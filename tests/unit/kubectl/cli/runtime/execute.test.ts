@@ -21,7 +21,10 @@ describe('runKubectlCommandHooks', () => {
     if (!parsedResult.ok) {
       return
     }
-    const result = runKubectlCommandHooks('kubectl get pods', parsedResult.value)
+    const result = runKubectlCommandHooks(
+      'kubectl get pods',
+      parsedResult.value
+    )
     expect(result.ok).toBe(true)
   })
 })

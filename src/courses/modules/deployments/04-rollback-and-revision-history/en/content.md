@@ -24,7 +24,6 @@ This is exactly what a rolling update protects against. When new Pods fail to st
 
 ## Rolling back immediately
 
-
 ```bash
 kubectl rollout undo deployment/web-app
 kubectl rollout status deployment/web-app

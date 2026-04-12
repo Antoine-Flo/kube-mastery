@@ -303,7 +303,9 @@ describe('runner executor parity', () => {
         'Defaulted container "app" out of: app, write-data (init)'
       )
 
-      const deletePodResult = executor.executeCommand('kubectl delete pod pvc-pod')
+      const deletePodResult = executor.executeCommand(
+        'kubectl delete pod pvc-pod'
+      )
       expect(deletePodResult.exitCode).toBe(0)
 
       const recreatePodResult = executor.applyYaml({
@@ -331,7 +333,9 @@ describe('runner executor parity', () => {
       expect(pvStatusResult.exitCode).toBe(0)
       expect(pvStatusResult.stdout).toContain('Bound')
 
-      const finalPvcStatusResult = executor.executeCommand('kubectl get pvc my-pvc')
+      const finalPvcStatusResult = executor.executeCommand(
+        'kubectl get pvc my-pvc'
+      )
       expect(finalPvcStatusResult.exitCode).toBe(0)
       expect(finalPvcStatusResult.stdout).toContain('Bound')
     } finally {

@@ -236,7 +236,9 @@ const syncClaimProvisioning = (
     }
   }
 
-  const persistentVolumes = [...deps.apiServer.listResources('PersistentVolume')]
+  const persistentVolumes = [
+    ...deps.apiServer.listResources('PersistentVolume')
+  ]
   const candidatePersistentVolume = deps.bindingPolicy.findCandidateVolume(
     persistentVolumes,
     persistentVolumeClaim

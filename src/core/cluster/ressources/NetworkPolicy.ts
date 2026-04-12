@@ -20,7 +20,10 @@ export type NetworkPolicySpec = K8sNetworkPolicySpec
 /**
  * Factory / YAML parse input: podSelector defaults to {} when omitted (Kubernetes behavior).
  */
-export type NetworkPolicySpecInput = Omit<K8sNetworkPolicySpec, 'podSelector'> & {
+export type NetworkPolicySpecInput = Omit<
+  K8sNetworkPolicySpec,
+  'podSelector'
+> & {
   podSelector?: K8sNetworkPolicySpec['podSelector']
 }
 

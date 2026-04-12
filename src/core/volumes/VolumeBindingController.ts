@@ -77,7 +77,9 @@ export const createVolumeBindingController = (
         persistentVolumeClaim.metadata.name
       )
     }
-    for (const persistentVolume of apiServer.listResources('PersistentVolume')) {
+    for (const persistentVolume of apiServer.listResources(
+      'PersistentVolume'
+    )) {
       enqueueVolume(persistentVolume.metadata.name)
     }
   }
@@ -88,7 +90,9 @@ export const createVolumeBindingController = (
     }
 
     if (event.type === 'PersistentVolumeCreated') {
-      const payload = event.payload as { persistentVolume?: { metadata: { name: string } } }
+      const payload = event.payload as {
+        persistentVolume?: { metadata: { name: string } }
+      }
       if (payload.persistentVolume != null) {
         enqueueVolume(payload.persistentVolume.metadata.name)
         const persistentVolumeResult = apiServer.findResource(
@@ -105,7 +109,9 @@ export const createVolumeBindingController = (
       return
     }
     if (event.type === 'PersistentVolumeUpdated') {
-      const payload = event.payload as { persistentVolume?: { metadata: { name: string } } }
+      const payload = event.payload as {
+        persistentVolume?: { metadata: { name: string } }
+      }
       if (payload.persistentVolume != null) {
         enqueueVolume(payload.persistentVolume.metadata.name)
         const persistentVolumeResult = apiServer.findResource(
@@ -123,7 +129,9 @@ export const createVolumeBindingController = (
     }
     if (event.type === 'PersistentVolumeDeleted') {
       const payload = event.payload as {
-        deletedPersistentVolume?: { spec?: { claimRef?: { namespace: string; name: string } } }
+        deletedPersistentVolume?: {
+          spec?: { claimRef?: { namespace: string; name: string } }
+        }
       }
       const claimRef = payload.deletedPersistentVolume?.spec?.claimRef
       if (claimRef != null) {
@@ -133,7 +141,9 @@ export const createVolumeBindingController = (
     }
     if (event.type === 'PersistentVolumeClaimCreated') {
       const payload = event.payload as {
-        persistentVolumeClaim?: { metadata: { namespace: string; name: string } }
+        persistentVolumeClaim?: {
+          metadata: { namespace: string; name: string }
+        }
       }
       if (payload.persistentVolumeClaim != null) {
         enqueueClaim(
@@ -145,7 +155,9 @@ export const createVolumeBindingController = (
     }
     if (event.type === 'PersistentVolumeClaimUpdated') {
       const payload = event.payload as {
-        persistentVolumeClaim?: { metadata: { namespace: string; name: string } }
+        persistentVolumeClaim?: {
+          metadata: { namespace: string; name: string }
+        }
       }
       if (payload.persistentVolumeClaim != null) {
         enqueueClaim(
@@ -157,10 +169,14 @@ export const createVolumeBindingController = (
     }
     if (event.type === 'PersistentVolumeClaimDeleted') {
       const payload = event.payload as {
-        deletedPersistentVolumeClaim?: { metadata: { namespace: string; name: string }; spec: { volumeName?: string } }
+        deletedPersistentVolumeClaim?: {
+          metadata: { namespace: string; name: string }
+          spec: { volumeName?: string }
+        }
       }
       if (payload.deletedPersistentVolumeClaim != null) {
-        const claimNamespace = payload.deletedPersistentVolumeClaim.metadata.namespace
+        const claimNamespace =
+          payload.deletedPersistentVolumeClaim.metadata.namespace
         const claimName = payload.deletedPersistentVolumeClaim.metadata.name
         volumeState.unbindClaim(claimNamespace, claimName)
         const volumeName = payload.deletedPersistentVolumeClaim.spec.volumeName

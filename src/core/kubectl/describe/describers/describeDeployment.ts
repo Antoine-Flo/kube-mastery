@@ -14,7 +14,7 @@ import {
   formatLabels,
   formatSelector,
   formatStrategyType,
-  formatTemplateEnv,
+  formatTemplateEnv
 } from '../internal/helpers'
 
 export const describeDeployment = (

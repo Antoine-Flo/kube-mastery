@@ -59,12 +59,12 @@ Still `nginx:1.27`. The ReplicaSet spec was updated. The running Pods were not.
 
 @@@
 graph LR
-    RS["ReplicaSet\ntemplate: nginx:1.28"]
-    P1["Pod 1\nnginx:1.27\n(still running)"]
-    P2["Pod 2\nnginx:1.27\n(still running)"]
-    RS -->|"owns but does not replace"| P1
-    RS -->|"owns but does not replace"| P2
-    NOTE["New Pods would use nginx:1.28\nbut existing Pods are not recreated"]
+RS["ReplicaSet\ntemplate: nginx:1.28"]
+P1["Pod 1\nnginx:1.27\n(still running)"]
+P2["Pod 2\nnginx:1.27\n(still running)"]
+RS -->|"owns but does not replace"| P1
+RS -->|"owns but does not replace"| P2
+NOTE["New Pods would use nginx:1.28\nbut existing Pods are not recreated"]
 @@@
 
 Why does the controller not replace the running Pods? Because the ReplicaSet was designed to manage count, not version. It creates Pods when there are too few and deletes them when there are too many. It never touches a running Pod that it already owns. Separating these concerns, count in the ReplicaSet, version transitions in a Deployment, keeps each component responsible for exactly one thing.
@@ -100,11 +100,11 @@ A Deployment wraps a ReplicaSet and adds three capabilities that bare ReplicaSet
 
 @@@
 graph TB
-    DEP["Deployment\nmanages updates, rollbacks, revision history"]
-    RS1["ReplicaSet v1\nnginx:1.27\nreplicas: 0"]
-    RS2["ReplicaSet v2\nnginx:1.28\nreplicas: 3"]
-    DEP --> RS1
-    DEP --> RS2
+DEP["Deployment\nmanages updates, rollbacks, revision history"]
+RS1["ReplicaSet v1\nnginx:1.27\nreplicas: 0"]
+RS2["ReplicaSet v2\nnginx:1.28\nreplicas: 3"]
+DEP --> RS1
+DEP --> RS2
 @@@
 
 **Rolling updates.** When you update the image in a Deployment, it creates a new ReplicaSet for the new version and progressively scales it up while scaling down the old one. At no point are zero Pods running.
@@ -126,4 +126,3 @@ kubectl delete replicaset rs-demo
 ```
 
 ReplicaSets are the right primitive for "keep N Pods running." They handle self-healing and scaling reliably. But for real workloads where you need to ship new versions safely and roll back reliably, always use a Deployment. In practice, you will rarely write a ReplicaSet manifest directly. Deployments create them for you. Understanding how ReplicaSets work makes the Deployment layer transparent: when you see the Deployment managing two ReplicaSets during a rollout, you will know exactly what is happening and why.
-

@@ -375,7 +375,9 @@ const ingressAllowedByUnion = (
       continue
     }
     anyIngressType = true
-    if (policyContributesIngressAllow(policy, source, protocol, containerPort)) {
+    if (
+      policyContributesIngressAllow(policy, source, protocol, containerPort)
+    ) {
       return true
     }
   }
@@ -440,12 +442,7 @@ export const evaluateSimulatedPodTraffic = (
     if (sourcePod == null) {
       return success(undefined)
     }
-    if (
-      !isEgressRestrictedForPod(
-        input.policiesInSourceNamespace,
-        sourcePod
-      )
-    ) {
+    if (!isEgressRestrictedForPod(input.policiesInSourceNamespace, sourcePod)) {
       return success(undefined)
     }
     const egressOk = egressAllowedByUnion(
@@ -497,9 +494,7 @@ export const evaluateSimulatedPodTraffic = (
     )
   }
 
-  if (
-    !isEgressRestrictedForPod(input.policiesInSourceNamespace, sourcePod)
-  ) {
+  if (!isEgressRestrictedForPod(input.policiesInSourceNamespace, sourcePod)) {
     return success(undefined)
   }
 

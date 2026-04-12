@@ -1277,7 +1277,8 @@ const topTransformer: ActionTransformer = (ctx) => {
     return error('error: top requires one of: pods, pod, nodes, node')
   }
 
-  const isPodsSubcommand = subcommandToken === 'pods' || subcommandToken === 'pod'
+  const isPodsSubcommand =
+    subcommandToken === 'pods' || subcommandToken === 'pod'
   const isNodesSubcommand =
     subcommandToken === 'nodes' || subcommandToken === 'node'
   if (!isPodsSubcommand && !isNodesSubcommand) {

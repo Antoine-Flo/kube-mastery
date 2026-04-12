@@ -16,8 +16,10 @@ export type IngressSpec = K8sIngressSpec
 
 export type IngressRule = IoSchemas['io.k8s.api.networking.v1.IngressRule']
 export type IngressTLS = IoSchemas['io.k8s.api.networking.v1.IngressTLS']
-export type IngressBackend = IoSchemas['io.k8s.api.networking.v1.IngressBackend']
-export type HTTPIngressPath = IoSchemas['io.k8s.api.networking.v1.HTTPIngressPath']
+export type IngressBackend =
+  IoSchemas['io.k8s.api.networking.v1.IngressBackend']
+export type HTTPIngressPath =
+  IoSchemas['io.k8s.api.networking.v1.HTTPIngressPath']
 
 type IngressMetadata = Pick<
   K8sIngressMetadata,

@@ -58,8 +58,8 @@ spec:
 
 @@@
 graph LR
-    source["Allowed source"] -- "Ingress" --> pod["Protected Pod"]
-    blocked["Other Pods"] -. "denied" .-> pod
+source["Allowed source"] -- "Ingress" --> pod["Protected Pod"]
+blocked["Other Pods"] -. "denied" .-> pod
 @@@
 
 The `ingress` section lists which sources may send traffic to the protected Pods. Each entry in the `from` array describes an allowed source using one or more of three selectors: `podSelector`, `namespaceSelector`, or `ipBlock`.
@@ -103,14 +103,14 @@ spec:
 Both `ingress` and `egress` rules accept a `ports` field that limits the rule to specific ports and protocols.
 
 ```yaml
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              app: api
-      ports:
-        - protocol: TCP
-          port: 5432 # illustrative only
+ingress:
+  - from:
+      - podSelector:
+          matchLabels:
+            app: api
+    ports:
+      - protocol: TCP
+        port: 5432 # illustrative only
 ```
 
 Without a `ports` field, the rule allows all ports. With it, only the listed ports are permitted.
@@ -127,26 +127,26 @@ You define an ingress rule with no `ports` field. Which ports are allowed?
 
 @@@
 graph TD
-    subgraph AND["Single from element (AND)"]
-        A["Pod must match label AND be in namespace"]
-    end
-    subgraph OR["Two from elements (OR)"]
-        B["Pod matches label"]
-        C["OR Pod is in namespace"]
-    end
+subgraph AND["Single from element (AND)"]
+A["Pod must match label AND be in namespace"]
+end
+subgraph OR["Two from elements (OR)"]
+B["Pod matches label"]
+C["OR Pod is in namespace"]
+end
 @@@
 
 This is the most misunderstood part of NetworkPolicy. When you write multiple fields inside a single `from` element, they are combined with AND. The source must satisfy all conditions.
 
 ```yaml
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              app: api
-          namespaceSelector:
-            matchLabels:
-              env: production # illustrative only
+ingress:
+  - from:
+      - podSelector:
+          matchLabels:
+            app: api
+        namespaceSelector:
+          matchLabels:
+            env: production # illustrative only
 ```
 
 Here, both conditions are inside the same list item (same `-`). The source Pod must have `app: api` AND be in a namespace labeled `env: production`.
@@ -154,14 +154,14 @@ Here, both conditions are inside the same list item (same `-`). The source Pod m
 When you write multiple elements in the `from` array (multiple `-` entries), they are combined with OR. Either condition is sufficient.
 
 ```yaml
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              app: api
-        - namespaceSelector:
-            matchLabels:
-              env: production # illustrative only
+ingress:
+  - from:
+      - podSelector:
+          matchLabels:
+            app: api
+      - namespaceSelector:
+          matchLabels:
+            env: production # illustrative only
 ```
 
 Now any Pod with `app: api` in any namespace is allowed, OR any Pod in a namespace labeled `env: production` regardless of its own label.

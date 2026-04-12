@@ -64,15 +64,15 @@ Think of it like a company phone directory. Employees move desks constantly, but
 
 @@@
 graph LR
-    CLIENT["Client Pod"]
-    SVC["Service\nClusterIP: 10.96.0.10\nDNS: web-svc"]
-    P1["Pod A\n10.244.0.5"]
-    P2["Pod B\n10.244.0.6"]
-    P3["Pod C (new)\n10.244.0.8"]
-    CLIENT --> SVC
-    SVC --> P1
-    SVC --> P2
-    SVC --> P3
+CLIENT["Client Pod"]
+SVC["Service\nClusterIP: 10.96.0.10\nDNS: web-svc"]
+P1["Pod A\n10.244.0.5"]
+P2["Pod B\n10.244.0.6"]
+P3["Pod C (new)\n10.244.0.8"]
+CLIENT --> SVC
+SVC --> P1
+SVC --> P2
+SVC --> P3
 @@@
 
 The label selector is the bridge between the Service and the Pods. The Service says: "route traffic to any Pod that has the label `app: web`." Kubernetes keeps that list up to date automatically. When Pod A dies and Pod C appears with the same label, Pod C enters the routing pool. The client never changes its target.

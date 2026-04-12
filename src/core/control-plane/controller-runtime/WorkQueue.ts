@@ -100,7 +100,10 @@ export const createWorkQueue = (options: WorkQueueOptions = {}): WorkQueue => {
     delayedTimerByKey.set(key, timerId)
   }
 
-  const enqueueKey = (key: string, enqueueOptions: EnqueueOptions = {}): void => {
+  const enqueueKey = (
+    key: string,
+    enqueueOptions: EnqueueOptions = {}
+  ): void => {
     const afterMs = Math.max(0, enqueueOptions.afterMs ?? 0)
     if (enqueueOptions.resetRetry === true) {
       retryAttemptsByKey.delete(key)
@@ -226,7 +229,6 @@ export const createWorkQueue = (options: WorkQueueOptions = {}): WorkQueue => {
         retryKey(key)
       }
     }
-
   }
 
   /**
@@ -255,9 +257,7 @@ export const createWorkQueue = (options: WorkQueueOptions = {}): WorkQueue => {
       retryKey(key)
     },
 
-    start(
-      processHandler: (key: string) => void | ReconcileResult
-    ): void {
+    start(processHandler: (key: string) => void | ReconcileResult): void {
       handler = processHandler
       running = true
 

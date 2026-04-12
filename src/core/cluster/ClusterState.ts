@@ -59,7 +59,10 @@ export type {
 export const createClusterStateData = (
   collections: ClusterStateCollectionsInput = {}
 ): ClusterStateData => {
-  const out = {} as Record<keyof ClusterStateData, { items: KubernetesResource[] }>
+  const out = {} as Record<
+    keyof ClusterStateData,
+    { items: KubernetesResource[] }
+  >
   for (const key of CLUSTER_DATA_KEYS) {
     const raw = collections[key]
     const items = (Array.isArray(raw) ? raw : []) as KubernetesResource[]
@@ -79,7 +82,9 @@ const createEmptyState = (): ClusterStateData => {
         items: createSystemNamespaces()
       } as ResourceCollection<KubernetesResource>
     } else {
-      next[key] = repos[key].createEmpty() as ResourceCollection<KubernetesResource>
+      next[key] = repos[
+        key
+      ].createEmpty() as ResourceCollection<KubernetesResource>
     }
   }
   return next as ClusterStateData
@@ -224,7 +229,10 @@ export interface ClusterState {
   getNetworkPolicies: (namespace?: string) => NetworkPolicy[]
   addNetworkPolicy: (networkPolicy: NetworkPolicy) => void
   findNetworkPolicy: (name: string, namespace: string) => Result<NetworkPolicy>
-  deleteNetworkPolicy: (name: string, namespace: string) => Result<NetworkPolicy>
+  deleteNetworkPolicy: (
+    name: string,
+    namespace: string
+  ) => Result<NetworkPolicy>
   updateNetworkPolicy: (
     name: string,
     namespace: string,
@@ -489,8 +497,7 @@ const buildNodeKindHandlers = (m: NodeFacadeMethods): KindHandlers => ({
   },
   update: (name, r) =>
     m.update(name, () => r as Node) as Result<KubernetesResource>,
-  delete: (name, _effectiveNs) =>
-    m.delete(name) as Result<KubernetesResource>
+  delete: (name, _effectiveNs) => m.delete(name) as Result<KubernetesResource>
 })
 
 const buildNamespaceKindHandlers = (
@@ -503,8 +510,7 @@ const buildNamespaceKindHandlers = (
   },
   update: (name, r) =>
     m.update(name, () => r as Namespace) as Result<KubernetesResource>,
-  delete: (name, _effectiveNs) =>
-    m.delete(name) as Result<KubernetesResource>
+  delete: (name, _effectiveNs) => m.delete(name) as Result<KubernetesResource>
 })
 
 function bindStandardEntityMethods<T extends KubernetesResource>(
@@ -531,10 +537,8 @@ function bindClusterScopedEntityMethods<T extends KubernetesResource>(
     [`add${singular}`]: m.add,
     [`find${singular}`]: (name: string) => m.find(name, ''),
     [`delete${singular}`]: (name: string) => m.delete(name, ''),
-    [`update${singular}`]: (
-      name: string,
-      updateFn: (resource: T) => T
-    ) => m.update(name, '', updateFn)
+    [`update${singular}`]: (name: string, updateFn: (resource: T) => T) =>
+      m.update(name, '', updateFn)
   }
 }
 
@@ -590,7 +594,9 @@ export function createClusterState(
         return [
           kind,
           mk(
-            resourceOps[collectionKey] as unknown as ResourceOperations<KubernetesResource>,
+            resourceOps[
+              collectionKey
+            ] as unknown as ResourceOperations<KubernetesResource>,
             kind
           )
         ]
@@ -682,9 +688,9 @@ export function createClusterState(
       })
       .map((kind) => {
         const methods = generatedFacadeMethodsByKind[kind]
-        const handler = (CLUSTER_SCOPED_RESOURCE_KINDS as readonly ResourceKind[]).includes(
-          kind
-        )
+        const handler = (
+          CLUSTER_SCOPED_RESOURCE_KINDS as readonly ResourceKind[]
+        ).includes(kind)
           ? buildClusterScopedKindHandlers(methods)
           : buildNamespacedKindHandlers(methods)
         return [kind, handler]
@@ -707,10 +713,9 @@ export function createClusterState(
     if (!handler) {
       return { ok: false, error: `Unsupported resource kind: ${kind}` }
     }
-    return handler.find(
-      name,
-      effectiveNamespace
-    ) as Result<KindToResource<TKind>>
+    return handler.find(name, effectiveNamespace) as Result<
+      KindToResource<TKind>
+    >
   }
 
   const listByKind = <TKind extends ResourceKind>(
@@ -765,23 +770,24 @@ export function createClusterState(
       return { ok: false, error: `Unsupported resource kind: ${kind}` }
     }
     const effectiveNamespace = namespace ?? 'default'
-    return handler.delete(
-      name,
-      effectiveNamespace
-    ) as Result<KindToResource<TKind>>
+    return handler.delete(name, effectiveNamespace) as Result<
+      KindToResource<TKind>
+    >
   }
 
   const generatedFacadeBindings: Record<string, unknown> = {}
-  for (const kind of Object.keys(COLLECTION_KEY_BY_RESOURCE_KIND) as ResourceKind[]) {
+  for (const kind of Object.keys(
+    COLLECTION_KEY_BY_RESOURCE_KIND
+  ) as ResourceKind[]) {
     if (kind === 'Node' || kind === 'Namespace') {
       continue
     }
     const methods = generatedFacadeMethodsByKind[kind]
     const singular = RESOURCE_FACADE_NAMES_BY_KIND[kind].singular
     const plural = RESOURCE_FACADE_NAMES_BY_KIND[kind].plural
-    const isClusterScoped = (CLUSTER_SCOPED_RESOURCE_KINDS as readonly ResourceKind[]).includes(
-      kind
-    )
+    const isClusterScoped = (
+      CLUSTER_SCOPED_RESOURCE_KINDS as readonly ResourceKind[]
+    ).includes(kind)
     const bound = isClusterScoped
       ? bindClusterScopedEntityMethods(singular, plural, methods)
       : bindStandardEntityMethods(singular, plural, methods)

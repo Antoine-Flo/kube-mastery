@@ -24,7 +24,9 @@ const ENVOY_GATEWAY_DATA_PLANE_SERVICE_EXACT_REGEX = new RegExp(
   'g'
 )
 
-export const normalizeEnvoyServiceNameTokensForParity = (value: string): string => {
+export const normalizeEnvoyServiceNameTokensForParity = (
+  value: string
+): string => {
   return value
     .replace(
       ENVOY_GATEWAY_DATA_PLANE_SERVICE_WITH_HASH_REGEX,
@@ -36,7 +38,9 @@ export const normalizeEnvoyServiceNameTokensForParity = (value: string): string 
     )
 }
 
-export const normalizeEnvoyGatewayPodsStdoutForParity = (value: string): string => {
+export const normalizeEnvoyGatewayPodsStdoutForParity = (
+  value: string
+): string => {
   const lines = value.split('\n').filter((line) => {
     return line.trim().length > 0
   })
@@ -64,7 +68,9 @@ export const normalizeEnvoyGatewayServicesStdoutForParity = (
       return line.trim()
     })
     .join('\n')
-  const hasControlService = compact.includes(ENVOY_GATEWAY_CONTROL_PLANE_SERVICE_NAME)
+  const hasControlService = compact.includes(
+    ENVOY_GATEWAY_CONTROL_PLANE_SERVICE_NAME
+  )
   const hasDataPlaneService =
     compact.includes(ENVOY_GATEWAY_DATA_PLANE_SERVICE_BASENAME) ||
     ENVOY_GATEWAY_DATA_PLANE_SERVICE_WITH_HASH_TEST_REGEX.test(compact)
@@ -80,7 +86,9 @@ export const normalizeDescribeGatewayClassStdoutForParity = (
   return normalizeDescribeBodyStrictForParity(value)
 }
 
-export const normalizeDescribeGatewayStdoutForParity = (value: string): string => {
+export const normalizeDescribeGatewayStdoutForParity = (
+  value: string
+): string => {
   return normalizeDescribeBodyStrictForParity(value)
 }
 
@@ -92,10 +100,7 @@ export const normalizeDescribeHttpRouteStdoutForParity = (
 
 const normalizeDescribeBodyStrictForParity = (value: string): string => {
   return value
-    .replace(
-      /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z/g,
-      '<timestamp>'
-    )
+    .replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z/g, '<timestamp>')
     .replace(/(Resource Version:\s+)\d+/g, '$1<resource-version>')
     .replace(
       /(UID:\s+)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g,

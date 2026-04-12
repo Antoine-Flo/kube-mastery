@@ -72,14 +72,14 @@ CPU is expressed in millicores: 1000m equals one full CPU core. Memory uses bina
 
 @@@
 graph TD
-    POD["Pod spec"]
-    POD --> CNT["containers (list)"]
-    CNT --> NAME["name\n(internal identifier)"]
-    CNT --> IMG["image\n(always pin the tag)"]
-    CNT --> PORTS["ports\n(optional, documentary)"]
-    CNT --> RES["resources\n(strongly recommended)"]
-    RES --> REQ["requests\n(scheduling hint)"]
-    RES --> LIM["limits\n(enforcement cap)"]
+POD["Pod spec"]
+POD --> CNT["containers (list)"]
+CNT --> NAME["name\n(internal identifier)"]
+CNT --> IMG["image\n(always pin the tag)"]
+CNT --> PORTS["ports\n(optional, documentary)"]
+CNT --> RES["resources\n(strongly recommended)"]
+RES --> REQ["requests\n(scheduling hint)"]
+RES --> LIM["limits\n(enforcement cap)"]
 @@@
 
 :::quiz

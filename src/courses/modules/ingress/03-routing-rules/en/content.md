@@ -27,7 +27,7 @@ spec:
     - name: http
       protocol: HTTP
       port: 80
-      hostname: "*.myapp.com"
+      hostname: '*.myapp.com'
 ```
 
 The `gatewayClassName: eg` connects this Gateway to the Envoy Gateway controller. The listener accepts HTTP connections on port 80 for any subdomain of `myapp.com`. A request arriving for a hostname outside that wildcard, such as `other-domain.io`, is not accepted by this listener.
@@ -71,28 +71,28 @@ spec:
 Next, add the `hostnames` field to declare which hostname this route responds to:
 
 ```yaml
-  hostnames:
-    - "api.myapp.com"
+hostnames:
+  - 'api.myapp.com'
 ```
 
 Now add the `rules`. Each rule has a `matches` block (what to look for in the request) and a `backendRefs` block (where to send the traffic):
 
 ```yaml
-  rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /v1
-      backendRefs:
-        - name: api-svc
-          port: 80
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /admin
-      backendRefs:
-        - name: admin-svc
-          port: 80
+rules:
+  - matches:
+      - path:
+          type: PathPrefix
+          value: /v1
+    backendRefs:
+      - name: api-svc
+        port: 80
+  - matches:
+      - path:
+          type: PathPrefix
+          value: /admin
+    backendRefs:
+      - name: admin-svc
+        port: 80
 ```
 
 The complete HTTPRoute now routes `/v1` and everything beneath it to `api-svc`, and `/admin` and everything beneath it to `admin-svc`, both at the `api.myapp.com` hostname.
@@ -103,16 +103,17 @@ kubectl apply -f api-route.yaml
 
 @@@
 graph LR
-    GW["Gateway listener\nport 80, *.myapp.com"]
-    M1["match: PathPrefix /v1"]
-    M2["match: PathPrefix /admin"]
-    API["api-svc:80"]
-    ADMIN["admin-svc:80"]
+GW["Gateway listener\nport 80, *.myapp.com"]
+M1["match: PathPrefix /v1"]
+M2["match: PathPrefix /admin"]
+API["api-svc:80"]
+ADMIN["admin-svc:80"]
 
     GW --> M1
     GW --> M2
     M1 --> API
     M2 --> ADMIN
+
 @@@
 
 ## Path Matching Types

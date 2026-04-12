@@ -5,9 +5,7 @@ export interface DrillValidationPayloadEntry {
   assertions: DrillAssertion[]
 }
 
-const isObjectRecord = (
-  value: unknown
-): value is Record<string, unknown> => {
+const isObjectRecord = (value: unknown): value is Record<string, unknown> => {
   return value != null && typeof value === 'object'
 }
 
@@ -52,4 +50,3 @@ export function parseDrillValidationPayload(
   }
   return entries
 }
-

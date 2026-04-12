@@ -48,10 +48,7 @@ const normalizeDynamicTokensForParity = (value: string): string => {
   const withoutApplyNoise = stripKubectlLastAppliedYamlNoise(value)
   return withoutApplyNoise
     .replace(/^Created on:\s+.*$/gm, 'Created on:   <timestamp>')
-    .replace(
-      /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z/g,
-      '<timestamp>'
-    )
+    .replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z/g, '<timestamp>')
     .replace(/\b\d{1,3}(?:\.\d{1,3}){3}\b/g, '<ip>')
     .replace(/:\d+\/TCP/g, ':<port>/TCP')
     .replace(/:\d+\/UDP/g, ':<port>/UDP')

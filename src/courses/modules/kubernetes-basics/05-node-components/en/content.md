@@ -9,18 +9,18 @@ The scheduler has made its decision. Your Pod's `nodeName` field is now set to `
 
 @@@
 graph TB
-    subgraph cp [Control Plane]
-        API["kube-apiserver"]
-    end
-    subgraph node [Worker Node]
-        KL["kubelet"]
-        KP["kube-proxy"]
-        CNI["CNI plugin (kindnet)"]
-        CRI["Container Runtime (containerd)"]
-        P1["Pod A"]
-        P2["Pod B"]
-        DNS["CoreDNS Pod"]
-    end
+subgraph cp [Control Plane]
+API["kube-apiserver"]
+end
+subgraph node [Worker Node]
+KL["kubelet"]
+KP["kube-proxy"]
+CNI["CNI plugin (kindnet)"]
+CRI["Container Runtime (containerd)"]
+P1["Pod A"]
+P2["Pod B"]
+DNS["CoreDNS Pod"]
+end
 
     API -->|"Pod spec"| KL
     KL -->|"start"| CRI
@@ -35,6 +35,7 @@ graph TB
     CNI -->|"assign IP"| DNS
     DNS -->|"name resolution"| P1
     DNS -->|"name resolution"| P2
+
 @@@
 
 Four components run on every worker node. One additional component runs as a cluster-wide addon. Each has a distinct role: managing Pods, assigning network identities, routing Service traffic, running containers, and resolving names inside the cluster.

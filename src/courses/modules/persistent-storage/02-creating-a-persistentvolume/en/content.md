@@ -104,11 +104,11 @@ Once a PVC binds to this PV, both objects move to `Bound`. When the PVC is later
 
 @@@
 graph LR
-    Available["Available\nno claim"] --> Bound["Bound\nPVC attached"]
-    Bound --> Released["Released\nPVC deleted"]
-    Released --> AdminAct["Admin clears claimRef\nRetain policy"]
-    Released --> Deleted["PV removed\nDelete policy"]
-    AdminAct --> Available
+Available["Available\nno claim"] --> Bound["Bound\nPVC attached"]
+Bound --> Released["Released\nPVC deleted"]
+Released --> AdminAct["Admin clears claimRef\nRetain policy"]
+Released --> Deleted["PV removed\nDelete policy"]
+AdminAct --> Available
 @@@
 
 With `Retain`, the PV stays in `Released` indefinitely. The data on disk is untouched. An administrator must decide what to do with it before the PV can serve a new claim.

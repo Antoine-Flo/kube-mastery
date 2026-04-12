@@ -17,13 +17,13 @@ ClusterIP is the right choice for internal communication: a frontend calling a b
 
 @@@
 graph LR
-    FE["Frontend Pod\nnamespace: default"]
-    SVC["Service: api-svc\nClusterIP: 10.96.0.10\nDNS: api-svc.default.svc.cluster.local"]
-    BE1["Backend Pod 1"]
-    BE2["Backend Pod 2"]
-    FE -->|"curl api-svc"| SVC
-    SVC --> BE1
-    SVC --> BE2
+FE["Frontend Pod\nnamespace: default"]
+SVC["Service: api-svc\nClusterIP: 10.96.0.10\nDNS: api-svc.default.svc.cluster.local"]
+BE1["Backend Pod 1"]
+BE2["Backend Pod 2"]
+FE -->|"curl api-svc"| SVC
+SVC --> BE1
+SVC --> BE2
 @@@
 
 Create a ClusterIP Service explicitly so you can see the `type` field in action:
@@ -45,7 +45,6 @@ spec:
     - port: 80
       targetPort: 80
 ```
-
 
 ```bash
 kubectl apply -f clusterip-svc.yaml

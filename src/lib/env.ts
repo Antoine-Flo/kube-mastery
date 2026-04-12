@@ -17,7 +17,9 @@ function readNonEmptyString(value: unknown): string | undefined {
   return trimmed
 }
 
-function readLegacyRuntimeEnv(locals?: unknown): Record<string, unknown> | undefined {
+function readLegacyRuntimeEnv(
+  locals?: unknown
+): Record<string, unknown> | undefined {
   if (locals == null || typeof locals !== 'object') {
     return undefined
   }

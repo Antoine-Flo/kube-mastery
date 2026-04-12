@@ -51,8 +51,8 @@ You can give a regular Pod a predictable DNS record by setting two fields in its
 
 @@@
 graph LR
-    HeadlessSvc["Headless Service\nname: db-internal\nclusterIP: None"] --> Pod0["Pod\nhostname: primary\nsubdomain: db-internal"]
-    Pod0 --> Record["DNS A record\nprimary.db-internal.default.svc.cluster.local\n-> Pod IP"]
+HeadlessSvc["Headless Service\nname: db-internal\nclusterIP: None"] --> Pod0["Pod\nhostname: primary\nsubdomain: db-internal"]
+Pod0 --> Record["DNS A record\nprimary.db-internal.default.svc.cluster.local\n-> Pod IP"]
 @@@
 
 Why does Kubernetes require a headless Service as the zone anchor? CoreDNS only creates these records when a headless Service with the matching name exists. Without it, the `hostname` and `subdomain` fields in the Pod spec are stored in etcd but produce no DNS entry. The Service acts as the permission mechanism for the DNS zone.
@@ -87,12 +87,12 @@ StatefulSets are the most common use case for stable Pod DNS. A StatefulSet assi
 
 @@@
 graph LR
-    HeadlessSvc["Headless Service\nname: db\nclusterIP: None"] --> Pod0["Pod db-0"]
-    HeadlessSvc --> Pod1["Pod db-1"]
-    HeadlessSvc --> Pod2["Pod db-2"]
-    Pod0 --> DNS0["db-0.db.default.svc.cluster.local"]
-    Pod1 --> DNS1["db-1.db.default.svc.cluster.local"]
-    Pod2 --> DNS2["db-2.db.default.svc.cluster.local"]
+HeadlessSvc["Headless Service\nname: db\nclusterIP: None"] --> Pod0["Pod db-0"]
+HeadlessSvc --> Pod1["Pod db-1"]
+HeadlessSvc --> Pod2["Pod db-2"]
+Pod0 --> DNS0["db-0.db.default.svc.cluster.local"]
+Pod1 --> DNS1["db-1.db.default.svc.cluster.local"]
+Pod2 --> DNS2["db-2.db.default.svc.cluster.local"]
 @@@
 
 Even if `db-1` restarts and gets a new IP, its DNS name `db-1.db.default.svc.cluster.local` continues to resolve to the new IP. The name is stable because it is derived from the ordinal index, not the IP address.

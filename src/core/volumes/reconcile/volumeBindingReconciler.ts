@@ -27,7 +27,9 @@ export const makeClaimKey = (namespace: string, name: string): string => {
   return `${namespace}/${name}`
 }
 
-export const parseClaimKey = (key: string): { namespace: string; name: string } => {
+export const parseClaimKey = (
+  key: string
+): { namespace: string; name: string } => {
   const [namespace, name] = key.split('/')
   return { namespace, name }
 }
@@ -48,10 +50,7 @@ const updateClaimToPending = (
 
 export const enqueuePendingClaimsMatchingVolume = (
   persistentVolume: PersistentVolume,
-  deps: Pick<
-    VolumeBindingReconcilerDeps,
-    'apiServer' | 'enqueueClaim'
-  >
+  deps: Pick<VolumeBindingReconcilerDeps, 'apiServer' | 'enqueueClaim'>
 ): void => {
   const volumeStorageClass = persistentVolume.spec.storageClassName ?? ''
   for (const claim of deps.apiServer.listResources('PersistentVolumeClaim')) {
@@ -129,7 +128,11 @@ const syncBoundClaim = (
     )
   }
 
-  deps.volumeState.bindClaimToVolume(claimNamespace, claimName, preBoundVolumeName)
+  deps.volumeState.bindClaimToVolume(
+    claimNamespace,
+    claimName,
+    preBoundVolumeName
+  )
   deps.enqueueVolume(preBoundVolumeName)
 }
 
@@ -250,7 +253,10 @@ export const reconcileVolumeByKey = (
   )
   if (!claimResult.ok || claimResult.value == null) {
     if (persistentVolume.spec.persistentVolumeReclaimPolicy === 'Delete') {
-      deps.apiServer.deleteResource('PersistentVolume', persistentVolume.metadata.name)
+      deps.apiServer.deleteResource(
+        'PersistentVolume',
+        persistentVolume.metadata.name
+      )
       releasePersistentVolumeBacking(persistentVolume.metadata.name)
       return
     }

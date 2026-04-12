@@ -13,16 +13,16 @@ A Pod is the smallest deployable unit in Kubernetes. Think of it as a wrapper ar
 
 @@@
 graph TB
-    subgraph pod ["Pod: web-pod"]
-        C1["Container: nginx\nport 80"]
-        C2["Container: log-collector\n(sidecar)"]
-        NET["Shared network\nIP: 10.244.x.x"]
-        VOL["Shared volume\n(optional)"]
-    end
-    C1 --- NET
-    C2 --- NET
-    C1 --- VOL
-    C2 --- VOL
+subgraph pod ["Pod: web-pod"]
+C1["Container: nginx\nport 80"]
+C2["Container: log-collector\n(sidecar)"]
+NET["Shared network\nIP: 10.244.x.x"]
+VOL["Shared volume\n(optional)"]
+end
+C1 --- NET
+C2 --- NET
+C1 --- VOL
+C2 --- VOL
 @@@
 
 A useful analogy: a Pod is like an apartment. The containers are the tenants. They all share the same address (IP), the same mailbox (network ports), and they can knock on each other's door directly (localhost). One address per apartment, always. The building management (Kubernetes) decides which floor of the building (node) that apartment sits on, and it always moves the whole apartment, never just one tenant.
@@ -46,7 +46,7 @@ Which of the following is true for two containers running inside the same Pod?
 - They share the same IP address and can communicate via localhost
 - They each get their own IP address and isolated volume mounts
 
-**Answer:** They share the same IP address and can communicate via localhost. The other options describe containers in *different* Pods. The sidecar pattern works precisely because of this shared network: the main container and the sidecar behave as if they are on the same machine.
+**Answer:** They share the same IP address and can communicate via localhost. The other options describe containers in _different_ Pods. The sidecar pattern works precisely because of this shared network: the main container and the sidecar behave as if they are on the same machine.
 :::
 
 ## Pods are ephemeral by design

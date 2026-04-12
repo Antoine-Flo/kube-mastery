@@ -19,9 +19,9 @@ A container can crash and restart many times within the life of a single Pod. Ea
 
 @@@
 sequenceDiagram
-    participant P as Pod
-    participant C as Container filesystem
-    participant V as Volume
+participant P as Pod
+participant C as Container filesystem
+participant V as Volume
 
     P->>C: created (clean image layers)
     P->>V: mounted
@@ -36,6 +36,7 @@ sequenceDiagram
 
     Note over C: /tmp/cache.bin gone
     Note over V: /data/record.db still there
+
 @@@
 
 The Pod's lifetime is a different story. When the Pod is deleted, most volume types are deleted with it. This is intentional for temporary data. For data that must outlive a Pod deletion or a rolling update, you need a PersistentVolume, which this module covers in lesson 4.

@@ -291,7 +291,9 @@ describe('ShellCommandHandler', () => {
       const result = handler.execute('invalid-command', context)
       expect(result.ok).toBe(false)
       // L'erreur est affichée dans le renderer
-      expect(renderer.getOutput()).toContain('command not found: invalid-command')
+      expect(renderer.getOutput()).toContain(
+        'command not found: invalid-command'
+      )
     })
 
     it('should display error message when command fails', () => {

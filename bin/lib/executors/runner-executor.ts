@@ -55,10 +55,7 @@ const parseKubectlExecutorEnvelope = (
   if (firstNewline === -1) {
     return { stderrNotice: '', payload: output }
   }
-  const encoded = output.slice(
-    KUBECTL_STDERR_PREFIX.length,
-    firstNewline
-  )
+  const encoded = output.slice(KUBECTL_STDERR_PREFIX.length, firstNewline)
   if (encoded.length === 0) {
     return { stderrNotice: '', payload: output }
   }
@@ -73,7 +70,10 @@ const parseKubectlExecutorEnvelope = (
   }
 }
 
-const parseFlagValue = (command: string, flagName: string): string | undefined => {
+const parseFlagValue = (
+  command: string,
+  flagName: string
+): string | undefined => {
   const regex = new RegExp(`(?:^|\\s)-{1,2}${flagName}(?:=|\\s+)([^\\s]+)`)
   const match = command.match(regex)
   if (match == null) {
@@ -322,12 +322,11 @@ const executeShellDirective = (
       )
     },
     runCurl: (target, namespace, sourcePod) => {
-      const resolvedSource =
-        sourcePod ?? {
-          name: pod.metadata.name,
-          namespace: directive.namespace,
-          labels: pod.metadata.labels ?? {}
-        }
+      const resolvedSource = sourcePod ?? {
+        name: pod.metadata.name,
+        namespace: directive.namespace,
+        labels: pod.metadata.labels ?? {}
+      }
       const curlResult = networkRuntime.trafficEngine.simulateHttpGet(target, {
         sourceNamespace: namespace,
         sourcePod: resolvedSource

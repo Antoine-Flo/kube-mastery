@@ -122,7 +122,10 @@ describe('volumeProvisioningReconciler', () => {
     )
 
     expect(result.reason).toBe('ProvisioningSucceeded')
-    const generatedPv = apiServer.findResource('PersistentVolume', 'pvc-default-claim-c')
+    const generatedPv = apiServer.findResource(
+      'PersistentVolume',
+      'pvc-default-claim-c'
+    )
     expect(generatedPv.ok).toBe(true)
   })
 })

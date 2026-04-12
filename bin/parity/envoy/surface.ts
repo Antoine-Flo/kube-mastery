@@ -61,7 +61,9 @@ const normalizeKnownEnvoyCommandStdoutForParity = (
   return normalizeGatewayDescribeStdoutForParity(command, stdout)
 }
 
-export const normalizeEnvoyAwareServiceStdoutForParity = (stdout: string): string => {
+export const normalizeEnvoyAwareServiceStdoutForParity = (
+  stdout: string
+): string => {
   return normalizeEnvoyServiceNameTokensForParity(stdout)
 }
 

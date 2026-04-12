@@ -44,7 +44,6 @@ spec:
       image: nginx:1.28
 ```
 
-
 ```bash
 kubectl apply -f labeled-pod.yaml
 ```
@@ -105,14 +104,14 @@ How many labels does `labeled-pod` have after all the commands above?
 
 @@@
 graph LR
-    POD1["Pod\napp=web\nenv=staging"]
-    POD2["Pod\napp=web\nenv=production"]
-    POD3["Pod\napp=api\nenv=staging"]
-    SEL1["-l app=web\nmatches POD1 + POD2"]
-    SEL2["-l app=web,env=staging\nmatches POD1 only"]
-    SEL1 --> POD1
-    SEL1 --> POD2
-    SEL2 --> POD1
+POD1["Pod\napp=web\nenv=staging"]
+POD2["Pod\napp=web\nenv=production"]
+POD3["Pod\napp=api\nenv=staging"]
+SEL1["-l app=web\nmatches POD1 + POD2"]
+SEL2["-l app=web,env=staging\nmatches POD1 only"]
+SEL1 --> POD1
+SEL1 --> POD2
+SEL2 --> POD1
 @@@
 
 When you pass multiple labels to `-l`, Kubernetes applies AND logic: every label in the list must match. A Pod matching `app=web` but not `env=staging` is excluded.

@@ -1,26 +1,26 @@
-title: "Work Within LimitRange and ResourceQuota"
+title: 'Work Within LimitRange and ResourceQuota'
 isDraft: true
-description: "Diagnose admission errors and make pod specs compliant with namespace policies."
+description: 'Diagnose admission errors and make pod specs compliant with namespace policies.'
 tag: troubleshooting
-environment: "minimal"
+environment: 'minimal'
 ckaTargetMinutes: 8
 tasks:
-  - task: "Review namespace quotas and limits"
-    command: "kubectl get resourcequota,limitrange -n team-a && kubectl describe resourcequota -n team-a"
-    explanation: "Start with a compact inventory, then inspect effective hard/used values."
+  - task: 'Review namespace quotas and limits'
+    command: 'kubectl get resourcequota,limitrange -n team-a && kubectl describe resourcequota -n team-a'
+    explanation: 'Start with a compact inventory, then inspect effective hard/used values.'
 
-  - task: "Try to apply the workload and observe rejection"
-    command: "kubectl apply -f team-a-pod.yaml -n team-a"
-    explanation: "A rejected apply reveals the exact policy violation (requests/limits or total quota)."
+  - task: 'Try to apply the workload and observe rejection'
+    command: 'kubectl apply -f team-a-pod.yaml -n team-a'
+    explanation: 'A rejected apply reveals the exact policy violation (requests/limits or total quota).'
 
-  - task: "Edit pod resources to satisfy constraints"
-    command: "kubectl edit -f team-a-pod.yaml"
-    explanation: "Reduce requests/limits or add missing fields so the pod is policy-compliant."
+  - task: 'Edit pod resources to satisfy constraints'
+    command: 'kubectl edit -f team-a-pod.yaml'
+    explanation: 'Reduce requests/limits or add missing fields so the pod is policy-compliant.'
 
-  - task: "Re-apply corrected manifest"
-    command: "kubectl apply -f team-a-pod.yaml -n team-a"
-    explanation: "Admission should succeed once resource values match namespace policies."
+  - task: 'Re-apply corrected manifest'
+    command: 'kubectl apply -f team-a-pod.yaml -n team-a'
+    explanation: 'Admission should succeed once resource values match namespace policies.'
 
-  - task: "Validate running state and quota usage impact"
-    command: "kubectl get pods -n team-a && kubectl describe resourcequota -n team-a"
-    explanation: "Final check confirms both successful admission and quota counters moving as expected."
+  - task: 'Validate running state and quota usage impact'
+    command: 'kubectl get pods -n team-a && kubectl describe resourcequota -n team-a'
+    explanation: 'Final check confirms both successful admission and quota counters moving as expected.'

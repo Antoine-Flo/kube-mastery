@@ -58,7 +58,14 @@ describe('buildDrillList', () => {
   it('returns full list item with correct fields', () => {
     const fileWithTwo: DrillFile = {
       ...SAMPLE_FILE,
-      tasks: [SAMPLE_TASK, { task: 'Describe a node', command: 'kubectl describe node x', explanation: 'Details.' }]
+      tasks: [
+        SAMPLE_TASK,
+        {
+          task: 'Describe a node',
+          command: 'kubectl describe node x',
+          explanation: 'Details.'
+        }
+      ]
     }
     const port = createMockPort({
       drillIds: ['inspect-nodes'],

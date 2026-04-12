@@ -19,17 +19,17 @@ When the update finishes, the old ReplicaSet is not deleted. It stays at zero re
 
 @@@
 graph TB
-    DEP["Deployment: web-app"]
-    RS1["ReplicaSet v1\nreplicas: 0\n(kept for rollback)"]
-    RS2["ReplicaSet v2\nreplicas: 3\n(active)"]
-    P1["Pod"]
-    P2["Pod"]
-    P3["Pod"]
-    DEP --> RS1
-    DEP --> RS2
-    RS2 --> P1
-    RS2 --> P2
-    RS2 --> P3
+DEP["Deployment: web-app"]
+RS1["ReplicaSet v1\nreplicas: 0\n(kept for rollback)"]
+RS2["ReplicaSet v2\nreplicas: 3\n(active)"]
+P1["Pod"]
+P2["Pod"]
+P3["Pod"]
+DEP --> RS1
+DEP --> RS2
+RS2 --> P1
+RS2 --> P2
+RS2 --> P3
 @@@
 
 The Deployment controller watches the desired state and delegates the Pod count to its active ReplicaSet. The ReplicaSet then creates and deletes Pods as needed. You interact only with the Deployment, and the rest of the hierarchy follows automatically.
@@ -39,7 +39,6 @@ The Deployment controller watches the desired state and delegates the Pod count 
 The structure is always: Deployment manages ReplicaSets, ReplicaSets manage Pods. You never create a ReplicaSet directly when using Deployments.
 
 This hierarchy shows up in Pod names. Every Pod owned by a Deployment carries two hashes: `<deploy-name>-<rs-hash>-<pod-hash>`. The first hash is a fingerprint of the Pod template used by that ReplicaSet. The second uniquely identifies the individual Pod within that ReplicaSet.
-
 
 ```bash
 kubectl create deployment web --image=nginx:1.28 --replicas=2

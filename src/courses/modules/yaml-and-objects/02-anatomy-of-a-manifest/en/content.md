@@ -9,12 +9,12 @@ seoDescription: 'Explore how Kubernetes separates desired state in spec from cur
 
 @@@
 graph LR
-    USER["You write spec\n(desired state)"]
-    API["API Server\nstores object in etcd"]
-    CTRL["Controller\nwatches API for changes"]
-    ACT["Controller acts\ncreates Pods, etc."]
-    STATUS["Controller updates\nstatus field"]
-    USER --> API --> CTRL --> ACT --> STATUS --> CTRL
+USER["You write spec\n(desired state)"]
+API["API Server\nstores object in etcd"]
+CTRL["Controller\nwatches API for changes"]
+ACT["Controller acts\ncreates Pods, etc."]
+STATUS["Controller updates\nstatus field"]
+USER --> API --> CTRL --> ACT --> STATUS --> CTRL
 @@@
 
 The reconciliation loop is the engine behind Kubernetes self-healing. A controller watches the API server for objects of its type. When it sees a difference between `spec` and `status`, it acts. After acting, it writes what it observed back into `status`. Then it watches again. The loop never stops.
@@ -54,7 +54,6 @@ spec:
 ```bash
 kubectl apply -f simple-pod.yaml
 ```
-
 
 ## Reading the Full Manifest
 
@@ -113,4 +112,3 @@ kubectl delete pod simple-pod
 The object is removed from etcd. The reconciliation loop for Pods has nothing left to reconcile. The slate is clean for the next exercise.
 
 In the next lesson, you will learn how to generate valid manifests from the CLI instead of writing them from scratch, which eliminates a whole class of syntax errors before they reach the API server.
-

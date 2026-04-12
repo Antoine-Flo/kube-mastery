@@ -19,8 +19,6 @@ export const ENVOY_GATEWAY_CONTROLLER_NAME =
 export const ENVOY_GATEWAY_CONTROL_PLANE_LABEL_KEY = 'control-plane'
 export const ENVOY_GATEWAY_CONTROL_PLANE_LABEL_VALUE = 'envoy-gateway'
 
-export const ENVOY_GATEWAY_INSTALL_MANIFEST_URL =
-  `https://github.com/envoyproxy/gateway/releases/download/${ENVOY_GATEWAY_VERSION}/install.yaml`
+export const ENVOY_GATEWAY_INSTALL_MANIFEST_URL = `https://github.com/envoyproxy/gateway/releases/download/${ENVOY_GATEWAY_VERSION}/install.yaml`
 
-export const ENVOY_GATEWAY_QUICKSTART_MANIFEST_URL =
-  `https://github.com/envoyproxy/gateway/releases/download/${ENVOY_GATEWAY_VERSION}/quickstart.yaml`
+export const ENVOY_GATEWAY_QUICKSTART_MANIFEST_URL = `https://github.com/envoyproxy/gateway/releases/download/${ENVOY_GATEWAY_VERSION}/quickstart.yaml`

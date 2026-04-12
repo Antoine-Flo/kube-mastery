@@ -1,40 +1,40 @@
-title: "Check etcd Endpoint Health"
+title: 'Check etcd Endpoint Health'
 isDraft: true
-description: "Validate etcd health using endpoint checks and control-plane certificates."
+description: 'Validate etcd health using endpoint checks and control-plane certificates.'
 tag: cluster_architecture_installation
-environment: "minimal"
+environment: 'minimal'
 ckaTargetMinutes: 6
 tasks:
-  - task: "Read etcd certificate paths from static manifest"
+  - task: 'Read etcd certificate paths from static manifest'
     command: "grep -E 'cert-file|key-file|trusted-ca-file' /etc/kubernetes/manifests/etcd.yaml"
-    explanation: "Avoid hardcoded paths by deriving flags from the active manifest."
+    explanation: 'Avoid hardcoded paths by deriving flags from the active manifest.'
 
-  - task: "Run etcd endpoint health check"
-    command: "ETCDCTL_API=3 etcdctl endpoint health --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key"
-    explanation: "Healthy response confirms etcd is serving requests correctly over TLS."
+  - task: 'Run etcd endpoint health check'
+    command: 'ETCDCTL_API=3 etcdctl endpoint health --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key'
+    explanation: 'Healthy response confirms etcd is serving requests correctly over TLS.'
     validation:
       assertions:
-        - type: "clusterListFieldContains"
-          kind: "Node"
-          path: "{.items[*].kind}"
-          value: "Node"
+        - type: 'clusterListFieldContains'
+          kind: 'Node'
+          path: '{.items[*].kind}'
+          value: 'Node'
           onFail: "L'endpoint etcd ne répond pas en état healthy."
 
-  - task: "List endpoint status details"
-    command: "ETCDCTL_API=3 etcdctl endpoint status --endpoints=https://127.0.0.1:2379 --write-out=table --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key"
-    explanation: "Provides leader, raft term, and DB size info for deeper diagnostics."
+  - task: 'List endpoint status details'
+    command: 'ETCDCTL_API=3 etcdctl endpoint status --endpoints=https://127.0.0.1:2379 --write-out=table --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key'
+    explanation: 'Provides leader, raft term, and DB size info for deeper diagnostics.'
 
-  - task: "Validate API server is responsive"
-    command: "kubectl get nodes"
-    explanation: "A healthy etcd should align with normal API responsiveness."
+  - task: 'Validate API server is responsive'
+    command: 'kubectl get nodes'
+    explanation: 'A healthy etcd should align with normal API responsiveness.'
     validation:
       assertions:
-        - type: "clusterListFieldContains"
-          kind: "Node"
-          path: "{.items[*].kind}"
-          value: "Node"
+        - type: 'clusterListFieldContains'
+          kind: 'Node'
+          path: '{.items[*].kind}'
+          value: 'Node'
           onFail: "L'API server ne répond pas correctement après la vérification etcd."
 
-  - task: "Check etcd static pod status in kube-system"
-    command: "kubectl get pods -n kube-system"
-    explanation: "Complements endpoint checks with runtime pod state for faster root-cause triage."
+  - task: 'Check etcd static pod status in kube-system'
+    command: 'kubectl get pods -n kube-system'
+    explanation: 'Complements endpoint checks with runtime pod state for faster root-cause triage.'

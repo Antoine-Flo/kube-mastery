@@ -27,13 +27,14 @@ This follows a fixed pattern:
 
 @@@
 graph LR
-    POD["Pod: frontend"]
-    DNS["CoreDNS"]
-    SVC["Service: backend<br/>ClusterIP: 10.96.4.2"]
+POD["Pod: frontend"]
+DNS["CoreDNS"]
+SVC["Service: backend<br/>ClusterIP: 10.96.4.2"]
 
     POD -->|"DNS query: backend.default.svc.cluster.local"| DNS
     DNS -->|"A record: 10.96.4.2"| POD
     POD -->|"TCP :80 to 10.96.4.2"| SVC
+
 @@@
 
 The important thing is that you almost never need to write the full name. Kubernetes configures every Pod's `/etc/resolv.conf` with search domains that allow short names to work. A Pod in the `default` namespace can reach `backend.default.svc.cluster.local` by simply writing `backend`. A Pod in a different namespace can use `backend.default`.

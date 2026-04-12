@@ -55,4 +55,3 @@ describe('drill validation payload', () => {
     expect(parsed.map((item) => item.index)).toEqual([0, 1])
   })
 })
-

@@ -112,7 +112,8 @@ describe('resourceHandlers', () => {
         claimRef: { namespace: 'default', name: 'claim-a' }
       }
     })
-    const pvRow = RESOURCE_HANDLERS.persistentvolumes.formatRow(persistentVolume)
+    const pvRow =
+      RESOURCE_HANDLERS.persistentvolumes.formatRow(persistentVolume)
     expect(pvRow[2]).toBe('RWOP,ROX')
     expect(pvRow[4]).toBe('Bound')
     expect(pvRow[5]).toBe('default/claim-a')

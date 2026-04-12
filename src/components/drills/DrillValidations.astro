@@ -15,7 +15,8 @@ const validationTasks = buildDrillValidationPayload(tasks)
   data-drill-validations-json={JSON.stringify(validationTasks)}
   hidden
   aria-hidden="true"
-/>
+>
+</div>
 <script>
   import {
     parseDrillValidationPayload,
@@ -121,7 +122,11 @@ const validationTasks = buildDrillValidationPayload(tasks)
 
       const runResult = await service.run([entry])
       if (!runResult.ok) {
-        setTaskValidationUiState(entry.index, 'fail', entry.assertions[0]?.onFail)
+        setTaskValidationUiState(
+          entry.index,
+          'fail',
+          entry.assertions[0]?.onFail
+        )
         allPassed = false
         continue
       }

@@ -9,10 +9,10 @@ Your company runs a single Kubernetes cluster. Two teams share it: the backend t
 
 @@@
 graph TB
-    CLUSTER["Kubernetes Cluster"]
-    CLUSTER --> NS1["Namespace: frontend\nService: api\nDeployment: web"]
-    CLUSTER --> NS2["Namespace: backend\nService: api\nDeployment: api"]
-    CLUSTER --> NS3["Namespace: kube-system\nSystem Pods"]
+CLUSTER["Kubernetes Cluster"]
+CLUSTER --> NS1["Namespace: frontend\nService: api\nDeployment: web"]
+CLUSTER --> NS2["Namespace: backend\nService: api\nDeployment: api"]
+CLUSTER --> NS3["Namespace: kube-system\nSystem Pods"]
 @@@
 
 A namespace is an isolated naming scope inside the cluster. Resources in one namespace do not conflict with resources of the same name in another namespace. Think of it like directories in a filesystem: `/frontend/api` and `/backend/api` can coexist without issue.
@@ -91,11 +91,12 @@ kubectl delete namespace staging
 ```
 
 :::quiz Which kubectl flag is used to target a specific namespace?
+
 - `--namespace-selector`
 - `-n`
 - `--context`
 - `--scope`
-**Answer:** `-n` (or `--namespace`). It applies to `get`, `create`, `apply`, `delete`, `describe`, and most other kubectl commands.
-:::
+  **Answer:** `-n` (or `--namespace`). It applies to `get`, `create`, `apply`, `delete`, `describe`, and most other kubectl commands.
+  :::
 
 Namespaces give your cluster a clear organizational structure. Now that you know how to create them and place resources inside them, the next lesson walks through the four namespaces that already exist in every Kubernetes cluster and explains what each one is for.

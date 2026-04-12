@@ -15,10 +15,10 @@ Think of Metrics Server as a lightweight data aggregator. Each node in your clus
 
 @@@
 graph LR
-    A[cAdvisor<br/>on each node] --> B[kubelet<br/>metrics endpoint]
-    B --> C[Metrics Server]
-    C --> D[metrics.k8s.io API]
-    D --> E[kubectl top]
+A[cAdvisor<br/>on each node] --> B[kubelet<br/>metrics endpoint]
+B --> C[Metrics Server]
+C --> D[metrics.k8s.io API]
+D --> E[kubectl top]
 @@@
 
 This design fits Kubernetes' API-first philosophy. Instead of building metrics into the core API server, the metrics surface is an extension. `kubectl top` is simply a client for that extension API.
@@ -83,10 +83,10 @@ Metrics Server is not just for humans. The Horizontal Pod Autoscaler (HPA) uses 
 
 @@@
 graph LR
-    A[Metrics Server] --> B[HPA Controller]
-    B --> C{Usage > threshold?}
-    C -- yes --> D[Scale up<br/>Deployment]
-    C -- no --> E[Scale down or<br/>hold replicas]
+A[Metrics Server] --> B[HPA Controller]
+B --> C{Usage > threshold?}
+C -- yes --> D[Scale up<br/>Deployment]
+C -- no --> E[Scale down or<br/>hold replicas]
 @@@
 
 If Metrics Server is not installed or not yet ready, the HPA cannot function. It will show a status of `unknown` for its metrics target, and it will not scale anything. This is one of the first things to check when an HPA is not working as expected.

@@ -29,11 +29,11 @@ This alone, with `policyTypes: [Ingress]` and no `ingress` rules listed, produce
 Now add the allowed source:
 
 ```yaml
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              app: api # illustrative only
+ingress:
+  - from:
+      - podSelector:
+          matchLabels:
+            app: api # illustrative only
 ```
 
 The `app: api` Pod is now the only allowed source. Any other Pod that tries to connect to `db` is silently dropped.
@@ -95,15 +95,15 @@ Sometimes the source is not a single Pod but an entire namespace. A monitoring s
 Add a second `from` entry to allow any Pod from the `monitoring` namespace:
 
 ```yaml
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              app: api
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: monitoring # illustrative only
+ingress:
+  - from:
+      - podSelector:
+          matchLabels:
+            app: api
+  - from:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: monitoring # illustrative only
 ```
 
 The two separate `from` entries use OR logic. Either source is independently sufficient to get through.
@@ -123,23 +123,23 @@ You want to allow ingress from any Pod in the `monitoring` namespace, regardless
 Sometimes you need to be more precise: a source must have a specific label AND be in a specific namespace. Place both selectors inside the same `-` element in `from`:
 
 ```yaml
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              app: api
-          namespaceSelector:
-            matchLabels:
-              env: production # illustrative only
+ingress:
+  - from:
+      - podSelector:
+          matchLabels:
+            app: api
+        namespaceSelector:
+          matchLabels:
+            env: production # illustrative only
 ```
 
 This allows only Pods with `app: api` that are also in a namespace labeled `env: production`. A Pod labeled `app: api` in a different namespace is blocked. A Pod in the `production` namespace without the `app: api` label is also blocked. Both conditions must be true simultaneously.
 
 @@@
 graph LR
-    A["Pod: app=api\nnamespace: production"] -- "allowed (AND)" --> db["Pod: db"]
-    B["Pod: app=api\nnamespace: staging"] -. "blocked" .-> db
-    C["Pod: app=frontend\nnamespace: production"] -. "blocked" .-> db
+A["Pod: app=api\nnamespace: production"] -- "allowed (AND)" --> db["Pod: db"]
+B["Pod: app=api\nnamespace: staging"] -. "blocked" .-> db
+C["Pod: app=frontend\nnamespace: production"] -. "blocked" .-> db
 @@@
 
 ## Allowing External Traffic with ipBlock
@@ -147,10 +147,10 @@ graph LR
 Traffic does not always come from other Pods. Sometimes a known external IP or CIDR range needs access. Use `ipBlock` in the `from` array for this:
 
 ```yaml
-  ingress:
-    - from:
-        - ipBlock:
-            cidr: 192.168.1.0/24 # illustrative only
+ingress:
+  - from:
+      - ipBlock:
+          cidr: 192.168.1.0/24 # illustrative only
 ```
 
 This allows any IP in that CIDR to reach the protected Pod. You can combine `ipBlock` with other `from` entries, each as a separate `-` item, using OR logic.
@@ -159,7 +159,7 @@ This allows any IP in that CIDR to reach the protected Pod. You can combine `ipB
 
 @@@
 graph LR
-    any["Any Pod"] -. "all blocked" .-> ns["All Pods in namespace"]
+any["Any Pod"] -. "all blocked" .-> ns["All Pods in namespace"]
 @@@
 
 A powerful foundation for namespace security is a deny-all ingress policy that blocks inbound traffic to every Pod in the namespace at once. You then add specific allow policies on top of it:

@@ -1,90 +1,90 @@
-title: "Pod Basics"
+title: 'Pod Basics'
 isDraft: true
-description: "Create a pod with labels and resource constraints, then manage its labels."
+description: 'Create a pod with labels and resource constraints, then manage its labels.'
 tag: cluster_architecture_installation
-environment: "minimal"
+environment: 'minimal'
 ckaTargetMinutes: 6
 tasks:
-  - task: "Create a namespace called `exercise-01`"
-    command: "kubectl create namespace exercise-01"
-    explanation: "Creates the namespace. All subsequent commands target this namespace with -n exercise-01."
+  - task: 'Create a namespace called `exercise-01`'
+    command: 'kubectl create namespace exercise-01'
+    explanation: 'Creates the namespace. All subsequent commands target this namespace with -n exercise-01.'
 
-  - task: "Create a pod named `web` in namespace `exercise-01` with these specs: image `nginx:1.27`, labels `app=web` and `tier=frontend`, resource requests 64Mi memory / 100m CPU, resource limits 128Mi memory / 250m CPU"
-    command: "kubectl run web -n exercise-01 --image=nginx:1.27 --labels=app=web,tier=frontend --dry-run=client -o yaml > pod.yaml"
-    explanation: "Generates the pod manifest without creating anything. Edit pod.yaml to add resources.requests and resources.limits under spec.containers[0], then apply it."
+  - task: 'Create a pod named `web` in namespace `exercise-01` with these specs: image `nginx:1.27`, labels `app=web` and `tier=frontend`, resource requests 64Mi memory / 100m CPU, resource limits 128Mi memory / 250m CPU'
+    command: 'kubectl run web -n exercise-01 --image=nginx:1.27 --labels=app=web,tier=frontend --dry-run=client -o yaml > pod.yaml'
+    explanation: 'Generates the pod manifest without creating anything. Edit pod.yaml to add resources.requests and resources.limits under spec.containers[0], then apply it.'
 
-  - task: "Apply the manifest to create the pod"
-    command: "kubectl apply -f pod.yaml"
-    explanation: "Creates the pod from the edited manifest."
+  - task: 'Apply the manifest to create the pod'
+    command: 'kubectl apply -f pod.yaml'
+    explanation: 'Creates the pod from the edited manifest.'
 
-  - task: "Wait until pod `web` is Ready"
-    command: "kubectl wait --for=condition=Ready pod/web -n exercise-01 --timeout=60s"
-    explanation: "Ready condition is a stronger success criterion than a visual `get` check."
+  - task: 'Wait until pod `web` is Ready'
+    command: 'kubectl wait --for=condition=Ready pod/web -n exercise-01 --timeout=60s'
+    explanation: 'Ready condition is a stronger success criterion than a visual `get` check.'
     validation:
       assertions:
-        - type: "clusterFieldEquals"
-          kind: "Pod"
-          namespace: "exercise-01"
-          name: "web"
+        - type: 'clusterFieldEquals'
+          kind: 'Pod'
+          namespace: 'exercise-01'
+          name: 'web'
           path: '{.status.conditions[?(@.type=="Ready")].status}'
-          value: "True"
+          value: 'True'
           onFail: "Le pod `web` n'est pas en état Ready."
 
-  - task: "Validate labels and resource constraints on the created pod"
+  - task: 'Validate labels and resource constraints on the created pod'
     command: "kubectl get pod web -n exercise-01 -o jsonpath='{.metadata.labels.app} {.metadata.labels.tier} {.spec.containers[0].resources.requests.cpu} {.spec.containers[0].resources.limits.memory}'"
-    explanation: "Expected output should include `web frontend 100m 128Mi`."
+    explanation: 'Expected output should include `web frontend 100m 128Mi`.'
     validation:
       assertions:
-        - type: "clusterFieldEquals"
-          kind: "Pod"
-          namespace: "exercise-01"
-          name: "web"
-          path: "{.spec.containers[0].resources.requests.cpu}"
-          value: "100m"
-          onFail: "Les resources requests/limits du pod `web` ne correspondent pas aux attentes."
-        - type: "clusterFieldEquals"
-          kind: "Pod"
-          namespace: "exercise-01"
-          name: "web"
-          path: "{.spec.containers[0].resources.limits.memory}"
-          value: "128Mi"
-          onFail: "Les resources requests/limits du pod `web` ne correspondent pas aux attentes."
+        - type: 'clusterFieldEquals'
+          kind: 'Pod'
+          namespace: 'exercise-01'
+          name: 'web'
+          path: '{.spec.containers[0].resources.requests.cpu}'
+          value: '100m'
+          onFail: 'Les resources requests/limits du pod `web` ne correspondent pas aux attentes.'
+        - type: 'clusterFieldEquals'
+          kind: 'Pod'
+          namespace: 'exercise-01'
+          name: 'web'
+          path: '{.spec.containers[0].resources.limits.memory}'
+          value: '128Mi'
+          onFail: 'Les resources requests/limits du pod `web` ne correspondent pas aux attentes.'
 
-  - task: "Add a new label `version=v1` to the running pod"
-    command: "kubectl label pod web -n exercise-01 version=v1"
-    explanation: "Adds the version=v1 label. No restart required — labels are metadata changes only."
+  - task: 'Add a new label `version=v1` to the running pod'
+    command: 'kubectl label pod web -n exercise-01 version=v1'
+    explanation: 'Adds the version=v1 label. No restart required — labels are metadata changes only.'
 
-  - task: "Remove the `tier` label from the pod"
-    command: "kubectl label pod web -n exercise-01 tier-"
-    explanation: "Removes a label by appending a dash to the key. Verify with --show-labels afterwards."
+  - task: 'Remove the `tier` label from the pod'
+    command: 'kubectl label pod web -n exercise-01 tier-'
+    explanation: 'Removes a label by appending a dash to the key. Verify with --show-labels afterwards.'
 
-  - task: "Prove final label state after updates"
+  - task: 'Prove final label state after updates'
     command: "kubectl get pod web -n exercise-01 -o jsonpath='{.metadata.labels.app} {.metadata.labels.version} {.metadata.labels.tier}'"
-    explanation: "Final state should keep `app` and `version` and remove `tier`."
+    explanation: 'Final state should keep `app` and `version` and remove `tier`.'
     validation:
       assertions:
-        - type: "clusterFieldEquals"
-          kind: "Pod"
-          namespace: "exercise-01"
-          name: "web"
-          path: "{.metadata.labels.app}"
-          value: "web"
-          onFail: "Les labels finaux attendus (`app=web`, `version=v1`, `tier` supprimé) ne sont pas respectés."
-        - type: "clusterFieldEquals"
-          kind: "Pod"
-          namespace: "exercise-01"
-          name: "web"
-          path: "{.metadata.labels.version}"
-          value: "v1"
-          onFail: "Les labels finaux attendus (`app=web`, `version=v1`, `tier` supprimé) ne sont pas respectés."
-        - type: "clusterFieldEquals"
-          kind: "Pod"
-          namespace: "exercise-01"
-          name: "web"
-          path: "{.metadata.labels.tier}"
-          value: ""
-          onFail: "Les labels finaux attendus (`app=web`, `version=v1`, `tier` supprimé) ne sont pas respectés."
+        - type: 'clusterFieldEquals'
+          kind: 'Pod'
+          namespace: 'exercise-01'
+          name: 'web'
+          path: '{.metadata.labels.app}'
+          value: 'web'
+          onFail: 'Les labels finaux attendus (`app=web`, `version=v1`, `tier` supprimé) ne sont pas respectés.'
+        - type: 'clusterFieldEquals'
+          kind: 'Pod'
+          namespace: 'exercise-01'
+          name: 'web'
+          path: '{.metadata.labels.version}'
+          value: 'v1'
+          onFail: 'Les labels finaux attendus (`app=web`, `version=v1`, `tier` supprimé) ne sont pas respectés.'
+        - type: 'clusterFieldEquals'
+          kind: 'Pod'
+          namespace: 'exercise-01'
+          name: 'web'
+          path: '{.metadata.labels.tier}'
+          value: ''
+          onFail: 'Les labels finaux attendus (`app=web`, `version=v1`, `tier` supprimé) ne sont pas respectés.'
 
-  - task: "Optional clean up — delete the namespace"
-    command: "kubectl delete namespace exercise-01"
-    explanation: "Deletes the namespace and everything inside it in one command."
+  - task: 'Optional clean up — delete the namespace'
+    command: 'kubectl delete namespace exercise-01'
+    explanation: 'Deletes the namespace and everything inside it in one command.'

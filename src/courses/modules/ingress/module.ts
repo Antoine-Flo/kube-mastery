@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Route external HTTP and HTTPS traffic with Gateway API and Envoy Gateway.'
   },
-  tags: ['ckad', 'cka', 'intermediate'],
+  tags: ['ckad', 'cka', 'intermediate']
 }

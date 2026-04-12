@@ -106,7 +106,9 @@ describe('kubectl get raw handler', () => {
     }
 
     expect(payload.kind).toBe('APIResourceList')
-    expect(payload.resources.map((resource) => resource.name)).toContain('events')
+    expect(payload.resources.map((resource) => resource.name)).toContain(
+      'events'
+    )
   })
 
   it('returns namespaced events.k8s.io/v1 EventList', () => {
@@ -123,7 +125,10 @@ describe('kubectl get raw handler', () => {
       message: 'Started pod default/web'
     })
     const state = createClusterStateData({ events: [event] })
-    const output = handleGetRaw(state, '/apis/events.k8s.io/v1/namespaces/default/events')
+    const output = handleGetRaw(
+      state,
+      '/apis/events.k8s.io/v1/namespaces/default/events'
+    )
     const payload = JSON.parse(output) as {
       apiVersion: string
       kind: string

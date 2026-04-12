@@ -86,15 +86,15 @@ When a PVC is applied, the control plane runs a matching algorithm to find the b
 
 @@@
 graph TD
-    PVC["PVC created"] --> C1["PV capacity >= request?"]
-    C1 --> C2["accessModes compatible?"]
-    C2 --> C3["storageClassName matches?"]
-    C3 --> C4["PV status is Available?"]
-    C4 --> Bound["PVC binds to PV"]
-    C1 --> Pending["PVC stays Pending"]
-    C2 --> Pending
-    C3 --> Pending
-    C4 --> Pending
+PVC["PVC created"] --> C1["PV capacity >= request?"]
+C1 --> C2["accessModes compatible?"]
+C2 --> C3["storageClassName matches?"]
+C3 --> C4["PV status is Available?"]
+C4 --> Bound["PVC binds to PV"]
+C1 --> Pending["PVC stays Pending"]
+C2 --> Pending
+C3 --> Pending
+C4 --> Pending
 @@@
 
 Every condition must pass. If multiple PVs satisfy all conditions, Kubernetes prefers the one closest in size to the request to avoid wasting large volumes on small claims.

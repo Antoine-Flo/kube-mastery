@@ -19,14 +19,15 @@ A **PersistentVolumeClaim** is a request for storage by a workload. It says "I n
 
 @@@
 graph LR
-    ADMIN["Admin / StorageClass"]
-    PV["PersistentVolume<br/>10Gi, ReadWriteOnce<br/>Status: Bound"]
-    PVC["PersistentVolumeClaim<br/>Request: 5Gi, RWO<br/>Status: Bound"]
-    POD["Pod"]
+ADMIN["Admin / StorageClass"]
+PV["PersistentVolume<br/>10Gi, ReadWriteOnce<br/>Status: Bound"]
+PVC["PersistentVolumeClaim<br/>Request: 5Gi, RWO<br/>Status: Bound"]
+POD["Pod"]
 
     ADMIN -->|provisions| PV
     PVC -->|binds to| PV
     POD -->|mounts| PVC
+
 @@@
 
 Why the indirection? Because it decouples what storage is from what storage is needed. The developer writing the PVC does not need to know whether the cluster uses AWS EBS, GCP Persistent Disk, or an NFS server. They just request capacity and an access mode. The cluster handles the rest.
@@ -65,7 +66,7 @@ spec:
     storage: 1Gi
   accessModes:
     - ReadWriteOnce
-  storageClassName: ""
+  storageClassName: ''
   hostPath:
     path: /tmp/my-pv-data
 ```
@@ -87,7 +88,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: my-pvc
 spec:
-  storageClassName: ""
+  storageClassName: ''
   accessModes:
     - ReadWriteOnce
   resources:
@@ -130,8 +131,8 @@ spec:
   initContainers:
     - name: write-data
       image: busybox:1.36
-      command: ["sh"]
-      args: ["-c", "echo data persisted > /data/hello.txt"]
+      command: ['sh']
+      args: ['-c', 'echo data persisted > /data/hello.txt']
       volumeMounts:
         - name: storage
           mountPath: /data

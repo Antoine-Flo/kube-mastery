@@ -24,16 +24,19 @@ function parseDrillTag(value: unknown): DrillTagId | undefined {
   return value as DrillTagId
 }
 
-function parseClusterKind(value: unknown): DrillClusterResourceKind | undefined {
-  if (typeof value !== 'string' || !DRILL_CLUSTER_RESOURCE_KIND_SET.has(value)) {
+function parseClusterKind(
+  value: unknown
+): DrillClusterResourceKind | undefined {
+  if (
+    typeof value !== 'string' ||
+    !DRILL_CLUSTER_RESOURCE_KIND_SET.has(value)
+  ) {
     return undefined
   }
   return value as DrillClusterResourceKind
 }
 
-const isObjectRecord = (
-  value: unknown
-): value is Record<string, unknown> => {
+const isObjectRecord = (value: unknown): value is Record<string, unknown> => {
   return value != null && typeof value === 'object'
 }
 
@@ -175,11 +178,7 @@ function parseDrillAssertion(value: unknown): DrillAssertion | undefined {
   const obj = value
   const type = readOptionalString(obj, 'type')
   const onFail = readOptionalString(obj, 'onFail')
-  if (
-    !type ||
-    !DRILL_ASSERTION_TYPE_SET.has(type) ||
-    !onFail
-  ) {
+  if (!type || !DRILL_ASSERTION_TYPE_SET.has(type) || !onFail) {
     return undefined
   }
 
@@ -198,7 +197,9 @@ type ParsedDrillTaskResult =
 function parseFrontmatter(
   rawMarkdown: string
 ): { frontmatter: unknown; body: string } | null {
-  const frontmatterMatch = rawMarkdown.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/)
+  const frontmatterMatch = rawMarkdown.match(
+    /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/
+  )
   if (!frontmatterMatch) {
     return null
   }
@@ -270,11 +271,15 @@ function splitSectionBySubHeading(
   }
 }
 
-function parseMarkdownValidation(validationMarkdown: string): ParsedDrillTaskResult | DrillValidation | undefined {
+function parseMarkdownValidation(
+  validationMarkdown: string
+): ParsedDrillTaskResult | DrillValidation | undefined {
   if (validationMarkdown.length === 0) {
     return undefined
   }
-  const validationFenceMatch = validationMarkdown.match(/```yaml\n([\s\S]*?)\n```/)
+  const validationFenceMatch = validationMarkdown.match(
+    /```yaml\n([\s\S]*?)\n```/
+  )
   if (!validationFenceMatch) {
     return undefined
   }
@@ -294,8 +299,13 @@ function parseMarkdownTask(
     return { kind: 'skip' }
   }
 
-  const validationParts = splitSectionBySubHeading(solutionParts.after, 'Validation')
-  const solutionMarkdown = (validationParts ? validationParts.before : solutionParts.after).trim()
+  const validationParts = splitSectionBySubHeading(
+    solutionParts.after,
+    'Validation'
+  )
+  const solutionMarkdown = (
+    validationParts ? validationParts.before : solutionParts.after
+  ).trim()
   const validationMarkdown = validationParts ? validationParts.after : ''
   const validationOrResult = parseMarkdownValidation(validationMarkdown)
   if (
@@ -341,7 +351,9 @@ function parseDrillMarkdownFile(rawMarkdown: string): DrillFile | null {
   }
 
   const headingRegex = /^##\s+(.+)\s*$/gm
-  const headingMatches = Array.from(frontmatterResult.body.matchAll(headingRegex))
+  const headingMatches = Array.from(
+    frontmatterResult.body.matchAll(headingRegex)
+  )
   if (headingMatches.length === 0) {
     return null
   }
@@ -385,7 +397,10 @@ export function parseDrillFile(rawMarkdown: string): DrillFile | null {
   return parseDrillMarkdownFile(rawMarkdown)
 }
 
-export function buildDrillList(port: DrillIndexPort, lang: UiLang): DrillListItem[] {
+export function buildDrillList(
+  port: DrillIndexPort,
+  lang: UiLang
+): DrillListItem[] {
   const drillIds = port.getDrillIds()
   const list: DrillListItem[] = []
 

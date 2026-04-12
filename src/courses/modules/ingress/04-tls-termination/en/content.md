@@ -9,12 +9,13 @@ Your API is live and reachable over HTTP. Every request, including authenticatio
 
 @@@
 graph LR
-    Client["Client\nHTTPS request"]
-    GW["Gateway\nTLS termination\ncert from Secret"]
-    POD["Pod\nplain HTTP"]
+Client["Client\nHTTPS request"]
+GW["Gateway\nTLS termination\ncert from Secret"]
+POD["Pod\nplain HTTP"]
 
     Client --> GW
     GW --> POD
+
 @@@
 
 This pattern is called TLS termination. The client establishes a TLS-encrypted connection with the Gateway. The Gateway decrypts the connection, reads the request, and forwards it over plain HTTP to the backend Pod. The Pod has no certificate to manage and no TLS configuration of its own. Encryption is handled in one place, at the edge, making certificate management centralized and consistent.
@@ -93,11 +94,11 @@ spec:
     - name: http
       protocol: HTTP
       port: 80
-      hostname: "*.myapp.com"
+      hostname: '*.myapp.com'
     - name: https
       protocol: HTTPS
       port: 443
-      hostname: "*.myapp.com"
+      hostname: '*.myapp.com'
       tls:
         mode: Terminate
         certificateRefs:
@@ -131,9 +132,9 @@ One of the clean properties of TLS termination at the listener level is that HTT
 If you want to restrict a specific HTTPRoute to HTTPS only, add a `sectionName` to its `parentRef`:
 
 ```yaml
-  parentRefs:
-    - name: my-gateway
-      sectionName: https
+parentRefs:
+  - name: my-gateway
+    sectionName: https
 ```
 
 The `sectionName` value must match the `name` field of the listener in the Gateway spec. Without it, the HTTPRoute attaches to all listeners whose hostname matches, meaning the same route responds to both HTTP and HTTPS.
