@@ -255,6 +255,6 @@ export function evaluateDrillAssertion(
     return success({ passed: true })
   }
 
-  return error(`Unsupported assertion type: ${String(assertion.type)}`)
+  return error('Unsupported assertion type')
 }
 

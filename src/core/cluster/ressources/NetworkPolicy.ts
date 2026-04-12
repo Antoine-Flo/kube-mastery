@@ -61,7 +61,7 @@ export const createNetworkPolicy = (
   return deepFreeze(policy)
 }
 
-const PodSelectorSchema = z.object({}).passthrough()
+const PodSelectorSchema = z.looseObject({})
 
 const RuleObjectSchema = z.record(z.string(), z.unknown())
 
@@ -75,14 +75,12 @@ const NetworkPolicyManifestSchema = z.object({
     annotations: z.record(z.string(), z.string()).optional(),
     creationTimestamp: z.string().optional()
   }),
-  spec: z
-    .object({
-      podSelector: PodSelectorSchema.optional(),
-      policyTypes: z.array(z.string()).optional(),
-      ingress: z.array(RuleObjectSchema).optional(),
-      egress: z.array(RuleObjectSchema).optional()
-    })
-    .passthrough()
+  spec: z.looseObject({
+    podSelector: PodSelectorSchema.optional(),
+    policyTypes: z.array(z.string()).optional(),
+    ingress: z.array(RuleObjectSchema).optional(),
+    egress: z.array(RuleObjectSchema).optional()
+  })
 })
 
 export const parseNetworkPolicyManifest = (
