@@ -1,4 +1,4 @@
-import type { DrillAssertion } from '../../../content/drills/types'
+import type { DrillValidationPayloadEntry } from '../../../content/drills/validationPayload'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
 import {
@@ -11,11 +11,6 @@ export interface TaskValidationRunResult {
   index: number
   passed: boolean
   errorMessage?: string
-}
-
-export interface ValidationEntryInput {
-  index: number
-  assertions: DrillAssertion[]
 }
 
 export interface DrillValidationRunResult {
@@ -65,7 +60,7 @@ export class DrillValidationService {
   }
 
   private async evaluateWithRetry(
-    entry: ValidationEntryInput
+    entry: DrillValidationPayloadEntry
   ): Promise<Result<AssertionEvaluation>> {
     if (entry.assertions.length === 0) {
       return success({ passed: true })
@@ -101,7 +96,7 @@ export class DrillValidationService {
   }
 
   async run(
-    entries: ValidationEntryInput[]
+    entries: DrillValidationPayloadEntry[]
   ): Promise<Result<DrillValidationRunResult>> {
     const taskResults: TaskValidationRunResult[] = []
     let allPassed = true

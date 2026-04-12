@@ -1,38 +1,33 @@
 ---
 import type { DrillTask } from '../../content/drills/types'
+import { buildDrillValidationPayload } from '../../content/drills/validationPayload'
 
 interface Props {
   tasks: DrillTask[]
 }
 
 const { tasks } = Astro.props
-const validationTasks = tasks
-  .map((t, i) => ({ index: i, validation: t.validation }))
-  .filter((t): t is { index: number; validation: NonNullable<typeof t.validation> } =>
-    t.validation !== undefined
-  )
+const validationTasks = buildDrillValidationPayload(tasks)
 ---
 
 <div
   data-drill-validations-root
-  data-drill-validations-json={JSON.stringify(
-    validationTasks.map(({ index, validation }) => ({ index, ...validation }))
-  )}
+  data-drill-validations-json={JSON.stringify(validationTasks)}
   hidden
   aria-hidden="true"
 />
 <script>
-  import type { DrillAssertion } from '../../content/drills/types'
+  import {
+    parseDrillValidationPayload,
+    type DrillValidationPayloadEntry
+  } from '../../content/drills/validationPayload'
   import { DrillValidationService } from '../../core/drills/validation/DrillValidationService'
   import { createRuntimeValidationQueryAdapter } from '../../core/drills/validation/RuntimeValidationQueryAdapter'
   import { getCurrentTerminalEnvironment } from '../../core/terminal/TerminalManager'
 
   type ValidationUiState = 'not-run' | 'running' | 'pass' | 'fail'
 
-  interface ValidationEntry {
-    index: number
-    assertions: DrillAssertion[]
-  }
+  type ValidationEntry = DrillValidationPayloadEntry
 
   function setTaskValidationUiState(
     taskIndex: number,
@@ -96,10 +91,7 @@ const validationTasks = tasks
     let entries: ValidationEntry[] = []
     const rawEntries = root.getAttribute('data-drill-validations-json') ?? '[]'
     try {
-      const parsed = JSON.parse(rawEntries)
-      if (Array.isArray(parsed)) {
-        entries = parsed as ValidationEntry[]
-      }
+      entries = parseDrillValidationPayload(JSON.parse(rawEntries))
     } catch {
       entries = []
     }

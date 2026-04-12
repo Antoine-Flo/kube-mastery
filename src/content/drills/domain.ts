@@ -2,7 +2,8 @@ import { parse } from 'yaml'
 import type { UiLang } from '../courses/types'
 import {
   DRILL_TAG_IDS,
-  DRILL_CLUSTER_RESOURCE_KINDS,
+  DRILL_ASSERTION_TYPE_SET,
+  DRILL_CLUSTER_RESOURCE_KIND_SET,
   type DrillFile,
   type DrillTask,
   type DrillValidation,
@@ -23,22 +24,6 @@ function parseDrillTag(value: unknown): DrillTagId | undefined {
   return value as DrillTagId
 }
 
-const DRILL_CLUSTER_RESOURCE_KIND_SET = new Set<string>(
-  DRILL_CLUSTER_RESOURCE_KINDS
-)
-const DRILL_ASSERTION_TYPES = [
-  'clusterResourceExists',
-  'clusterFieldEquals',
-  'clusterFieldContains',
-  'clusterFieldNotEmpty',
-  'clusterFieldsEqual',
-  'clusterListFieldContains',
-  'filesystemFileExists',
-  'filesystemFileContains',
-  'filesystemFileNotEmpty'
-] as const
-const DRILL_ASSERTION_TYPE_SET = new Set<string>(DRILL_ASSERTION_TYPES)
-
 function parseClusterKind(value: unknown): DrillClusterResourceKind | undefined {
   if (typeof value !== 'string' || !DRILL_CLUSTER_RESOURCE_KIND_SET.has(value)) {
     return undefined
@@ -46,11 +31,17 @@ function parseClusterKind(value: unknown): DrillClusterResourceKind | undefined 
   return value as DrillClusterResourceKind
 }
 
+const isObjectRecord = (
+  value: unknown
+): value is Record<string, unknown> => {
+  return value != null && typeof value === 'object'
+}
+
 function parseDrillAssertion(value: unknown): DrillAssertion | undefined {
-  if (!value || typeof value !== 'object') {
+  if (!isObjectRecord(value)) {
     return undefined
   }
-  const obj = value as Record<string, unknown>
+  const obj = value
   const type = obj.type
   if (
     typeof type !== 'string' ||
@@ -169,10 +160,10 @@ function parseDrillAssertion(value: unknown): DrillAssertion | undefined {
 }
 
 function parseDrillValidation(value: unknown): DrillValidation | undefined {
-  if (!value || typeof value !== 'object') {
+  if (!isObjectRecord(value)) {
     return undefined
   }
-  const obj = value as Record<string, unknown>
+  const obj = value
   if (!Array.isArray(obj.assertions)) {
     return undefined
   }
@@ -190,6 +181,38 @@ function parseDrillValidation(value: unknown): DrillValidation | undefined {
   return { assertions }
 }
 
+type ParsedDrillTaskResult =
+  | { kind: 'ok'; task: DrillTask }
+  | { kind: 'skip' }
+  | { kind: 'invalidValidation' }
+
+function parseDrillTask(value: unknown): ParsedDrillTaskResult {
+  if (!isObjectRecord(value)) {
+    return { kind: 'skip' }
+  }
+  if (
+    typeof value.task !== 'string' ||
+    typeof value.command !== 'string' ||
+    typeof value.explanation !== 'string'
+  ) {
+    return { kind: 'skip' }
+  }
+
+  const validation = parseDrillValidation(value.validation)
+  if (value.validation !== undefined && !validation) {
+    return { kind: 'invalidValidation' }
+  }
+  return {
+    kind: 'ok',
+    task: {
+      task: value.task,
+      command: value.command,
+      explanation: value.explanation,
+      ...(validation && { validation })
+    }
+  }
+}
+
 export function parseDrillFile(rawYaml: string): DrillFile | null {
   let parsed: unknown
   try {
@@ -198,11 +221,11 @@ export function parseDrillFile(rawYaml: string): DrillFile | null {
     return null
   }
 
-  if (!parsed || typeof parsed !== 'object') {
+  if (!isObjectRecord(parsed)) {
     return null
   }
 
-  const obj = parsed as Record<string, unknown>
+  const obj = parsed
 
   if (typeof obj.title !== 'string' || !Array.isArray(obj.tasks)) {
     return null
@@ -211,25 +234,14 @@ export function parseDrillFile(rawYaml: string): DrillFile | null {
   const tasks: DrillTask[] = []
 
   for (const item of obj.tasks) {
-    if (
-      item &&
-      typeof item === 'object' &&
-      typeof (item as Record<string, unknown>).task === 'string' &&
-      typeof (item as Record<string, unknown>).command === 'string' &&
-      typeof (item as Record<string, unknown>).explanation === 'string'
-    ) {
-      const taskObj = item as Record<string, unknown>
-      const validation = parseDrillValidation(taskObj.validation)
-      if (taskObj.validation !== undefined && !validation) {
-        return null
-      }
-      tasks.push({
-        task: taskObj.task as string,
-        command: taskObj.command as string,
-        explanation: taskObj.explanation as string,
-        ...(validation && { validation })
-      })
+    const parsedTask = parseDrillTask(item)
+    if (parsedTask.kind === 'invalidValidation') {
+      return null
     }
+    if (parsedTask.kind === 'skip') {
+      continue
+    }
+    tasks.push(parsedTask.task)
   }
 
   const tag = parseDrillTag(obj.tag)

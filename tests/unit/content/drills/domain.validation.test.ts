@@ -64,5 +64,79 @@ tasks:
 `
     expect(parseDrillFile(rawYaml)).toBeNull()
   })
+
+  it('parses every supported assertion type', () => {
+    const rawYaml = `
+title: "All assertions"
+tasks:
+  - task: "all"
+    command: "kubectl get pods"
+    explanation: "x"
+    validation:
+      assertions:
+        - type: "clusterResourceExists"
+          kind: "Namespace"
+          name: "demo"
+          onFail: "x"
+        - type: "clusterFieldEquals"
+          kind: "Pod"
+          namespace: "app"
+          name: "web"
+          path: "{.metadata.name}"
+          value: "web"
+          onFail: "x"
+        - type: "clusterFieldContains"
+          kind: "Deployment"
+          namespace: "app"
+          name: "api"
+          path: "{.spec.template.spec.containers[0].image}"
+          value: "nginx"
+          onFail: "x"
+        - type: "clusterFieldNotEmpty"
+          kind: "Endpoints"
+          namespace: "app"
+          name: "web"
+          path: "{.subsets[*].addresses[*].ip}"
+          onFail: "x"
+        - type: "clusterFieldsEqual"
+          kind: "Deployment"
+          namespace: "app"
+          name: "web"
+          leftPath: "{.status.readyReplicas}"
+          rightPath: "{.status.replicas}"
+          onFail: "x"
+        - type: "clusterListFieldContains"
+          kind: "Pod"
+          namespace: "app"
+          path: "{.items[*].metadata.name}"
+          value: "web"
+          onFail: "x"
+        - type: "filesystemFileExists"
+          path: "/tmp/demo.txt"
+          onFail: "x"
+        - type: "filesystemFileContains"
+          path: "/tmp/demo.txt"
+          value: "hello"
+          onFail: "x"
+        - type: "filesystemFileNotEmpty"
+          path: "/tmp/demo.txt"
+          onFail: "x"
+`
+    const parsed = parseDrillFile(rawYaml)
+    expect(parsed).not.toBeNull()
+    const assertions = parsed?.tasks[0].validation?.assertions ?? []
+    expect(assertions).toHaveLength(9)
+    expect(assertions.map((item) => item.type)).toEqual([
+      'clusterResourceExists',
+      'clusterFieldEquals',
+      'clusterFieldContains',
+      'clusterFieldNotEmpty',
+      'clusterFieldsEqual',
+      'clusterListFieldContains',
+      'filesystemFileExists',
+      'filesystemFileContains',
+      'filesystemFileNotEmpty'
+    ])
+  })
 })
 

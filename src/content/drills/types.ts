@@ -37,16 +37,24 @@ export const DRILL_CLUSTER_RESOURCE_KINDS = [
 
 export type DrillClusterResourceKind = (typeof DRILL_CLUSTER_RESOURCE_KINDS)[number]
 
-export type DrillAssertionType =
-  | 'clusterResourceExists'
-  | 'clusterFieldEquals'
-  | 'clusterFieldContains'
-  | 'clusterFieldNotEmpty'
-  | 'clusterFieldsEqual'
-  | 'clusterListFieldContains'
-  | 'filesystemFileExists'
-  | 'filesystemFileContains'
-  | 'filesystemFileNotEmpty'
+export const DRILL_ASSERTION_TYPES = [
+  'clusterResourceExists',
+  'clusterFieldEquals',
+  'clusterFieldContains',
+  'clusterFieldNotEmpty',
+  'clusterFieldsEqual',
+  'clusterListFieldContains',
+  'filesystemFileExists',
+  'filesystemFileContains',
+  'filesystemFileNotEmpty'
+] as const
+
+export type DrillAssertionType = (typeof DRILL_ASSERTION_TYPES)[number]
+
+export const DRILL_ASSERTION_TYPE_SET = new Set<string>(DRILL_ASSERTION_TYPES)
+export const DRILL_CLUSTER_RESOURCE_KIND_SET = new Set<string>(
+  DRILL_CLUSTER_RESOURCE_KINDS
+)
 
 interface DrillAssertionBase {
   type: DrillAssertionType
