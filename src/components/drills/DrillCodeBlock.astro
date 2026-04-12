@@ -1,0 +1,14 @@
+---
+import type { DrillSolutionCodeLang } from '../../content/drills/types'
+import { renderDrillCodeBlock } from '../../lib/drills/drillCodeHighlight'
+
+interface Props {
+  code: string
+  lang: DrillSolutionCodeLang
+}
+
+const { code, lang } = Astro.props
+const html = await renderDrillCodeBlock(code, lang)
+---
+
+<div class="drill-task__code" set:html={html} />

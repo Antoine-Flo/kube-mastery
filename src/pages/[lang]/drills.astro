@@ -130,19 +130,6 @@ const DRILL_TAG_UI_KEY: Record<
     </main>
   </div>
 
-  <Dialog id="drill-mode-dialog" title="" size="md">
-    <div class="mode-cards">
-      <a href="" id="drill-mode-guided" class="mode-card">
-        <strong>{t('drills_mode_guidedCta')}</strong>
-        <p>{t('drills_mode_subGuided')}</p>
-      </a>
-      <a href="" id="drill-mode-exam" class="mode-card">
-        <strong>{t('drills_mode_examCta')}</strong>
-        <p>{t('drills_mode_subExam')}</p>
-      </a>
-    </div>
-  </Dialog>
-
   <Dialog
     id="drill-pro-required-dialog"
     title={t('drills_proOnly_title')}
@@ -167,20 +154,10 @@ const DRILL_TAG_UI_KEY: Record<
 </Layout>
 
 <script>
-  function initDrillModalTriggers() {
-    const modeDialog = document.getElementById(
-      'drill-mode-dialog'
-    ) as HTMLDialogElement | null
+  function initDrillCardTriggers() {
     const proDialog = document.getElementById(
       'drill-pro-required-dialog'
     ) as HTMLDialogElement | null
-    const titleEl = document.getElementById('drill-mode-dialog-title')
-    const guidedLink = document.getElementById(
-      'drill-mode-guided'
-    ) as HTMLAnchorElement | null
-    const examLink = document.getElementById(
-      'drill-mode-exam'
-    ) as HTMLAnchorElement | null
 
     document
       .querySelectorAll<HTMLButtonElement>('[data-drill-id]')
@@ -192,22 +169,13 @@ const DRILL_TAG_UI_KEY: Record<
             proDialog?.showModal()
             return
           }
-          if (titleEl) {
-            titleEl.textContent = btn.dataset.drillTitle ?? ''
-          }
-          if (guidedLink) {
-            guidedLink.href = `${baseHref}?mode=guided`
-          }
-          if (examLink) {
-            examLink.href = `${baseHref}?mode=exam`
-          }
-          modeDialog?.showModal()
+          window.location.href = `${baseHref}?mode=guided`
         })
       })
   }
 
-  initDrillModalTriggers()
-  document.addEventListener('astro:page-load', initDrillModalTriggers)
+  initDrillCardTriggers()
+  document.addEventListener('astro:page-load', initDrillCardTriggers)
 </script>
 
 <script is:inline define:vars={{ bestLabel: t('drills_list_bestTime') }}>
@@ -299,10 +267,8 @@ const DRILL_TAG_UI_KEY: Record<
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-gray-6);
     background: var(--color-gray-1);
-    color: inherit;
     text-align: left;
     cursor: pointer;
-    font: inherit;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     transition:
@@ -453,44 +419,6 @@ const DRILL_TAG_UI_KEY: Record<
 
   .drill-card__meta :global(svg) {
     flex-shrink: 0;
-  }
-
-  .mode-cards {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-  }
-
-  .mode-card {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    padding: 1rem 1.125rem;
-    border: 1px solid var(--color-gray-6);
-    border-radius: var(--radius-sm);
-    text-decoration: none;
-    color: inherit;
-    transition:
-      border-color 0.15s,
-      background 0.15s;
-  }
-
-  .mode-card:hover {
-    border-color: var(--color-cyan-7);
-    background: var(--color-cyan-2);
-  }
-
-  .mode-card strong {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-gray-12);
-  }
-
-  .mode-card p {
-    font-size: var(--text-sm);
-    color: var(--color-gray-10);
-    margin: 0;
-    line-height: 1.45;
   }
 
   .drill-pro-dialog__footer {

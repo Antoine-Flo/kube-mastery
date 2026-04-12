@@ -10,7 +10,7 @@ import { getLayoutAuthContext } from '../../../../lib/auth/server'
 import { getProgressContext } from '../../../../lib/progress/server'
 import { getFirstNonPlaceholderLessonIdFromSections } from '../../../../lib/lesson/lessonTerminalAccess'
 import { inlineBackticksToHtml } from '../../../../lib/drills/inlineBackticksToHtml'
-import { Code } from 'astro:components';
+import DrillCodeBlock from '../../../../components/drills/DrillCodeBlock.astro'
 import '../../../../styles/components/lesson-content.css'
 import '../../../../styles/components/cluster-visualization.css'
 
@@ -142,7 +142,7 @@ const tasks = drillDetail.tasks
                 />
                 <div class="drill-task__commands">
                   {task.commandBlocks.map((block) => (
-                    <Code lang={block.lang} code={block.code} />
+                    <DrillCodeBlock lang={block.lang} code={block.code} />
                   ))}
                 </div>
                 </details>
@@ -417,13 +417,9 @@ const tasks = drillDetail.tasks
 
   .drill-task__commands :global(pre) {
     font-size: var(--text-sm);
-  }
-
-  .drill-task__code {
-    background: var(--color-gray-2);
-    border: 1px solid var(--color-gray-5);
     padding: 0.55rem 0.7rem;
-    overflow-x: auto;
+    border-radius: var(--radius-xs);
+    margin-top: 0.5rem;
   }
 
   .drill-task__code code {
@@ -436,7 +432,7 @@ const tasks = drillDetail.tasks
     padding: 0.3rem 0.5rem;
     background: color-mix(in srgb, var(--color-ruby-3) 60%, transparent);
     border-left: 2px solid var(--color-ruby-7);
-    border-radius: 0 var(--radius-1) var(--radius-1) 0;
+    border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
     color: var(--color-ruby-11);
     font-size: var(--text-xs);
     font-family: var(--font-mono);

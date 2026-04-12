@@ -129,10 +129,30 @@ const hasBadgeRow = startHere || inProgress || comingSoon || isFree
   .course-card--interactive {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    transition:
+      border-color 0.15s,
+      background-color 0.15s;
   }
 
   .course-card--interactive:hover {
-    background-color: var(--color-palette-gray-surface-bg-hover);
+    border-color: var(--color-cyan-7);
+    background-color: var(--color-cyan-2);
+  }
+
+  .course-card--interactive:active {
+    background-color: var(--color-gray-2);
+  }
+
+  :global([data-theme='dark']) .course-card--interactive:active {
+    background-color: var(--color-gray-3);
+  }
+
+  .course-card--interactive:hover:active {
+    background-color: var(--color-cyan-1);
+  }
+
+  :global([data-theme='dark']) .course-card--interactive:hover:active {
+    background-color: var(--color-cyan-4);
   }
 
   .course-card--start-here {
