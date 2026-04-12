@@ -193,6 +193,37 @@ const createNamespaceCommand = createLeafCommand({
   ]
 })
 
+const createClusterroleCommand = createLeafCommand({
+  path: ['create', 'clusterrole'],
+  use: 'create clusterrole NAME [--verb=verbs] [--resource=resources] [--dry-run=none|server|client] [-o output]',
+  short: 'Create a ClusterRole',
+  handlerId: 'create',
+  flags: [
+    {
+      kind: 'stringArray',
+      name: 'verb',
+      description: 'Verbs allowed on the resources'
+    },
+    {
+      kind: 'stringArray',
+      name: 'resource',
+      description: 'Resources this rule applies to'
+    },
+    {
+      kind: 'string',
+      name: 'output',
+      short: 'o',
+      description: 'Output format'
+    },
+    {
+      kind: 'enum',
+      name: 'dry-run',
+      description: 'Must be none, server or client',
+      enumValues: ['none', 'server', 'client']
+    }
+  ]
+})
+
 const createServiceClusterIpCommand = createLeafCommand({
   path: ['create', 'service', 'clusterip'],
   use: 'create service clusterip NAME --tcp=port:targetPort [--dry-run=none|server|client] [-o output]',
@@ -477,6 +508,7 @@ const createCommand = command({
     createDeploymentCommand,
     createIngressCommand,
     createNamespaceCommand,
+    createClusterroleCommand,
     createServiceCommand,
     createConfigMapCommand,
     createSecretCommand

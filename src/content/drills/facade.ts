@@ -8,6 +8,8 @@ export type {
   DrillListItem,
   DrillDetail,
   DrillTask,
+  DrillCommandBlock,
+  DrillSolutionCodeLang,
   DrillValidation,
   DrillTagId
 } from './types'

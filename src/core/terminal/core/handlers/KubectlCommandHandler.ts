@@ -12,7 +12,11 @@ import type { CommandHandler } from '../CommandHandler'
 export class KubectlCommandHandler implements CommandHandler {
   canHandle(command: string): boolean {
     const trimmed = command.trim()
-    return trimmed === 'kubectl' || trimmed.startsWith('kubectl ')
+    if (trimmed.length === 0) {
+      return false
+    }
+    const firstToken = trimmed.split(/\s+/)[0] ?? ''
+    return firstToken === 'kubectl' || firstToken === 'k'
   }
 
   execute(command: string, context: CommandContext): ExecutionResult {

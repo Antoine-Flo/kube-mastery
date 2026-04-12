@@ -114,9 +114,17 @@ export interface DrillValidation {
   assertions: DrillAssertion[]
 }
 
+/** Languages supported for solution code fences in drill markdown (see `domain.ts` extraction). */
+export type DrillSolutionCodeLang = 'bash' | 'yaml'
+
+export interface DrillCommandBlock {
+  lang: DrillSolutionCodeLang
+  code: string
+}
+
 export interface DrillTask {
   task: string
-  command: string | string[]
+  commandBlocks: DrillCommandBlock[]
   explanation: string
   instructionMarkdown?: string
   solutionMarkdown?: string

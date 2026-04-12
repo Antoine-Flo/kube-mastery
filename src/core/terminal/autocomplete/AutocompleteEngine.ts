@@ -4,6 +4,8 @@
 // Moteur principal qui orchestre les providers d'autocomplete
 // Utilise le pattern Strategy avec des providers pluggables
 
+import { applyKubectlCliAliases } from '../../kubectl/cli/runtime/tokenize'
+
 import { AutocompleteProvider } from './AutocompleteProvider'
 import type {
   AutocompleteContext,
@@ -72,6 +74,7 @@ export class AutocompleteEngine {
     context: AutocompleteContext
   ): CompletionResult[] {
     const tokens = tokenize(currentLine)
+    applyKubectlCliAliases(tokens)
     const currentToken = getCurrentToken(currentLine)
 
     // Essayer chaque provider dans l'ordre de priorité

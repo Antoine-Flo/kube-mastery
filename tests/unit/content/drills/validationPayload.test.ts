@@ -10,12 +10,12 @@ describe('drill validation payload', () => {
     const tasks: DrillTask[] = [
       {
         task: 'a',
-        command: 'kubectl get pods',
+        commandBlocks: [{ lang: 'bash', code: 'kubectl get pods' }],
         explanation: 'a'
       },
       {
         task: 'b',
-        command: 'kubectl get ns',
+        commandBlocks: [{ lang: 'bash', code: 'kubectl get ns' }],
         explanation: 'b',
         validation: {
           assertions: [

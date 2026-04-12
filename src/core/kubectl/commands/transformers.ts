@@ -4,6 +4,7 @@ import { parseSelector, stripMatchingQuotes } from '../../shared/parsing'
 import { RESOURCE_ALIAS_MAP } from './resourceCatalog'
 import { parseResourceTargetToken } from './resourceCatalog'
 import type { Action, Resource } from './types'
+import { kubectlUnexpectedArgsUsageError } from './usageError'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // KUBECTL COMMAND TRANSFORMERS
@@ -376,6 +377,17 @@ const execTransformer: ActionTransformer = (ctx) => {
  * Transformer for apply: sets default resource to pods
  */
 const applyTransformer: ActionTransformer = (ctx) => {
+  if (!ctx.tokens) {
+    return success({ ...ctx, resource: 'pods' as Resource })
+  }
+
+  const applyPositionalTokens = extractPositionalTokensAfterAction(ctx.tokens)
+  if (applyPositionalTokens.length > 0) {
+    return error(
+      kubectlUnexpectedArgsUsageError('kubectl apply', applyPositionalTokens)
+    )
+  }
+
   return success({ ...ctx, resource: 'pods' as Resource })
 }
 
@@ -399,7 +411,7 @@ const createTransformer: ActionTransformer = (ctx) => {
     CREATE_IMPERATIVE_PLURAL_TOKENS.has(firstPositional)
   ) {
     return error(
-      `error: Unexpected args: [${positionalTokens.join(' ')}]\nSee 'kubectl create -h' for help and examples`
+      kubectlUnexpectedArgsUsageError('kubectl create', positionalTokens)
     )
   }
   const resourceToken = beforeSeparator[2]
@@ -415,11 +427,9 @@ const createTransformer: ActionTransformer = (ctx) => {
 
   const resource = RESOURCE_ALIAS_MAP[resourceToken] as Resource | undefined
   if (!resource) {
-    return success({
-      ...ctx,
-      tokens: beforeSeparator,
-      createCommand
-    })
+    return error(
+      kubectlUnexpectedArgsUsageError('kubectl create', positionalTokens)
+    )
   }
 
   const name = findNameSkippingFlags(beforeSeparator, 3)

@@ -53,7 +53,9 @@ Then inspect the output.
     expect(result!.title).toBe('Markdown Drill')
     expect(result!.tasks).toHaveLength(1)
     expect(result!.tasks[0].task).toBe('First task')
-    expect(result!.tasks[0].command).toBe('kubectl get pods -n app')
+    expect(result!.tasks[0].commandBlocks).toEqual([
+      { lang: 'bash', code: 'kubectl get pods -n app' }
+    ])
     expect(result!.tasks[0].instructionMarkdown).toBe(
       'Optional instruction text.'
     )
@@ -82,9 +84,47 @@ kubectl get cm
 `
     const result = parseDrillFile(markdown)
     expect(result).not.toBeNull()
-    expect(result!.tasks[0].command).toEqual([
-      'kubectl apply -f cm.yaml',
-      'kubectl get cm'
+    expect(result!.tasks[0].commandBlocks).toEqual([
+      { lang: 'bash', code: 'kubectl apply -f cm.yaml' },
+      { lang: 'bash', code: 'kubectl get cm' }
+    ])
+  })
+
+  it('parses bash and yaml fences in solution order as commandBlocks', () => {
+    const markdown = `---
+title: "Mixed fences"
+---
+
+## Task
+
+### Solution
+
+\`\`\`bash
+kubectl run x --image=busybox --dry-run=client -o yaml > pod.yaml
+\`\`\`
+
+\`\`\`yaml
+spec:
+  containers:
+    - name: x
+\`\`\`
+
+\`\`\`bash
+kubectl apply -f pod.yaml
+\`\`\`
+`
+    const result = parseDrillFile(markdown)
+    expect(result).not.toBeNull()
+    expect(result!.tasks[0].commandBlocks).toEqual([
+      {
+        lang: 'bash',
+        code: 'kubectl run x --image=busybox --dry-run=client -o yaml > pod.yaml'
+      },
+      {
+        lang: 'yaml',
+        code: 'spec:\n  containers:\n    - name: x'
+      },
+      { lang: 'bash', code: 'kubectl apply -f pod.yaml' }
     ])
   })
 

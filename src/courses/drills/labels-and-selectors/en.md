@@ -4,6 +4,7 @@ description: Use labels to make a Service select the intended pods and restore e
 tag: cluster_architecture_installation
 environment: minimal
 ckaTargetMinutes: 5
+isDraft: true
 ---
 
 ## Inspect `nginx-svc` selector in namespace `app`

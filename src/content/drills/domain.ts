@@ -5,6 +5,8 @@ import {
   DRILL_ASSERTION_TYPE_SET,
   DRILL_CLUSTER_RESOURCE_KIND_SET,
   type DrillFile,
+  type DrillCommandBlock,
+  type DrillSolutionCodeLang,
   type DrillTask,
   type DrillValidation,
   type DrillAssertion,
@@ -237,20 +239,34 @@ function parseValidationYaml(rawYaml: string): DrillValidation | undefined {
   return { assertions }
 }
 
-function extractBashCommands(markdown: string): string[] {
-  const commands: string[] = []
+function fenceLanguageToSolutionLang(
+  raw: string
+): DrillSolutionCodeLang | undefined {
+  const language = raw.trim().toLowerCase()
+  if (language === 'bash') {
+    return 'bash'
+  }
+  if (language === 'yaml') {
+    return 'yaml'
+  }
+  return undefined
+}
+
+function extractSolutionCodeBlocks(markdown: string): DrillCommandBlock[] {
+  const blocks: DrillCommandBlock[] = []
   const fenceRegex = /```([^\n`]*)\n([\s\S]*?)\n```/g
   let match: RegExpExecArray | null
   while ((match = fenceRegex.exec(markdown)) !== null) {
-    const language = match[1].trim().toLowerCase()
-    if (language === 'bash' || language === 'sh' || language === 'shell') {
-      const code = match[2].trim()
-      if (code.length > 0) {
-        commands.push(code)
-      }
+    const lang = fenceLanguageToSolutionLang(match[1])
+    if (!lang) {
+      continue
+    }
+    const code = match[2].trim()
+    if (code.length > 0) {
+      blocks.push({ lang, code })
     }
   }
-  return commands
+  return blocks
 }
 
 function stripCodeFences(markdown: string): string {
@@ -317,15 +333,15 @@ function parseMarkdownTask(
   }
   const validation = validationOrResult
 
-  const commands = extractBashCommands(solutionMarkdown)
-  if (commands.length === 0) {
+  const commandBlocks = extractSolutionCodeBlocks(solutionMarkdown)
+  if (commandBlocks.length === 0) {
     return { kind: 'skip' }
   }
 
   const explanationText = stripCodeFences(solutionMarkdown)
   const task: DrillTask = {
     task: heading.trim(),
-    command: commands.length === 1 ? commands[0] : commands,
+    commandBlocks,
     explanation: explanationText,
     instructionMarkdown:
       solutionParts.before.length > 0 ? solutionParts.before : undefined,

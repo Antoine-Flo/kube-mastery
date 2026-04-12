@@ -151,6 +151,24 @@ describe('KubectlAutocompleteProvider', () => {
         expect(results).toEqual([{ text: 'create', suffix: ' ' }])
       })
 
+      it('should complete create subcommand namespace (not plural namespaces)', () => {
+        const results = provider.complete(
+          ['kubectl', 'create', 'nam'],
+          'nam',
+          mockContext
+        )
+        expect(results).toEqual([{ text: 'namespace', suffix: ' ' }])
+      })
+
+      it('should complete create subcommand clusterrole for prefix cluste', () => {
+        const results = provider.complete(
+          ['kubectl', 'create', 'cluste'],
+          'cluste',
+          mockContext
+        )
+        expect(results).toEqual([{ text: 'clusterrole', suffix: ' ' }])
+      })
+
       it('should complete replace action with unique prefix', () => {
         const results = provider.complete(['kubectl'], 'rep', mockContext)
         expect(results).toEqual([{ text: 'replace', suffix: ' ' }])

@@ -1,7 +1,7 @@
 ---
 title: Create PV/PVC and Mount in a Pod
 isFree: true
-description: Provision static storage from scratch, write PV and PVC manifests, bind them, and mount the volume inside a running pod.
+description: Provision static storage from scratch, bind a PVC to a PV, and mount the volume inside a running pod.
 tag: storage
 environment: minimal
 ckaTargetMinutes: 10
@@ -15,14 +15,15 @@ ckaTargetMinutes: 10
 kubectl create namespace storage-lab
 ```
 
-PVC and workload resources live in this namespace. The PV itself is cluster-scoped and does not belong to a namespace.
+PVC and workload resources live in this namespace. The PV itself is cluster-scoped.
 
-## Write a PersistentVolume manifest to `pv.yaml` with specs `data-pv`, hostPath `/mnt/data`, capacity `1Gi`, accessMode `ReadWriteOnce`, storageClassName `manual`, reclaimPolicy `Retain`, then apply it
+## Create a PersistentVolume named `data-pv` with hostPath `/mnt/data`, capacity `1Gi`, accessMode `ReadWriteOnce`, storageClassName `manual`, reclaimPolicy `Retain`
 
 ### Solution
 
-```bash
-cat > pv.yaml << 'EOF'
+No imperative command exists for PersistentVolume. In the exam, open the docs at Concepts > Storage > Persistent Volumes and copy the hostPath example.
+
+```yaml
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -36,15 +37,13 @@ spec:
   storageClassName: manual
   hostPath:
     path: /mnt/data
-EOF
 ```
 
 ```bash
 kubectl apply -f pv.yaml
-kubectl get pv data-pv
 ```
 
-PV is cluster-scoped, no `-n` flag needed. After apply, the PV should appear in `Available` state.
+PV is cluster-scoped, no `-n` flag needed.
 
 ### Validation
 
@@ -67,12 +66,13 @@ PV is cluster-scoped, no `-n` flag needed. After apply, the PV should appear in 
   onFail: "Le storageClassName de `data-pv` n'est pas `manual`."
 ```
 
-## Write a PersistentVolumeClaim manifest to `pvc.yaml` in namespace `storage-lab` with specs `data-pvc`, storageClassName `manual`, accessMode `ReadWriteOnce`, requested storage `500Mi`, then apply it
+## Create a PersistentVolumeClaim named `data-pvc` in namespace `storage-lab` with storageClassName `manual`, accessMode `ReadWriteOnce`, and requested storage `500Mi`
 
 ### Solution
 
-```bash
-cat > pvc.yaml << 'EOF'
+No imperative command exists for PersistentVolumeClaim. In the exam, open the docs at Concepts > Storage > Persistent Volumes > PersistentVolumeClaims. Save the exemple in a file with nano and update it before applying it.
+
+```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -85,15 +85,13 @@ spec:
   resources:
     requests:
       storage: 500Mi
-EOF
 ```
 
 ```bash
 kubectl apply -f pvc.yaml
-kubectl get pvc -n storage-lab
 ```
 
-The storageClassName and accessMode must match the PV for binding to succeed.
+`storageClassName` and `accessModes` must match the PV exactly for binding to succeed.
 
 ### Validation
 
@@ -110,22 +108,6 @@ The storageClassName and accessMode must match the PV for binding to succeed.
   path: '{.spec.storageClassName}'
   value: 'manual'
   onFail: "Le storageClassName de `data-pvc` n'est pas `manual`."
-```
-
-## Verify that both `data-pv` and `data-pvc` are in `Bound` state
-
-### Solution
-
-```bash
-kubectl get pv data-pv
-kubectl get pvc data-pvc -n storage-lab
-```
-
-A PVC binds to a PV when storageClassName, accessMode, and capacity all match.
-
-### Validation
-
-```yaml
 - type: clusterFieldEquals
   kind: PersistentVolumeClaim
   namespace: storage-lab
@@ -135,15 +117,17 @@ A PVC binds to a PV when storageClassName, accessMode, and capacity all match.
   onFail: "La PVC `data-pvc` n'est pas en état Bound. Vérifiez que storageClassName et accessMode correspondent exactement au PV."
 ```
 
-## Generate a pod manifest for `storage-pod` in namespace `storage-lab`, image `busybox:1.36`, command `sleep 3600`, then add a PVC volume mount at `/data` and apply it
+## Create pod `storage-pod` in namespace `storage-lab`, image `busybox:1.36`, command `sleep 3600`, with a volume from PVC `data-pvc` mounted at `/data`
 
 ### Solution
+
+Generate the base manifest:
 
 ```bash
 kubectl run storage-pod -n storage-lab --image=busybox:1.36 --dry-run=client -o yaml -- sleep 3600 > pod.yaml
 ```
 
-Add the PVC volume and mount in `pod.yaml`.
+Add the `volumes` entry under `spec` and the `volumeMounts` entry inside `containers[0]`:
 
 ```yaml
 spec:
@@ -159,20 +143,11 @@ spec:
 ```
 
 ```bash
-kubectl apply -f pod.yaml -n storage-lab
-```
-
-The volume name must match between `volumes` and `volumeMounts`.
-
-## Wait for `storage-pod` to be Ready
-
-### Solution
-
-```bash
+kubectl apply -f pod.yaml
 kubectl wait --for=condition=Ready pod/storage-pod -n storage-lab --timeout=60s
 ```
 
-If the pod stays Pending, inspect describe output for mount errors.
+The `name` value must be identical in `volumes` and `volumeMounts`.
 
 ### Validation
 
@@ -193,7 +168,7 @@ If the pod stays Pending, inspect describe output for mount errors.
   onFail: "Le pod `storage-pod` n'est pas Running."
 ```
 
-## Write a file inside the pod to confirm the volume is writable, then read it back
+## Write a file inside `storage-pod` to confirm the volume is writable, then read it back
 
 ### Solution
 

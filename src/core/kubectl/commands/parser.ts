@@ -16,6 +16,7 @@ import { parseResourceTargetToken } from './resourceCatalog'
 import { getTransformerForAction, type ParseContext } from './transformers'
 import type { Action, ParsedCommand, Resource } from './types'
 import { assertParsedCommandSupportedBySpec } from '../cli/runtime/parse'
+import { applyKubectlCliAliases } from '../cli/runtime/tokenize'
 import { validateUnknownFlagsBySpec } from '../cli/runtime/flagErrors'
 import { validateUnknownCommandBySpec } from '../cli/runtime/commandErrors'
 import { KUBECTL_ROOT_COMMAND_SPEC } from '../cli/registry/root'
@@ -285,10 +286,15 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
 // Each step: ParseContext → Result<ParseContext>
 
 const checkKubectl = (ctx: ParseContext): Result<ParseContext> => {
-  if (!ctx.tokens || ctx.tokens[0] !== 'kubectl') {
+  if (!ctx.tokens || ctx.tokens.length === 0) {
     return error('Command must start with kubectl')
   }
-  return success(ctx)
+  const tokens = [...ctx.tokens]
+  applyKubectlCliAliases(tokens)
+  if (tokens[0] !== 'kubectl') {
+    return error('Command must start with kubectl')
+  }
+  return success({ ...ctx, tokens })
 }
 
 const extractResource = (ctx: ParseContext): Result<ParseContext> => {

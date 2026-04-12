@@ -11,6 +11,7 @@ import {
   successWithIO
 } from '../../../shared/result'
 import { validateMetadataNameByKind } from '../resourceCatalog'
+import { kubectlUsageError } from '../usageError'
 import type { ParsedCommand } from '../types'
 import { buildDryRunResponse } from './create'
 import { createResourceWithEvents } from '../resourceCatalog'
@@ -164,7 +165,10 @@ export const handleRun = (
     parsed.runRestart !== 'Never'
   ) {
     return error(
-      `error: invalid restart policy: ${parsed.runRestart}\nSee 'kubectl run -h' for help and examples`
+      kubectlUsageError(
+        'kubectl run',
+        `invalid restart policy: ${parsed.runRestart}`
+      )
     )
   }
 

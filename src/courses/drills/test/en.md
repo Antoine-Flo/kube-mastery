@@ -1,6 +1,6 @@
 ---
 title: Test
-isDraft: false
+isDraft: true
 description: Sanity check, verify validation runner with simple deterministic checks.
 tag: cluster_architecture_installation
 environment: minimal

@@ -19,7 +19,7 @@ function createMockPort(overrides: {
 
 const SAMPLE_TASK = {
   task: 'List all nodes in the cluster',
-  command: 'kubectl get nodes',
+  commandBlocks: [{ lang: 'bash' as const, code: 'kubectl get nodes' }],
   explanation: 'Lists all nodes.'
 }
 
@@ -62,7 +62,9 @@ describe('buildDrillList', () => {
         SAMPLE_TASK,
         {
           task: 'Describe a node',
-          command: 'kubectl describe node x',
+          commandBlocks: [
+            { lang: 'bash' as const, code: 'kubectl describe node x' }
+          ],
           explanation: 'Details.'
         }
       ]

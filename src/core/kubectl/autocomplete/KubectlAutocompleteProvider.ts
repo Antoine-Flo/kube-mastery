@@ -174,12 +174,14 @@ export class KubectlAutocompleteProvider extends AutocompleteProvider {
         })
       )
       if (staticSuggestions.length > 0) {
+        // create uses spec subcommands (namespace, deployment, ...), not API plural kinds (namespaces).
         const isResourceResolutionStep =
           tokens.length >= 3 &&
           tokens[0] === 'kubectl' &&
           action !== 'logs' &&
           action !== 'exec' &&
-          action !== 'run'
+          action !== 'run' &&
+          action !== 'create'
         if (!isResourceResolutionStep) {
           return staticSuggestions
         }

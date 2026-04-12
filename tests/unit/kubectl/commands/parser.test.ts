@@ -86,6 +86,18 @@ describe('kubectl parser - create deployment', () => {
     }
   })
 
+  it('should reject unknown create subcommand with kubectl usage error', () => {
+    const result = parseCommand('kubectl create cluster-info')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('Unexpected args: [cluster-info]')
+      expect(result.error).toContain(
+        "See 'kubectl create -h' for help and examples"
+      )
+    }
+  })
+
   it('should reject create when dry-run value is invalid', () => {
     const result = parseCommand(
       'kubectl create deployment my-dep --image=nginx --dry-run=local'
@@ -1796,6 +1808,20 @@ describe('kubectl parser - unknown flags', () => {
     expect(result.ok).toBe(false)
     if (!result.ok) {
       expect(result.error).toContain('error: invalid subcommand for top')
+    }
+  })
+})
+
+describe('kubectl parser - apply', () => {
+  it('should reject unexpected positional args', () => {
+    const result = parseCommand('kubectl apply extra')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('Unexpected args: [extra]')
+      expect(result.error).toContain(
+        "See 'kubectl apply -h' for help and examples"
+      )
     }
   })
 })

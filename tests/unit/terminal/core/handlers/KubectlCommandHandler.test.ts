@@ -104,6 +104,12 @@ describe('KubectlCommandHandler', () => {
       expect(handler.canHandle('kubectl exec -it my-pod -- /bin/sh')).toBe(true)
     })
 
+    it('should return true for k alias commands', () => {
+      expect(handler.canHandle('k')).toBe(true)
+      expect(handler.canHandle('k get pods')).toBe(true)
+      expect(handler.canHandle('k\tget pods')).toBe(true)
+    })
+
     it('should return true even with leading spaces', () => {
       expect(handler.canHandle('  kubectl get pods')).toBe(true)
     })
@@ -114,6 +120,7 @@ describe('KubectlCommandHandler', () => {
       expect(handler.canHandle('cd /home')).toBe(false)
       expect(handler.canHandle('kubect')).toBe(false)
       expect(handler.canHandle('kubectlget')).toBe(false)
+      expect(handler.canHandle('kind')).toBe(false)
     })
 
     it('should return false for empty command', () => {
@@ -128,6 +135,11 @@ describe('KubectlCommandHandler', () => {
 
     it('should execute kubectl get pods and return success', () => {
       const result = handler.execute('kubectl get pods', context)
+      expect(result.ok).toBe(true)
+    })
+
+    it('should execute k alias like kubectl get pods', () => {
+      const result = handler.execute('k get pods', context)
       expect(result.ok).toBe(true)
     })
 

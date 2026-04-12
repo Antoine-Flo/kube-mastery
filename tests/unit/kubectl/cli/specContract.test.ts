@@ -25,6 +25,11 @@ describe('kubectl cli spec contracts', () => {
     expect(suggestions).toEqual([{ text: 'patch', suffix: ' ' }])
   })
 
+  it('completes create clusterrole from partial subcommand', () => {
+    const suggestions = completeKubectlFromSpec('kubectl create cluste')
+    expect(suggestions).toEqual([{ text: 'clusterrole', suffix: ' ' }])
+  })
+
   it('keeps parser results aligned with command spec handler', () => {
     const parsedResult = parseCommand('kubectl api-versions')
     expect(parsedResult.ok).toBe(true)

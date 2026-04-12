@@ -9,6 +9,8 @@ import { getCourseOverview } from '../../../../content/overview/facade'
 import { getLayoutAuthContext } from '../../../../lib/auth/server'
 import { getProgressContext } from '../../../../lib/progress/server'
 import { getFirstNonPlaceholderLessonIdFromSections } from '../../../../lib/lesson/lessonTerminalAccess'
+import { inlineBackticksToHtml } from '../../../../lib/drills/inlineBackticksToHtml'
+import { Code } from 'astro:components';
 import '../../../../styles/components/lesson-content.css'
 import '../../../../styles/components/cluster-visualization.css'
 
@@ -105,7 +107,10 @@ const tasks = drillDetail.tasks
           tasks.map((task, index) => (
             <li class="drill-task">
               <div class="drill-task__header">
-                <p class="drill-task__description">{task.task}</p>
+                <p
+                  class="drill-task__description"
+                  set:html={inlineBackticksToHtml(task.task)}
+                />
                 {task.validation && (
                   <span
                     class="task-validation-badge task-validation-badge--not-run"
@@ -126,28 +131,24 @@ const tasks = drillDetail.tasks
               <details class="drill-task__solution">
                 <summary>{t('drills_solution')}</summary>
                 {task.instructionMarkdown && (
-                  <p class="drill-task__explanation">
-                    {task.instructionMarkdown}
-                  </p>
+                  <p
+                    class="drill-task__explanation"
+                    set:html={inlineBackticksToHtml(task.instructionMarkdown)}
+                  />
                 )}
-                <p class="drill-task__explanation">{task.explanation}</p>
+                <p
+                  class="drill-task__explanation"
+                  set:html={inlineBackticksToHtml(task.explanation)}
+                />
                 <div class="drill-task__commands">
-                  {Array.isArray(task.command) ? (
-                    task.command.map((cmd) => (
-                      <pre class="drill-task__code">
-                        <code>{cmd}</code>
-                      </pre>
-                    ))
-                  ) : (
-                    <pre class="drill-task__code">
-                      <code>{task.command}</code>
-                    </pre>
-                  )}
+                  {task.commandBlocks.map((block) => (
+                    <Code lang={block.lang} code={block.code} />
+                  ))}
                 </div>
-              </details>
-            </li>
-          ))
-        }
+                </details>
+              </li>
+            )
+          )}
       </ol>
     </article>
 
@@ -330,10 +331,6 @@ const tasks = drillDetail.tasks
     margin: 0;
   }
 
-  .drill-task {
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--color-gray-4);
-  }
 
   .drill-task:last-child {
     border-bottom: none;
@@ -419,8 +416,6 @@ const tasks = drillDetail.tasks
   }
 
   .drill-task__commands :global(pre) {
-    margin: 0;
-    border-radius: var(--radius-2);
     font-size: var(--text-sm);
   }
 

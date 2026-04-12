@@ -64,7 +64,7 @@
 
 /* Task list for drill pages */
 .lesson-content[data-drill-mode] > ol > li {
-  padding: 0.375rem 0;
+  padding: 0.8rem 0;
   border-bottom: 1px solid var(--color-gray-4);
 }
 
@@ -74,6 +74,7 @@
 
 .lesson-content pre.astro-code {
   padding: 0.55rem 0.7rem;
+  margin-top: 0.5rem;
 }
 
 .lesson-content pre.astro-code code {

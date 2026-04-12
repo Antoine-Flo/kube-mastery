@@ -1,10 +1,9 @@
+import { tokenizeInput } from '../../kubectl/cli/runtime/tokenize'
+
 const HELP_FLAGS = new Set(['-h', '--help'])
 
 export const isKubectlHelpRequest = (command: string): boolean => {
-  const tokens = command
-    .trim()
-    .split(/\s+/)
-    .filter((token) => token.length > 0)
+  const tokens = tokenizeInput(command)
 
   if (tokens.length === 0 || tokens[0] !== 'kubectl') {
     return false
