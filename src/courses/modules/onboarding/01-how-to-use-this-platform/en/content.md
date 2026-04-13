@@ -7,10 +7,6 @@ seoDescription: Learn how to use the KubeMastery platform, including the termina
 
 Welcome to KubeMastery. This first lesson takes two minutes. By the end of it you will have deployed a workload to a simulated cluster and watched it come alive in real time.
 
-:::info
-On mobile, not every keyboard works well with the terminal. <a href="https://play.google.com/store/apps/details?id=com.google.android.inputmethod.latin&hl=en" target="_blank">**Gboard**</a> works reliably if you need to practice on the go.
-:::
-
 ## How the Platform Works
 
 The terminal is connected to a simulated Kubernetes cluster running entirely in your browser. It is not a real cluster, but the commands, the outputs, and the cluster behavior are designed to match what you would see on a real one. Every `kubectl` command you type reaches that simulation, and changes persist within the session. Pods move through phases like `Pending`, `ContainerCreating`, and `Running` just as they would on a live cluster.

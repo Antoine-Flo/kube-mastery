@@ -22,12 +22,7 @@ describe('TerminalOutput', () => {
       write: vi.fn((text: string) => {
         writtenText += text
       }),
-      writeChar: vi.fn(),
       clearLine: vi.fn(),
-      clearToEnd: vi.fn(),
-      moveCursorLeft: vi.fn(),
-      moveCursorRight: vi.fn(),
-      setCursorPosition: vi.fn(),
       focus: vi.fn(),
       dispose: vi.fn()
     }
@@ -110,7 +105,7 @@ describe('TerminalOutput', () => {
       expect(writtenText).toBe('hello\r\n')
     })
 
-    it('should normalize LF to CRLF for xterm.js', () => {
+    it('should normalize LF to CRLF for terminal output', () => {
       const output = createTerminalOutput(mockRenderer)
       output.writeOutput('hello\n')
       expect(writtenText).toBe('hello\r\n')

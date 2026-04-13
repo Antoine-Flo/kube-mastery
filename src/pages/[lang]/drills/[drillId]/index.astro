@@ -413,6 +413,12 @@ const tasks = drillDetail.tasks
 
   .drill-task__commands {
     padding-top: 0.5rem;
+    min-width: 0;
+  }
+
+  .drill-task__commands :global(.drill-task__code) {
+    min-width: 0;
+    max-width: 100%;
   }
 
   .drill-task__commands :global(pre) {
@@ -420,11 +426,18 @@ const tasks = drillDetail.tasks
     padding: 0.55rem 0.7rem;
     border-radius: var(--radius-xs);
     margin-top: 0.5rem;
+    box-sizing: border-box;
+    max-width: 100%;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
   }
 
-  .drill-task__code code {
+  .drill-task__commands :global(.drill-task__code code) {
     font-family: var(--font-mono);
-    white-space: pre;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
   }
 
   .drill-task__validation-error {

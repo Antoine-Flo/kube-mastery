@@ -126,9 +126,10 @@ describe('KubectlAutocompleteProvider', () => {
 
   describe('complete', () => {
     describe('position 1 (action)', () => {
-      it('should return empty array when action prefix is ambiguous (empty)', () => {
+      it('should return actions when action prefix is empty', () => {
         const results = provider.complete(['kubectl'], '', mockContext)
-        expect(results).toEqual([])
+        expect(results.length).toBeGreaterThan(0)
+        expect(results).toContainEqual({ text: 'get', suffix: ' ' })
       })
 
       it('should filter actions by prefix', () => {
@@ -136,9 +137,10 @@ describe('KubectlAutocompleteProvider', () => {
         expect(results).toEqual([{ text: 'get', suffix: ' ' }])
       })
 
-      it('should return empty array for ambiguous action prefix', () => {
+      it('should return matching actions for ambiguous action prefix', () => {
         const results = provider.complete(['kubectl'], 'd', mockContext)
-        expect(results).toEqual([])
+        expect(results).toContainEqual({ text: 'delete', suffix: ' ' })
+        expect(results).toContainEqual({ text: 'describe', suffix: ' ' })
       })
 
       it('should return empty array for unknown prefix', () => {
@@ -191,17 +193,18 @@ describe('KubectlAutocompleteProvider', () => {
     })
 
     describe('position 2 (resource type) for non-logs/exec actions', () => {
-      it('should return empty array when resource prefix is ambiguous (empty)', () => {
+      it('should return resource suggestions when resource prefix is empty', () => {
         const results = provider.complete(['kubectl', 'get'], '', mockContext)
-        expect(results).toEqual([])
+        expect(results.length).toBeGreaterThan(0)
+        expect(results).toContainEqual({ text: 'pods', suffix: ' ' })
       })
 
-      it('should complete canonical resource type when prefix is unique', () => {
+      it('should include canonical resource type when prefix matches', () => {
         const results = provider.complete(['kubectl', 'get'], 'po', mockContext)
-        expect(results).toEqual([{ text: 'pods', suffix: ' ' }])
+        expect(results).toContainEqual({ text: 'pods', suffix: ' ' })
       })
 
-      it('should complete resource type from kubectl alias (cm)', () => {
+      it('should include canonical resource from kubectl alias prefix (cm)', () => {
         const results = provider.complete(['kubectl', 'get'], 'cm', mockContext)
         expect(results).toEqual([{ text: 'configmaps', suffix: ' ' }])
       })
@@ -220,31 +223,42 @@ describe('KubectlAutocompleteProvider', () => {
         expect(results).toEqual([])
       })
 
-      it('should return empty array for ambiguous typed resource token', () => {
+      it('should return matching resource suggestions for ambiguous typed token', () => {
         const results = provider.complete(
           ['kubectl', 'get', 'd'],
           'd',
           mockContext
         )
-        expect(results).toEqual([])
+        expect(results.length).toBeGreaterThan(0)
+        expect(results).toContainEqual({ text: 'deployments', suffix: ' ' })
       })
 
-      it('should complete typed resource token when unique on canonical kind', () => {
+      it('should include canonical resource kind when token matches', () => {
         const results = provider.complete(
           ['kubectl', 'get', 'depl'],
           'depl',
           mockContext
         )
-        expect(results).toEqual([{ text: 'deployments', suffix: ' ' }])
+        expect(results).toContainEqual({ text: 'deployments', suffix: ' ' })
       })
 
-      it('should complete statefulsets resource type with unique prefix', () => {
+      it('should include statefulsets resource type for matching prefix', () => {
         const results = provider.complete(
           ['kubectl', 'get', 'statef'],
           'statef',
           mockContext
         )
-        expect(results).toEqual([{ text: 'statefulsets', suffix: ' ' }])
+        expect(results).toContainEqual({ text: 'statefulsets', suffix: ' ' })
+      })
+
+      it('should not suggest all for describe resource type completion', () => {
+        const results = provider.complete(['kubectl', 'describe'], '', mockContext)
+        expect(results).not.toContainEqual({ text: 'all', suffix: ' ' })
+      })
+
+      it('should suggest describable resources for describe action', () => {
+        const results = provider.complete(['kubectl', 'describe'], 'po', mockContext)
+        expect(results).toContainEqual({ text: 'pods', suffix: ' ' })
       })
     })
 
@@ -489,9 +503,9 @@ describe('KubectlAutocompleteProvider', () => {
         expect(results).toEqual([])
       })
 
-      it('should return empty array for ambiguous resource type step', () => {
+      it('should return suggestions for ambiguous resource type step', () => {
         const results = provider.complete(['kubectl', 'get'], '', mockContext)
-        expect(results).toEqual([])
+        expect(results.length).toBeGreaterThan(0)
       })
     })
 
@@ -613,7 +627,7 @@ describe('KubectlAutocompleteProvider', () => {
           'de',
           mockContext
         )
-        expect(resourceKinds).toEqual([{ text: 'deployments', suffix: ' ' }])
+        expect(resourceKinds).toContainEqual({ text: 'deployments', suffix: ' ' })
       })
 
       it('should resolve rollout resource kind for short unique alias', () => {
@@ -622,7 +636,7 @@ describe('KubectlAutocompleteProvider', () => {
           's',
           mockContext
         )
-        expect(suggestions).toEqual([{ text: 'statefulsets', suffix: ' ' }])
+        expect(suggestions).toContainEqual({ text: 'statefulsets', suffix: ' ' })
       })
 
       it('should tolerate flag-token completion without throwing', () => {

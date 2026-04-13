@@ -17,7 +17,6 @@ type TourMessages = {
   lesson_tour_sidebar_toggle_desc: string
   lesson_tour_terminal_title: string
   lesson_tour_terminal_desc: string
-  lesson_tour_terminal_mobile_note: string
   lesson_tour_visualizer_title: string
   lesson_tour_visualizer_desc: string
   lesson_tour_reload_title: string
@@ -249,7 +248,7 @@ function buildMobileTourSteps(m: TourMessages): DriveStep[] {
       element: terminalToggleBtn,
       popover: {
         title: m.lesson_tour_terminal_title,
-        description: `${m.lesson_tour_terminal_desc} ${m.lesson_tour_terminal_mobile_note}`,
+        description: m.lesson_tour_terminal_desc,
         side: 'top',
         align: 'center'
       }

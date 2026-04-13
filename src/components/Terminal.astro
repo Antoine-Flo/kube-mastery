@@ -1,20 +1,18 @@
 ---
 interface Props {
   class?: string
-  rows?: number
   lang?: 'en' | 'fr'
 }
 
 import TerminalWindow from './TerminalWindow.astro'
 import { useTranslations } from '../i18n/utils'
 
-const { class: className = '', rows = 20, lang = 'en' } = Astro.props
+const { class: className = '', lang = 'en' } = Astro.props
 const t = useTranslations(lang)
 ---
 
 <TerminalWindow
   class={className}
-  rows={rows}
   lang={lang}
   topPrompt={t('terminal_topPrompt')}
   commandLimit={6}

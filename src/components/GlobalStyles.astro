@@ -18,6 +18,14 @@
     color: var(--color-gray-12);
   }
 
+  html[data-theme='dark'] {
+    color-scheme: dark;
+  }
+
+  html[data-theme='light'] {
+    color-scheme: light;
+  }
+
   body {
     margin: 0;
     width: 100%;
@@ -28,8 +36,87 @@
     color: var(--color-gray-12);
   }
 
-  .xterm .xterm-scrollable-element > .scrollbar > .slider {
+  :root {
+    --terminal-size: 1.1;
+  }
+
+  @media screen and (min-width: 1200px) {
+    :root {
+      --terminal-size: 1.2;
+    }
+  }
+
+  .terminal.jt-terminal {
+    --background: #111113;
+    --color: #b4b4b4;
+    --size: var(--terminal-size);
+    --terminal-font-size: calc(12px * var(--terminal-size));
+    --terminal-line: calc(var(--terminal-font-size) * 1.4);
+    height: 100%;
+    font-family: var(--font-mono), monospace;
+    font-size: var(--terminal-font-size);
+    border-radius: var(--radius-xs);
+    overflow: hidden;
+    background-color: var(--background);
+    color: var(--color);
+  }
+
+  .jt-theme-dark .terminal.jt-terminal {
+    --background: #111113;
+    --color: #b4b4b4;
+  }
+
+  .jt-theme-light .terminal.jt-terminal {
+    --background: #fcfcfc;
+    --color: #1a1a1a;
+  }
+
+  .jt-terminal {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .terminal.jt-terminal .terminal-scroller {
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  .terminal.jt-terminal .terminal-output,
+  .terminal.jt-terminal .cmd {
+    font-family: inherit;
+    font-size: var(--terminal-font-size);
+    line-height: var(--terminal-line);
+  }
+
+  .terminal.jt-terminal .cmd div,
+  .terminal.jt-terminal .terminal-output > div > div {
+    line-height: round(var(--terminal-line, 1em));
+  }
+
+  .terminal.jt-terminal .terminal-output > div.raw,
+  .terminal.jt-terminal .terminal-output > div.raw > div {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+  }
+
+  .terminal.jt-terminal .terminal-output .ansi > div {
+    line-height: round(var(--terminal-line, 1em)) !important;
+  }
+
+  .terminal.jt-terminal .terminal-scroller,
+  .terminal.jt-terminal .terminal-fill,
+  .terminal.jt-terminal .cmd {
+    background-color: var(--background);
+    color: var(--color);
+  }
+
+  .terminal.jt-terminal .terminal-scroller::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .terminal.jt-terminal .terminal-scroller::-webkit-scrollbar-thumb {
     border-radius: 9999px;
-    width: 8px !important;
+    background-color: rgba(110, 110, 118, 0.8);
   }
 </style>

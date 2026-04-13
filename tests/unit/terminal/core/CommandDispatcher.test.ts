@@ -104,8 +104,7 @@ describe('CommandDispatcher', () => {
     it('should execute clear command', () => {
       const result = dispatcher.execute('clear')
       expect(result.ok).toBe(true)
-      // clear efface le terminal
-      expect(renderer.getOutput()).toContain('\x1b[2J\x1b[H')
+      expect(renderer.getOutput()).toBe('')
     })
 
     it('should execute help command', () => {

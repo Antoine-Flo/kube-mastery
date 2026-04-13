@@ -141,7 +141,6 @@ const auth = await getLayoutAuthContext(
   }
   .layout-main {
     flex: 1;
-    min-height: 0;
     display: flex;
     flex-direction: column;
   }
@@ -154,6 +153,7 @@ const auth = await getLayoutAuthContext(
   }
 
   body.lp-fill .layout-main {
+    min-height: 0;
     overflow: auto;
   }
 </style>

@@ -49,7 +49,6 @@ const parseSleepDurationMs = (
 
 const restorePromptAfterSleep = (context: CommandContext): void => {
   context.output.showCursor()
-  context.renderer.write(context.shellContextStack.getCurrentPrompt())
   context.renderer.focus()
 }
 
@@ -232,12 +231,6 @@ export class ShellCommandHandler implements CommandHandler {
 
     // Gérer les commandes spéciales avec effets de bord
     const parsed = parseResult.value
-    if (parsed.command === 'clear') {
-      // Effacer le terminal (séquence ANSI spéciale)
-      context.renderer.write('\x1b[2J\x1b[H')
-      return result
-    }
-
     if (parsed.command === 'cd' && result.ok) {
       // Mettre à jour le prompt après un cd réussi
       context.shellContextStack.updateCurrentPrompt()
