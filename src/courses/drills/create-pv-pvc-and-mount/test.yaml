@@ -1,0 +1,80 @@
+version: 1
+drillId: create-pv-pvc-and-mount
+resetKindBeforeRun: false
+timeoutMs: 60000
+
+manifests:
+  - path: pv.yaml
+    sourcePath: pv.yaml
+
+  - path: pvc.yaml
+    sourcePath: pvc.yaml
+
+  - path: pod.yaml
+    sourcePath: pod.yaml
+
+steps:
+  - id: cleanup-namespace
+    run: kubectl delete namespace storage-lab --ignore-not-found=true
+    expectParity: false
+  - id: cleanup-pv
+    run: kubectl delete pv data-pv --ignore-not-found=true
+    expectParity: false
+  - id: create-namespace
+    run: kubectl create namespace storage-lab
+  - id: apply-pv
+    run: kubectl apply -f pv.yaml
+  - id: apply-pvc
+    run: kubectl apply -f pvc.yaml
+  - id: apply-pod
+    run: kubectl apply -f pod.yaml
+  - id: wait-ready
+    run: kubectl wait --for=condition=Ready pod/storage-pod -n storage-lab --timeout=60s
+  - id: write-and-read-probe
+    run: kubectl exec -n storage-lab storage-pod -- sh -c 'echo cka-ok > /data/probe.txt && cat /data/probe.txt'
+
+checks:
+  cluster:
+    - id: pv-capacity
+      kind: pv
+      name: data-pv
+      path: '{.spec.capacity.storage}'
+      expected: '1Gi'
+    - id: pv-storage-class
+      kind: pv
+      name: data-pv
+      path: '{.spec.storageClassName}'
+      expected: 'manual'
+    - id: pvc-bound
+      kind: pvc
+      namespace: storage-lab
+      name: data-pvc
+      path: '{.status.phase}'
+      expected: 'Bound'
+    - id: pod-running
+      kind: pod
+      namespace: storage-lab
+      name: storage-pod
+      path: '{.status.phase}'
+      expected: 'Running'
+    - id: pod-container-name
+      kind: pod
+      namespace: storage-lab
+      name: storage-pod
+      path: '{.spec.containers[0].name}'
+      expected: 'storage-pod'
+
+  filesystem:
+    - id: pv-manifest-content
+      path: pv.yaml
+      contains: 'kind: PersistentVolume'
+    - id: pvc-manifest-content
+      path: pvc.yaml
+      contains: 'kind: PersistentVolumeClaim'
+    - id: pod-manifest-content
+      path: pod.yaml
+      contains: 'claimName: data-pvc'
+
+compare:
+  normalize:
+    stripAgeValues: true

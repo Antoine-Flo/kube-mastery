@@ -36,6 +36,7 @@
     "command-index:generate": "tsx bin/generate-command-index.ts",
     "mcp:simulation": "tsx mcp/simulation-server/index.ts",
     "parity:manual": "tsx bin/parity/manual-compare.ts",
+    "parity:drill": "tsx bin/parity/drill-compare.ts",
     "cluster:resources:generate": "tsx bin/generate-cluster-resources.ts",
     "openapi:types:generate": "tsx bin/generate-openapi-types.ts",
     "codegen:generate": "npm run cluster:resources:generate && npm run openapi:types:generate"
