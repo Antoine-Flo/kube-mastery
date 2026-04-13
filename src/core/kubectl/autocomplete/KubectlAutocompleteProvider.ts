@@ -6,12 +6,17 @@
 
 import { AutocompleteProvider } from '../../terminal/autocomplete/AutocompleteProvider'
 import {
+  KUBECTL_RESOURCES,
   RESOURCE_ALIAS_MAP,
-  resolveUniqueKubectlResourceKind,
-  resolveUniqueKubectlResourceKindAllowlist,
   type KubectlResource
 } from '../commands/resourceCatalog'
+import type {
+  KubectlCommandSpec,
+  KubectlCompletionResourceNames,
+  KubectlCompletionResourceTypes
+} from '../cli/model'
 import { completeKubectlFromSpec } from '../cli/runtime/completion'
+import { resolveKubectlCommand } from '../cli/runtime/resolve'
 import { KUBECTL_ROOT_COMMAND_SPEC } from '../cli/registry/root'
 import type {
   AutocompleteClusterState,
@@ -19,15 +24,10 @@ import type {
   CompletionResult
 } from '../../terminal/autocomplete/types'
 
-const KUBECTL_ROLLOUT_SUBCOMMANDS = [
-  'status',
-  'history',
-  'restart',
-  'undo'
-] as const
 const KUBECTL_ACTIONS = KUBECTL_ROOT_COMMAND_SPEC.subcommands.map((command) => {
   return command.path[command.path.length - 1]
 })
+const PSEUDO_RESOURCE_SET = new Set<KubectlResource>(['all'])
 
 /**
  * Cluster-backed name completion: only kinds where the terminal exposes a list API.
@@ -61,20 +61,96 @@ const filterMatches = (items: string[], prefix: string): string[] => {
   return items.filter((item) => item.startsWith(prefix))
 }
 
-/**
- * v1 policy: only return a completion when prefix has a single match.
- * Ambiguous or empty-match prefixes return no suggestions.
- */
-const completeOnlyWhenUnique = (
-  items: string[],
-  prefix: string,
-  suffix: string
+const mapSuggestions = (items: string[], suffix: string): CompletionResult[] => {
+  return items.map((item) => ({
+    text: item,
+    suffix
+  }))
+}
+
+const getResourceTypeSuggestions = (
+  currentToken: string,
+  allowlist?: readonly KubectlResource[]
 ): CompletionResult[] => {
-  const matches = filterMatches(items, prefix)
-  if (matches.length !== 1) {
+  const allowedKinds = allowlist
+    ? [...allowlist]
+    : (Object.keys(KUBECTL_RESOURCES) as KubectlResource[])
+  const canonicalMatches = new Set<string>()
+  for (const kind of allowedKinds) {
+    const aliases = KUBECTL_RESOURCES[kind]
+    const hasMatch = aliases.some((alias) => alias.startsWith(currentToken))
+    if (hasMatch) {
+      canonicalMatches.add(kind)
+    }
+  }
+  return mapSuggestions(
+    [...canonicalMatches].sort((left, right) => left.localeCompare(right)),
+    ' '
+  )
+}
+
+const getResourceTypesFromCompletion = (
+  resourceTypesCompletion: KubectlCompletionResourceTypes | undefined
+): readonly KubectlResource[] => {
+  if (resourceTypesCompletion == null) {
     return []
   }
-  return [{ text: matches[0], suffix }]
+
+  if (resourceTypesCompletion.mode === 'none') {
+    return []
+  }
+  if (resourceTypesCompletion.mode === 'allowlist') {
+    return resourceTypesCompletion.resources.filter((kind) => {
+      return Object.hasOwn(KUBECTL_RESOURCES, kind)
+    }) as KubectlResource[]
+  }
+  if (resourceTypesCompletion.mode === 'all') {
+    const includePseudoResources =
+      resourceTypesCompletion.includePseudoResources === true
+    return Object.keys(KUBECTL_RESOURCES).filter((kind) => {
+      if (includePseudoResources) {
+        return true
+      }
+      return !PSEUDO_RESOURCE_SET.has(kind as KubectlResource)
+    }) as KubectlResource[]
+  }
+  return []
+}
+
+const isTypePosition = (
+  tokens: string[],
+  currentToken: string,
+  consumedTokens: number
+): boolean => {
+  return (
+    tokens.length === consumedTokens ||
+    (tokens.length === consumedTokens + 1 &&
+      currentToken !== '' &&
+      tokens[tokens.length - 1] === currentToken)
+  )
+}
+
+const resolveNamesSource = (
+  command: KubectlCommandSpec
+): KubectlCompletionResourceNames => {
+  const completion = command.completion
+  if (completion?.resourceNames != null) {
+    return completion.resourceNames
+  }
+  return { mode: 'none' }
+}
+
+const getSubcommandSuggestions = (
+  command: KubectlCommandSpec,
+  currentToken: string
+): CompletionResult[] => {
+  const subcommands = command.subcommands
+    .map((subcommand) => {
+      return subcommand.path[subcommand.path.length - 1]
+    })
+    .filter((name) => name.startsWith(currentToken))
+    .sort((left, right) => left.localeCompare(right))
+  return mapSuggestions(subcommands, ' ')
 }
 
 /**
@@ -155,12 +231,25 @@ export class KubectlAutocompleteProvider extends AutocompleteProvider {
       tokens.length === 1 ||
       (tokens.length === 2 && currentToken !== '' && tokens[1] === currentToken)
     if (isActionPosition) {
-      return completeOnlyWhenUnique([...KUBECTL_ACTIONS], currentToken, ' ')
+      return mapSuggestions(
+        filterMatches([...KUBECTL_ACTIONS], currentToken).sort((left, right) =>
+          left.localeCompare(right)
+        ),
+        ' '
+      )
     }
 
     const action = tokens[1]
-    if ((action === 'logs' || action === 'exec') && tokens.length === 2) {
-      return getResourceNames('pods', currentToken, context)
+    const resolved = resolveKubectlCommand(KUBECTL_ROOT_COMMAND_SPEC, tokens)
+    if (resolved != null && resolved.command.subcommands.length > 0) {
+      const isSubcommandPosition = isTypePosition(
+        tokens,
+        currentToken,
+        resolved.consumedTokens
+      )
+      if (isSubcommandPosition) {
+        return getSubcommandSuggestions(resolved.command, currentToken)
+      }
     }
 
     const canUseStaticRegistryCompletion =
@@ -188,58 +277,6 @@ export class KubectlAutocompleteProvider extends AutocompleteProvider {
       }
     }
 
-    if (action === 'rollout') {
-      if (tokens.length === 2) {
-        return filterMatches(
-          [...KUBECTL_ROLLOUT_SUBCOMMANDS],
-          currentToken
-        ).map((subcommand) => ({ text: subcommand, suffix: ' ' }))
-      }
-      if (
-        tokens.length === 3 &&
-        currentToken !== '' &&
-        tokens[2] === currentToken
-      ) {
-        return filterMatches(
-          [...KUBECTL_ROLLOUT_SUBCOMMANDS],
-          currentToken
-        ).map((subcommand) => ({ text: subcommand, suffix: ' ' }))
-      }
-
-      const rolloutSubcommand = tokens[2]
-      if (!KUBECTL_ROLLOUT_SUBCOMMANDS.includes(rolloutSubcommand as never)) {
-        return []
-      }
-
-      const rolloutResourceKinds: KubectlResource[] = [
-        'deployments',
-        'daemonsets',
-        'statefulsets'
-      ]
-      const isResourceTypePosition =
-        tokens.length === 3 ||
-        (tokens.length === 4 &&
-          currentToken !== '' &&
-          tokens[3] === currentToken)
-      if (isResourceTypePosition) {
-        const kind = resolveUniqueKubectlResourceKindAllowlist(
-          currentToken,
-          rolloutResourceKinds
-        )
-        if (kind == null) {
-          return []
-        }
-        return [{ text: kind, suffix: ' ' }]
-      }
-
-      if (tokens.length < 4) {
-        return []
-      }
-
-      const resourceType = RESOURCE_ALIAS_MAP[tokens[3]] || tokens[3]
-      return getResourceNames(resourceType, currentToken, context)
-    }
-
     if (action === 'config') {
       if (tokens[2] === 'set-context') {
         const setContextFlags = ['--current', '--namespace=']
@@ -257,37 +294,50 @@ export class KubectlAutocompleteProvider extends AutocompleteProvider {
       return []
     }
 
-    // Type de ressource (position 2) - sauf pour logs/exec/run
-    if (action !== 'logs' && action !== 'exec' && action !== 'run') {
-      const isResourceTypePosition =
-        tokens.length === 2 ||
-        (tokens.length === 3 &&
-          currentToken !== '' &&
-          tokens[2] === currentToken)
-      if (isResourceTypePosition) {
-        const kind = resolveUniqueKubectlResourceKind(currentToken)
-        if (kind == null) {
-          return []
-        }
-        return [{ text: kind, suffix: ' ' }]
-      }
-    }
-
     if (action === 'run') {
       return []
     }
 
-    // Nom de ressource
-    let resourceType = 'pods'
-
-    // For logs/exec, always use pods
-    if (action === 'logs' || action === 'exec') {
-      resourceType = 'pods'
-    } else if (tokens.length >= 3) {
-      // Map resource alias to canonical name
-      const resource = tokens[2]
-      resourceType = RESOURCE_ALIAS_MAP[resource] || resource
+    if (resolved == null) {
+      return []
     }
+
+    const command = resolved.command
+    const resourceTypes = getResourceTypesFromCompletion(command.completion?.resourceTypes)
+    const hasResourceTypeCompletion = resourceTypes.length > 0
+    if (hasResourceTypeCompletion) {
+      const shouldCompleteType = isTypePosition(
+        tokens,
+        currentToken,
+        resolved.consumedTokens
+      )
+      if (shouldCompleteType) {
+        return getResourceTypeSuggestions(currentToken, resourceTypes)
+      }
+    }
+
+    const namesSource = resolveNamesSource(command)
+    if (namesSource.mode === 'none') {
+      return []
+    }
+    if (namesSource.mode === 'pods') {
+      return getResourceNames('pods', currentToken, context)
+    }
+    if (namesSource.mode === 'nodes') {
+      return getResourceNames('nodes', currentToken, context)
+    }
+    if (namesSource.mode !== 'fromResourceType') {
+      return []
+    }
+
+    if (!hasResourceTypeCompletion || tokens.length <= resolved.consumedTokens) {
+      return []
+    }
+    const resourceToken = tokens[resolved.consumedTokens]
+    if (resourceToken == null) {
+      return []
+    }
+    const resourceType = RESOURCE_ALIAS_MAP[resourceToken] || resourceToken
 
     return getResourceNames(resourceType, currentToken, context)
   }

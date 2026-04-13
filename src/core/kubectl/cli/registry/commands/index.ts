@@ -1,5 +1,6 @@
 import { command } from '../../builder'
 import type { KubectlCommandSpec } from '../../model'
+import { DESCRIBE_CONFIG } from '../../../describe/registry'
 import { createLeafCommand } from './shared'
 
 /**
@@ -9,12 +10,19 @@ import { createLeafCommand } from './shared'
  * - describe: refs/k8s/kubectl/pkg/cmd/describe/describe.go (DescribeFlags, AddFlags)
  */
 
+const DESCRIBE_RESOURCE_ALLOWLIST = Object.keys(DESCRIBE_CONFIG)
+const ROLLOUT_RESOURCE_ALLOWLIST = ['deployments', 'daemonsets', 'statefulsets']
+
 /** get subcommand flags: compare with GetFlags / PrintFlags in refs/k8s/kubectl/pkg/cmd/get/get_flags.go */
 const getCommand = createLeafCommand({
   path: ['get'],
   use: 'get\n[(-o|--output=)json|yaml|kyaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-as-json|jsonpath-file|custom-columns|custom-columns-file|wide]\n(TYPE[.VERSION][.GROUP] [NAME | -l label] | TYPE[.VERSION][.GROUP]/NAME ...) [flags] [options]',
   short: 'Display one or many resources',
   handlerId: 'get',
+  completion: {
+    resourceTypes: { mode: 'all' },
+    resourceNames: { mode: 'fromResourceType' }
+  },
   flags: [
     { kind: 'string', name: 'filename', short: 'f', description: 'File path' },
     {
@@ -83,6 +91,13 @@ const describeCommand = createLeafCommand({
   use: 'describe TYPE NAME',
   short: 'Show details of a specific resource or group of resources',
   handlerId: 'describe',
+  completion: {
+    resourceTypes: {
+      mode: 'allowlist',
+      resources: DESCRIBE_RESOURCE_ALLOWLIST
+    },
+    resourceNames: { mode: 'fromResourceType' }
+  },
   flags: [
     { kind: 'string', name: 'selector', short: 'l', description: 'Selector' }
   ]
@@ -93,6 +108,10 @@ const deleteCommand = createLeafCommand({
   use: 'delete (-f FILENAME | TYPE [NAME])',
   short: 'Delete resources by file names, stdin, resources and names',
   handlerId: 'delete',
+  completion: {
+    resourceTypes: { mode: 'all', includePseudoResources: true },
+    resourceNames: { mode: 'fromResourceType' }
+  },
   flags: [
     { kind: 'string', name: 'filename', short: 'f', description: 'File path' },
     {
@@ -520,6 +539,10 @@ const logsCommand = createLeafCommand({
   use: 'logs POD [-c CONTAINER]',
   short: 'Print the logs for a container in a pod',
   handlerId: 'logs',
+  completion: {
+    resourceTypes: { mode: 'none' },
+    resourceNames: { mode: 'pods' }
+  },
   flags: [
     {
       kind: 'string',
@@ -540,6 +563,10 @@ const execCommand = createLeafCommand({
   use: 'exec POD -- COMMAND [args...]',
   short: 'Execute a command in a container',
   handlerId: 'exec',
+  completion: {
+    resourceTypes: { mode: 'none' },
+    resourceNames: { mode: 'pods' }
+  },
   flags: [
     {
       kind: 'string',
@@ -562,6 +589,10 @@ const labelCommand = createLeafCommand({
   use: 'label TYPE NAME KEY=VALUE [--overwrite]',
   short: 'Update the labels on a resource',
   handlerId: 'label',
+  completion: {
+    resourceTypes: { mode: 'all' },
+    resourceNames: { mode: 'fromResourceType' }
+  },
   flags: [
     { kind: 'bool', name: 'overwrite', description: 'Overwrite existing value' }
   ]
@@ -572,6 +603,10 @@ const annotateCommand = createLeafCommand({
   use: 'annotate TYPE NAME KEY=VALUE [--overwrite]',
   short: 'Update the annotations on a resource',
   handlerId: 'annotate',
+  completion: {
+    resourceTypes: { mode: 'all' },
+    resourceNames: { mode: 'fromResourceType' }
+  },
   flags: [
     { kind: 'bool', name: 'overwrite', description: 'Overwrite existing value' }
   ]
@@ -678,7 +713,11 @@ const editCommand = createLeafCommand({
   path: ['edit'],
   use: 'edit TYPE NAME',
   short: 'Edit a resource from the default editor',
-  handlerId: 'edit'
+  handlerId: 'edit',
+  completion: {
+    resourceTypes: { mode: 'all' },
+    resourceNames: { mode: 'fromResourceType' }
+  }
 })
 
 const patchCommand = createLeafCommand({
@@ -686,6 +725,10 @@ const patchCommand = createLeafCommand({
   use: 'patch (TYPE NAME | TYPE/NAME) --type=merge -p PATCH',
   short: 'Update fields of a resource',
   handlerId: 'patch',
+  completion: {
+    resourceTypes: { mode: 'all' },
+    resourceNames: { mode: 'fromResourceType' }
+  },
   flags: [
     {
       kind: 'enum',
@@ -703,6 +746,10 @@ const scaleCommand = createLeafCommand({
   short:
     'Set a new size for a deployment, replica set, or replication controller',
   handlerId: 'scale',
+  completion: {
+    resourceTypes: { mode: 'all' },
+    resourceNames: { mode: 'fromResourceType' }
+  },
   flags: [{ kind: 'string', name: 'replicas', description: 'Replica count' }]
 })
 
@@ -711,6 +758,10 @@ const exposeCommand = createLeafCommand({
   use: 'expose TYPE NAME --port=PORT',
   short: 'Expose a resource as a new Kubernetes service',
   handlerId: 'expose',
+  completion: {
+    resourceTypes: { mode: 'all' },
+    resourceNames: { mode: 'fromResourceType' }
+  },
   flags: [
     { kind: 'string', name: 'port', description: 'Service port' },
     { kind: 'string', name: 'target-port', description: 'Target port' },
@@ -725,6 +776,10 @@ const waitCommand = createLeafCommand({
   use: 'wait --for=condition=Ready TYPE/NAME --timeout=60s',
   short: 'Wait for a specific condition on one or many resources',
   handlerId: 'wait',
+  completion: {
+    resourceTypes: { mode: 'all' },
+    resourceNames: { mode: 'fromResourceType' }
+  },
   flags: [
     { kind: 'string', name: 'for', description: 'Condition expression' },
     { kind: 'string', name: 'timeout', description: 'Duration' }
@@ -765,7 +820,11 @@ const setImageCommand = createLeafCommand({
   path: ['set', 'image'],
   use: 'set image TYPE/NAME CONTAINER=IMAGE [CONTAINER=IMAGE...]',
   short: 'Update the image of a pod template or pod',
-  handlerId: 'set'
+  handlerId: 'set',
+  completion: {
+    resourceTypes: { mode: 'all' },
+    resourceNames: { mode: 'fromResourceType' }
+  }
 })
 
 const setCommand = command({
@@ -783,6 +842,13 @@ const rolloutStatusCommand = createLeafCommand({
   use: 'rollout status (TYPE NAME | TYPE/NAME)',
   short: 'Show the status of the rollout',
   handlerId: 'rollout',
+  completion: {
+    resourceTypes: {
+      mode: 'allowlist',
+      resources: ROLLOUT_RESOURCE_ALLOWLIST
+    },
+    resourceNames: { mode: 'fromResourceType' }
+  },
   flags: [
     { kind: 'string', name: 'timeout', description: 'Duration' },
     { kind: 'string', name: 'watch', description: 'true or false' }
@@ -794,6 +860,13 @@ const rolloutHistoryCommand = createLeafCommand({
   use: 'rollout history (TYPE NAME | TYPE/NAME)',
   short: 'View rollout history',
   handlerId: 'rollout',
+  completion: {
+    resourceTypes: {
+      mode: 'allowlist',
+      resources: ROLLOUT_RESOURCE_ALLOWLIST
+    },
+    resourceNames: { mode: 'fromResourceType' }
+  },
   flags: [{ kind: 'string', name: 'revision', description: 'Revision id' }]
 })
 
@@ -801,7 +874,14 @@ const rolloutRestartCommand = createLeafCommand({
   path: ['rollout', 'restart'],
   use: 'rollout restart (TYPE NAME | TYPE/NAME)',
   short: 'Restart a resource',
-  handlerId: 'rollout'
+  handlerId: 'rollout',
+  completion: {
+    resourceTypes: {
+      mode: 'allowlist',
+      resources: ROLLOUT_RESOURCE_ALLOWLIST
+    },
+    resourceNames: { mode: 'fromResourceType' }
+  }
 })
 
 const rolloutUndoCommand = createLeafCommand({
@@ -809,6 +889,13 @@ const rolloutUndoCommand = createLeafCommand({
   use: 'rollout undo (TYPE NAME | TYPE/NAME)',
   short: 'Roll back to a previous revision',
   handlerId: 'rollout',
+  completion: {
+    resourceTypes: {
+      mode: 'allowlist',
+      resources: ROLLOUT_RESOURCE_ALLOWLIST
+    },
+    resourceNames: { mode: 'fromResourceType' }
+  },
   flags: [
     { kind: 'string', name: 'revision', description: 'Revision id' },
     { kind: 'string', name: 'to-revision', description: 'Revision id' }
@@ -835,6 +922,10 @@ const topPodsCommand = createLeafCommand({
   use: 'top pods [NAME]',
   short: 'Display resource (CPU/memory) usage of pods',
   handlerId: 'top-pods',
+  completion: {
+    resourceTypes: { mode: 'none' },
+    resourceNames: { mode: 'pods' }
+  },
   flags: [
     { kind: 'string', name: 'selector', short: 'l', description: 'Selector' }
   ]
@@ -845,6 +936,10 @@ const topPodCommand = createLeafCommand({
   use: 'top pod [NAME]',
   short: 'Display resource (CPU/memory) usage of pods',
   handlerId: 'top-pods',
+  completion: {
+    resourceTypes: { mode: 'none' },
+    resourceNames: { mode: 'pods' }
+  },
   flags: [
     { kind: 'string', name: 'selector', short: 'l', description: 'Selector' }
   ]
@@ -855,6 +950,10 @@ const topNodesCommand = createLeafCommand({
   use: 'top nodes [NAME]',
   short: 'Display resource (CPU/memory) usage of nodes',
   handlerId: 'top-nodes',
+  completion: {
+    resourceTypes: { mode: 'none' },
+    resourceNames: { mode: 'nodes' }
+  },
   flags: [
     { kind: 'string', name: 'selector', short: 'l', description: 'Selector' }
   ]
@@ -865,6 +964,10 @@ const topNodeCommand = createLeafCommand({
   use: 'top node [NAME]',
   short: 'Display resource (CPU/memory) usage of nodes',
   handlerId: 'top-nodes',
+  completion: {
+    resourceTypes: { mode: 'none' },
+    resourceNames: { mode: 'nodes' }
+  },
   flags: [
     { kind: 'string', name: 'selector', short: 'l', description: 'Selector' }
   ]

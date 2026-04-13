@@ -21,6 +21,38 @@ export interface KubectlArgSpec {
   description?: string
 }
 
+export type KubectlCompletionResourceTypes =
+  | {
+      mode: 'none'
+    }
+  | {
+      mode: 'all'
+      includePseudoResources?: boolean
+    }
+  | {
+      mode: 'allowlist'
+      resources: readonly string[]
+    }
+
+export type KubectlCompletionResourceNames =
+  | {
+      mode: 'none'
+    }
+  | {
+      mode: 'fromResourceType'
+    }
+  | {
+      mode: 'pods'
+    }
+  | {
+      mode: 'nodes'
+    }
+
+export interface KubectlCompletionSpec {
+  resourceTypes?: KubectlCompletionResourceTypes
+  resourceNames?: KubectlCompletionResourceNames
+}
+
 export type KubectlCommandStage = 'complete' | 'validate' | 'run'
 
 export interface KubectlCommandRuntimeContext {
@@ -61,6 +93,7 @@ export interface KubectlCommandSpec {
   args?: readonly KubectlArgSpec[]
   subcommands: readonly KubectlCommandSpec[]
   handlerId?: string
+  completion?: KubectlCompletionSpec
   hooks?: Partial<Record<KubectlCommandStage, KubectlCommandHook>>
 }
 

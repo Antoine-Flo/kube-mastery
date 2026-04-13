@@ -9,6 +9,17 @@ export const createLeafCommand = (definition: {
   example?: string
   aliases?: readonly string[]
   handlerId?: string
+  completion?: {
+    resourceTypes?:
+      | { mode: 'none' }
+      | { mode: 'all'; includePseudoResources?: boolean }
+      | { mode: 'allowlist'; resources: readonly string[] }
+    resourceNames?:
+      | { mode: 'none' }
+      | { mode: 'fromResourceType' }
+      | { mode: 'pods' }
+      | { mode: 'nodes' }
+  }
   flags?: ReadonlyArray<{
     kind: 'bool' | 'string' | 'enum' | 'stringArray'
     name: string
@@ -22,6 +33,7 @@ export const createLeafCommand = (definition: {
     path: definition.path,
     use: definition.use,
     aliases: definition.aliases,
+    completion: definition.completion,
     description: {
       short: definition.short,
       long: definition.long,

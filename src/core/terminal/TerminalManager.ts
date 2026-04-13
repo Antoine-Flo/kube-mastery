@@ -7,10 +7,8 @@ import $ from 'jquery'
 import installJQueryTerminal from 'jquery.terminal'
 import installUnixFormatting from 'jquery.terminal/js/unix_formatting'
 import type { EmulatedEnvironment } from '../emulatedEnvironment/EmulatedEnvironment'
-import type { KubectlCommandSpec } from '../kubectl/cli/model'
-import { KUBECTL_ROOT_COMMAND_SPEC } from '../kubectl/cli/registry/root'
-import { KUBECTL_RESOURCES } from '../kubectl/commands/resourceCatalog'
-import { getShellRegistryCommandNames } from '../shell/commands'
+import { createDefaultAutocompleteEngine } from './autocomplete'
+import type { AutocompleteContext } from './autocomplete/types'
 import { createJQueryTerminalRenderer } from './renderer/JQueryTerminalRenderer'
 import type { TerminalRenderer } from './renderer/TerminalRenderer'
 
@@ -78,6 +76,7 @@ const state: TerminalManagerState = {
 
 let jqueryTerminalInstalled = false
 let unixFormattingInstalled = false
+const autocompleteEngine = createDefaultAutocompleteEngine()
 
 const applyAnsiColorOverrides = (): void => {
   if ($.terminal == null || $.terminal.ansi_colors == null) {
@@ -94,123 +93,82 @@ const applyAnsiColorOverrides = (): void => {
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════
 
-const resourceAliasCandidates = Object.values(KUBECTL_RESOURCES)
-  .flatMap((aliases) => aliases)
-  .sort((left, right) => left.localeCompare(right))
-
-const findKubectlCommandByPath = (
-  path: readonly string[]
-): KubectlCommandSpec | undefined => {
-  let current: KubectlCommandSpec = KUBECTL_ROOT_COMMAND_SPEC
-  for (const segment of path) {
-    const nextCommand = current.subcommands.find((subcommand) => {
-      const commandSegment = subcommand.path[subcommand.path.length - 1]
-      return commandSegment === segment
-    })
-    if (nextCommand == null) {
-      return undefined
-    }
-    current = nextCommand
+const buildAutocompleteContext = (): AutocompleteContext | null => {
+  if (state.currentEnvironment == null) {
+    return null
   }
-  return current
-}
-
-const filterByPrefix = (
-  values: readonly string[],
-  prefix: string
-): string[] => {
-  const normalizedPrefix = prefix.trim()
-  if (normalizedPrefix.length === 0) {
-    return [...values]
+  const environment = state.currentEnvironment
+  return {
+    clusterState: {
+      getPods: (namespace?: string) =>
+        environment.apiServer.listResources('Pod', namespace),
+      getConfigMaps: (namespace?: string) =>
+        environment.apiServer.listResources('ConfigMap', namespace),
+      getSecrets: (namespace?: string) =>
+        environment.apiServer.listResources('Secret', namespace),
+      getNodes: () => environment.apiServer.listResources('Node'),
+      getReplicaSets: (namespace?: string) =>
+        environment.apiServer.listResources('ReplicaSet', namespace),
+      getDaemonSets: (namespace?: string) =>
+        environment.apiServer.listResources('DaemonSet', namespace),
+      getStatefulSets: (namespace?: string) =>
+        environment.apiServer.listResources('StatefulSet', namespace),
+      getDeployments: (namespace?: string) =>
+        environment.apiServer.listResources('Deployment', namespace),
+      getLeases: (namespace?: string) =>
+        environment.apiServer.listResources('Lease', namespace),
+      getNetworkPolicies: (namespace?: string) =>
+        environment.apiServer.listResources('NetworkPolicy', namespace),
+      getNamespaces: () => environment.apiServer.listResources('Namespace')
+    },
+    fileSystem: environment.shellContextStack.getCurrentFileSystem()
   }
-  return values.filter((value) => value.startsWith(normalizedPrefix))
-}
-
-const getVisibleFlagSuggestions = (
-  commandSpec: KubectlCommandSpec | undefined,
-  prefix: string
-): string[] => {
-  if (commandSpec == null) {
-    return []
-  }
-  const flags = [
-    ...KUBECTL_ROOT_COMMAND_SPEC.flags,
-    ...commandSpec.flags
-  ]
-    .filter((flag) => !flag.hidden)
-    .flatMap((flag) => {
-      const longFlag = `--${flag.name}`
-      if (flag.short == null) {
-        return [longFlag]
-      }
-      return [longFlag, `-${flag.short}`]
-    })
-  const uniqueFlags = [...new Set(flags)]
-  return filterByPrefix(uniqueFlags, prefix)
 }
 
 const buildCompletionCandidates = (command: string): string[] => {
-  const shellCommands = [...getShellRegistryCommandNames()]
-  const commandLine = command.trimStart()
-
-  if (commandLine.length === 0) {
-    return ['kubectl', ...shellCommands]
-  }
-
-  const tokens = commandLine.split(/\s+/).filter((token) => token.length > 0)
-  if (tokens.length === 0) {
-    return ['kubectl', ...shellCommands]
-  }
-
-  if (tokens[0] !== 'kubectl') {
-    if (tokens.length > 1) {
-      return []
-    }
-    return filterByPrefix(['kubectl', ...shellCommands], tokens[0])
-  }
-
-  const kubectlRootCommands = KUBECTL_ROOT_COMMAND_SPEC.subcommands.map(
-    (subcommand) => subcommand.path[subcommand.path.length - 1]
-  )
-
-  if (tokens.length === 1) {
-    return kubectlRootCommands
-  }
-
-  const kubectlArgs = tokens.slice(1)
-  const activeToken = kubectlArgs[kubectlArgs.length - 1] ?? ''
-  const basePath = kubectlArgs.slice(0, -1)
-
-  if (basePath.length === 0) {
-    return filterByPrefix(kubectlRootCommands, activeToken)
-  }
-
-  if (activeToken.startsWith('-')) {
-    const resolvedCommand =
-      findKubectlCommandByPath(basePath) ??
-      findKubectlCommandByPath(basePath.slice(0, 1))
-    return getVisibleFlagSuggestions(resolvedCommand, activeToken)
-  }
-
-  const headCommand = basePath[0]
-  if (
-    (headCommand === 'get' ||
-      headCommand === 'describe' ||
-      headCommand === 'delete') &&
-    basePath.length === 1
-  ) {
-    return filterByPrefix(resourceAliasCandidates, activeToken)
-  }
-
-  const currentCommand = findKubectlCommandByPath(basePath)
-  if (currentCommand == null) {
+  const context = buildAutocompleteContext()
+  if (context == null) {
     return []
   }
+  const suggestions = autocompleteEngine.getCompletions(command, context)
+  return [...new Set(suggestions)].sort((left, right) =>
+    left.localeCompare(right)
+  )
+}
 
-  const subcommands = currentCommand.subcommands.map((subcommand) => {
-    return subcommand.path[subcommand.path.length - 1]
-  })
-  return filterByPrefix(subcommands, activeToken)
+const buildCompletionResults = (
+  command: string
+): Array<{ text: string; suffix: string }> => {
+  const context = buildAutocompleteContext()
+  if (context == null) {
+    return []
+  }
+  const suggestions = autocompleteEngine.getCompletionResults(command, context)
+  return suggestions.sort((left, right) => left.text.localeCompare(right.text))
+}
+
+const getCurrentToken = (line: string): string => {
+  if (line.endsWith(' ')) {
+    return ''
+  }
+  const lastSpace = line.lastIndexOf(' ')
+  if (lastSpace === -1) {
+    return line
+  }
+  return line.slice(lastSpace + 1)
+}
+
+const applySingleCompletion = (
+  line: string,
+  completion: { text: string; suffix: string }
+): string => {
+  const currentToken = getCurrentToken(line)
+  const lineBeforeToken = line.slice(0, line.length - currentToken.length)
+  const completedLine = `${lineBeforeToken}${completion.text}${completion.suffix}`
+  if (line === completedLine) {
+    return line
+  }
+  return completedLine
 }
 
 const applyThemeToContainer = (): void => {
@@ -300,6 +258,13 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
         callback: (values: string[]) => void
       ): void {
         const currentLine = this.get_command?.() ?? commandValue
+        const completionResults = buildCompletionResults(currentLine)
+        if (completionResults.length === 1) {
+          const nextLine = applySingleCompletion(currentLine, completionResults[0])
+          this.set_command(nextLine)
+          callback([])
+          return
+        }
         callback(buildCompletionCandidates(currentLine))
       },
       keydown: (event: KeyboardEvent): boolean => {

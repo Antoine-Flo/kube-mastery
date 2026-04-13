@@ -1,6 +1,7 @@
 import type {
   KubectlArgSpec,
   KubectlCommandDescription,
+  KubectlCompletionSpec,
   KubectlCommandSpec,
   KubectlFlagSpec
 } from './model'
@@ -14,6 +15,7 @@ type MutableCommandSpec = {
   flags: KubectlFlagSpec[]
   args: KubectlArgSpec[]
   subcommands: KubectlCommandSpec[]
+  completion?: KubectlCompletionSpec
   handlerId?: string
 }
 
@@ -74,6 +76,7 @@ const createMutableSpec = (
   options?: {
     aliases?: readonly string[]
     disableFlagsInUseLine?: boolean
+    completion?: KubectlCompletionSpec
   }
 ): MutableCommandSpec => {
   return {
@@ -84,7 +87,8 @@ const createMutableSpec = (
     description,
     flags: [],
     args: [],
-    subcommands: []
+    subcommands: [],
+    completion: options?.completion
   }
 }
 
@@ -107,7 +111,8 @@ const buildCommandSpec = (
     flags: Object.freeze([...mutableSpec.flags]),
     args: Object.freeze([...mutableSpec.args]),
     subcommands: Object.freeze([...mutableSpec.subcommands]),
-    handlerId: mutableSpec.handlerId
+    handlerId: mutableSpec.handlerId,
+    completion: mutableSpec.completion
   }
 }
 
@@ -117,6 +122,7 @@ export const command = (definition: {
   description: KubectlCommandDescription
   aliases?: readonly string[]
   disableFlagsInUseLine?: boolean
+  completion?: KubectlCompletionSpec
 }): CommandBuilder => {
   const mutableSpec = createMutableSpec(
     definition.path,
@@ -124,7 +130,8 @@ export const command = (definition: {
     definition.description,
     {
       aliases: definition.aliases,
-      disableFlagsInUseLine: definition.disableFlagsInUseLine
+      disableFlagsInUseLine: definition.disableFlagsInUseLine,
+      completion: definition.completion
     }
   )
 
