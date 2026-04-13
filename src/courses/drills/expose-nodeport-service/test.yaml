@@ -1,0 +1,117 @@
+version: 1
+drillId: expose-nodeport-service
+resetKindBeforeRun: false
+timeoutMs: 60000
+
+manifests:
+  - path: webapp-deploy.yaml
+    content: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: webapp
+        namespace: app
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: webapp
+        template:
+          metadata:
+            labels:
+              app: webapp
+          spec:
+            containers:
+              - name: nginx
+                image: nginx:1.28
+                ports:
+                  - containerPort: 80
+  - path: webapp-nodeport.yaml
+    content: |
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: webapp-nodeport
+        namespace: app
+      spec:
+        type: NodePort
+        selector:
+          app: webapp
+        ports:
+          - port: 80
+            targetPort: 80
+            nodePort: 30090
+
+steps:
+  - id: cleanup-namespace
+    run: kubectl delete namespace app
+    expectParity: false
+  - id: create-namespace
+    run: kubectl create namespace app
+  - id: apply-deployment
+    run: kubectl apply -f webapp-deploy.yaml
+  - id: apply-service
+    run: kubectl apply -f webapp-nodeport.yaml
+
+checks:
+  cluster:
+    - id: deployment-exists
+      kind: deployment
+      namespace: app
+      name: webapp
+      path: '{.metadata.name}'
+      expected: 'webapp'
+    - id: deployment-image
+      kind: deployment
+      namespace: app
+      name: webapp
+      path: '{.spec.template.spec.containers[0].image}'
+      expected: 'nginx:1.28'
+    - id: deployment-container-port
+      kind: deployment
+      namespace: app
+      name: webapp
+      path: '{.spec.template.spec.containers[0].ports[0].containerPort}'
+      expected: '80'
+    - id: service-type
+      kind: service
+      namespace: app
+      name: webapp-nodeport
+      path: '{.spec.type}'
+      expected: 'NodePort'
+    - id: service-port
+      kind: service
+      namespace: app
+      name: webapp-nodeport
+      path: '{.spec.ports[0].port}'
+      expected: '80'
+    - id: service-target-port
+      kind: service
+      namespace: app
+      name: webapp-nodeport
+      path: '{.spec.ports[0].targetPort}'
+      expected: '80'
+    - id: service-node-port
+      kind: service
+      namespace: app
+      name: webapp-nodeport
+      path: '{.spec.ports[0].nodePort}'
+      expected: '30090'
+    - id: service-selector
+      kind: service
+      namespace: app
+      name: webapp-nodeport
+      path: '{.spec.selector.app}'
+      expected: 'webapp'
+
+  filesystem:
+    - id: deploy-manifest-port
+      path: webapp-deploy.yaml
+      contains: 'containerPort: 80'
+    - id: service-manifest-nodeport
+      path: webapp-nodeport.yaml
+      contains: 'nodePort: 30090'
+
+compare:
+  normalize:
+    stripAgeValues: true

@@ -1,81 +1,169 @@
 ---
 title: Expose Workload Through NodePort
-isDraft: true
 description: Create or fix a NodePort service and verify external node-level exposure.
 tag: services_networking
 environment: minimal
 ckaTargetMinutes: 6
 ---
 
-## Extract `webapp` container port from deployment spec
+## Create namespace `app`
 
 ### Solution
+
+```bash
+kubectl create namespace app
+```
+
+This namespace isolates the workload and service used in the drill.
+
+## Create deployment `webapp` in namespace `app` with image `nginx:1.28`, label `app=webapp`, and containerPort `80`
+
+### Solution
+
+Generate a base manifest quickly:
+
+```bash
+kubectl create deployment webapp -n app --image=nginx:1.28 --dry-run=client -o yaml > webapp-deploy.yaml
+```
+
+Then edit `webapp-deploy.yaml` so it matches this final manifest:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp
+  namespace: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webapp
+  template:
+    metadata:
+      labels:
+        app: webapp
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.28
+          ports:
+            - containerPort: 80
+```
+
+```bash
+kubectl apply -f webapp-deploy.yaml
+```
+
+Reference lesson for recall: https://kubemastery.com/en/courses/common-core/what-is-a-service
+
+The `selector.matchLabels` and `template.metadata.labels` must match exactly.
+
+### Validation
+
+```yaml
+- type: clusterResourceExists
+  kind: Deployment
+  namespace: app
+  name: webapp
+  onFail: "Le deployment `webapp` n'existe pas dans `app`. Vérifiez que `webapp-deploy.yaml` a bien été appliqué."
+- type: clusterFieldEquals
+  kind: Deployment
+  namespace: app
+  name: webapp
+  path: '{.spec.template.spec.containers[0].image}'
+  value: 'nginx:1.28'
+  onFail: "L'image du deployment `webapp` n'est pas `nginx:1.28`. Vérifiez `spec.template.spec.containers[0].image`."
+- type: clusterFieldEquals
+  kind: Deployment
+  namespace: app
+  name: webapp
+  path: '{.spec.template.spec.containers[0].ports[0].containerPort}'
+  value: '80'
+  onFail: "Le containerPort de `webapp` n'est pas `80`. Vérifiez `spec.template.spec.containers[0].ports`."
+```
+
+## Create service `webapp-nodeport` in namespace `app` with type `NodePort`, port `80`, targetPort `80`, nodePort `30090`
+
+### Solution
+
+Use the deployment container port as `targetPort`:
 
 ```bash
 kubectl get deployment webapp -n app -o jsonpath='{.spec.template.spec.containers[0].ports[0].containerPort}'
 ```
 
-Use this value as `targetPort` to avoid creating a service that points to the wrong container port.
-
-## Create NodePort service with deterministic node port
-
-### Solution
+Generate a base manifest quickly:
 
 ```bash
-kubectl expose deployment webapp -n app --name=webapp-nodeport --type=NodePort --port=80 --target-port=8080 --dry-run=client -o yaml > webapp-nodeport.yaml
+kubectl expose deployment webapp -n app --name=webapp-nodeport --type=NodePort --port=80 --target-port=80 --dry-run=client -o yaml > webapp-nodeport.yaml
 ```
 
-Generate manifest first so you can set an explicit `nodePort` and keep the exercise verifiable.
+Then edit `webapp-nodeport.yaml` so it matches this final manifest:
 
-## Apply the service manifest after setting `nodePort: 30080`
-
-### Solution
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp-nodeport
+  namespace: app
+spec:
+  type: NodePort
+  selector:
+    app: webapp
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30090
+```
 
 ```bash
-kubectl apply -f webapp-nodeport.yaml -n app
+kubectl apply -f webapp-nodeport.yaml
 ```
 
-A fixed nodePort removes ambiguity and makes post-submit checks deterministic.
-
-## Validate NodePort service contract (type, port, targetPort, nodePort)
-
-### Solution
-
-```bash
-kubectl get svc webapp-nodeport -n app -o jsonpath='{.spec.type} {.spec.ports[0].port} {.spec.ports[0].targetPort} {.spec.ports[0].nodePort}'
-```
-
-Expected shape is `NodePort 80 8080 30080`.
+A fixed `nodePort` keeps the expected output deterministic.
 
 ### Validation
 
 ```yaml
+- type: clusterResourceExists
+  kind: Service
+  namespace: app
+  name: webapp-nodeport
+  onFail: "Le service `webapp-nodeport` n'existe pas dans `app`. Vérifiez que `webapp-nodeport.yaml` a bien été appliqué."
+- type: clusterFieldEquals
+  kind: Service
+  namespace: app
+  name: webapp-nodeport
+  path: '{.spec.type}'
+  value: 'NodePort'
+  onFail: "Le service `webapp-nodeport` n'est pas de type `NodePort`. Vérifiez `spec.type`."
+- type: clusterFieldEquals
+  kind: Service
+  namespace: app
+  name: webapp-nodeport
+  path: '{.spec.ports[0].port}'
+  value: '80'
+  onFail: "Le port du service `webapp-nodeport` n'est pas `80`. Vérifiez `spec.ports[0].port`."
+- type: clusterFieldEquals
+  kind: Service
+  namespace: app
+  name: webapp-nodeport
+  path: '{.spec.ports[0].targetPort}'
+  value: '80'
+  onFail: "Le targetPort du service `webapp-nodeport` n'est pas `80`. Vérifiez `spec.ports[0].targetPort`."
 - type: clusterFieldEquals
   kind: Service
   namespace: app
   name: webapp-nodeport
   path: '{.spec.ports[0].nodePort}'
-  value: '30080'
-  onFail: 'Le nodePort doit être `30080`.'
-```
-
-## Validate that endpoints are attached to the service
-
-### Solution
-
-```bash
-kubectl get endpoints webapp-nodeport -n app -o jsonpath='{.subsets[*].addresses[*].ip}'
-```
-
-Endpoint IPs confirm the service is not only defined, but actually routing to running pods.
-
-### Validation
-
-```yaml
-- type: clusterFieldNotEmpty
-  kind: Endpoints
+  value: '30090'
+  onFail: "Le nodePort du service `webapp-nodeport` n'est pas `30090`. Vérifiez `spec.ports[0].nodePort`."
+- type: clusterFieldEquals
+  kind: Service
   namespace: app
   name: webapp-nodeport
-  path: '{.subsets[*].addresses[*].ip}'
-  onFail: 'Aucun endpoint trouvé pour `webapp-nodeport`.'
+  path: '{.spec.selector.app}'
+  value: 'webapp'
+  onFail: "Le selector du service `webapp-nodeport` n'est pas `app=webapp`. Vérifiez `spec.selector`."
 ```
