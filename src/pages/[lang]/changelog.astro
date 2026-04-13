@@ -1,0 +1,119 @@
+---
+import ChangelogContent from '../../content/site-changelog.md'
+import Layout from '../../layouts/Layout.astro'
+import { useTranslations } from '../../i18n/utils'
+
+const locale = Astro.params.lang as 'en' | 'fr'
+const t = useTranslations(locale)
+---
+
+<Layout
+  seo={{
+    title: `${t('changelog_title')} | KubeMastery`,
+    description: t('changelog_metaDescription')
+  }}
+>
+  <article class="changelog">
+    <header class="changelog__header">
+      <h1 class="changelog__title">{t('changelog_title')}</h1>
+    </header>
+    <div class="changelog__body">
+      <ChangelogContent />
+    </div>
+  </article>
+</Layout>
+
+<style>
+  .changelog {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 4rem;
+  }
+
+  .changelog__header {
+    margin-bottom: 2.5rem;
+  }
+
+  .changelog__title {
+    font-size: 1.875rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-gray-12);
+    letter-spacing: -0.02em;
+    margin: 0 0 0.75rem;
+  }
+
+  .changelog__body :global(h2) {
+    font-size: 1.125rem;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-12);
+    margin: 2.25rem 0 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-gray-4);
+    letter-spacing: -0.01em;
+  }
+
+  .changelog__body :global(h2:first-of-type) {
+    margin-top: 0;
+  }
+
+  .changelog__body :global(h3) {
+    font-size: 1rem;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-11);
+    margin: 1.25rem 0 0.5rem;
+  }
+
+  .changelog__body :global(p) {
+    margin: 0 0 1rem;
+    color: var(--color-gray-11);
+    line-height: 1.65;
+  }
+
+  .changelog__body :global(ul),
+  .changelog__body :global(ol) {
+    margin: 0 0 1rem;
+    padding-left: 1.25rem;
+    color: var(--color-gray-11);
+    line-height: 1.65;
+  }
+
+  .changelog__body :global(li) {
+    margin-bottom: 0.35rem;
+  }
+
+  .changelog__body :global(a) {
+    color: var(--color-accent-11, var(--color-blue-11));
+    text-decoration: none;
+  }
+
+  .changelog__body :global(a:hover) {
+    text-decoration: underline;
+  }
+
+  .changelog__body :global(pre) {
+    margin: 0 0 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+    overflow-x: auto;
+    font-size: var(--text-sm);
+    border: 1px solid var(--color-gray-4);
+    background: var(--color-gray-2);
+  }
+
+  .changelog__body :global(code) {
+    font-size: 0.9em;
+  }
+
+  .changelog__body :global(p code),
+  .changelog__body :global(li code) {
+    padding: 0.1em 0.35em;
+    border-radius: 0.25rem;
+    background: var(--color-gray-3);
+    color: var(--color-gray-12);
+  }
+
+  .changelog__body :global(pre code) {
+    padding: 0;
+    background: none;
+  }
+</style>

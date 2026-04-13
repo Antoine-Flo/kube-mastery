@@ -22,33 +22,8 @@ export const createMockRenderer = (): MockRenderer => {
       callCount++
     },
 
-    writeChar: (char: string) => {
-      output.push(char)
-      callCount++
-    },
-
     clearLine: () => {
       output.push('[CLEAR_LINE]')
-      callCount++
-    },
-
-    clearToEnd: () => {
-      output.push('[CLEAR_TO_END]')
-      callCount++
-    },
-
-    moveCursorLeft: () => {
-      output.push('[CURSOR_LEFT]')
-      callCount++
-    },
-
-    moveCursorRight: () => {
-      output.push('[CURSOR_RIGHT]')
-      callCount++
-    },
-
-    setCursorPosition: (position: number) => {
-      output.push(`[SET_CURSOR:${position}]`)
       callCount++
     },
 

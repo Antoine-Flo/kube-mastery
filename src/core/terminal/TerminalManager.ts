@@ -1,18 +1,18 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // TERMINAL MANAGER
 // ═══════════════════════════════════════════════════════════════════════════
-// Gère le cycle de vie du terminal xterm.js avec protection contre les race conditions
+// Gère le cycle de vie du terminal jQuery Terminal avec protection race conditions.
 
-import { FitAddon } from '@xterm/addon-fit'
-import { Terminal as XTermTerminal, type IDisposable } from '@xterm/xterm'
+import $ from 'jquery'
+import installJQueryTerminal from 'jquery.terminal'
+import installUnixFormatting from 'jquery.terminal/js/unix_formatting'
 import type { EmulatedEnvironment } from '../emulatedEnvironment/EmulatedEnvironment'
-import { createDefaultAutocompleteEngine } from './autocomplete'
-import type { AutocompleteClusterState } from './autocomplete/types'
-import {
-  createTerminalController,
-  type TerminalController
-} from './core/TerminalController'
-import { createXTermRenderer } from './renderer/XTermRenderer'
+import type { KubectlCommandSpec } from '../kubectl/cli/model'
+import { KUBECTL_ROOT_COMMAND_SPEC } from '../kubectl/cli/registry/root'
+import { KUBECTL_RESOURCES } from '../kubectl/commands/resourceCatalog'
+import { getShellRegistryCommandNames } from '../shell/commands'
+import { createJQueryTerminalRenderer } from './renderer/JQueryTerminalRenderer'
+import type { TerminalRenderer } from './renderer/TerminalRenderer'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -20,8 +20,6 @@ import { createXTermRenderer } from './renderer/XTermRenderer'
 
 export interface TerminalManagerOptions {
   theme: () => 'dark' | 'light'
-  rows?: number
-  scrollback?: number
 }
 
 export interface AttachOptions {
@@ -38,94 +36,198 @@ export interface AttachOptions {
 // ═══════════════════════════════════════════════════════════════════════════
 
 interface TerminalManagerState {
-  terminal: XTermTerminal | null
-  renderer: ReturnType<typeof createXTermRenderer> | null
-  controller: TerminalController | null
-  currentEnvironment: EmulatedEnvironment | null
-  dataDisposable: IDisposable | null
-  keyHandlerDisposable: IDisposable | null
+  terminal: JQueryTerminalInstance | null
+  renderer: TerminalRenderer | null
   resizeObserver: ResizeObserver | null
-  fitAddon: FitAddon | null
+  currentEnvironment: EmulatedEnvironment | null
+  container: HTMLElement | null
   options: TerminalManagerOptions | null
   onCommandCallback: ((command: string) => void) | null
   onInterruptCallback: (() => boolean) | null
+  inputLocked: boolean
   attachId: number
 }
 
-interface TerminalContainer extends HTMLElement {
-  __terminalResizeCleanup?: () => void
+interface JQueryTerminalInstance {
+  clear: () => void
+  destroy: () => void
+  disable: () => void
+  enable: () => void
+  echo: (value: string, options?: { raw?: boolean }) => void
+  focus: () => void
+  cols?: () => number
+  resize?: (width?: number, height?: number) => JQueryTerminalInstance
+  scroll_to_bottom?: () => JQueryTerminalInstance
+  set_command: (value: string) => void
+  set_prompt: (value: string) => void
+  get_command?: () => string
 }
 
 const state: TerminalManagerState = {
   terminal: null,
   renderer: null,
-  controller: null,
-  currentEnvironment: null,
-  dataDisposable: null,
-  keyHandlerDisposable: null,
   resizeObserver: null,
-  fitAddon: null,
+  currentEnvironment: null,
+  container: null,
   options: null,
   onCommandCallback: null,
   onInterruptCallback: null,
+  inputLocked: false,
   attachId: 0
+}
+
+let jqueryTerminalInstalled = false
+let unixFormattingInstalled = false
+
+const applyAnsiColorOverrides = (): void => {
+  if ($.terminal == null || $.terminal.ansi_colors == null) {
+    return
+  }
+
+  // Keep classic terminal mapping, but tune yellow to avoid orange tint.
+  $.terminal.ansi_colors.normal.yellow = '#bf8f00'
+  $.terminal.ansi_colors.bold.yellow = '#bf8f00'
+  $.terminal.ansi_colors.faited.yellow = '#bf8f00'
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════
 
-const getThemeColors = (theme: 'dark' | 'light') => ({
-  background: theme === 'dark' ? '#111113' : '#fcfcfc',
-  foreground: theme === 'dark' ? '#b4b4b4' : '#1a1a1a',
-  cursor: theme === 'dark' ? '#b4b4b4' : '#1a1a1a'
-})
+const resourceAliasCandidates = Object.values(KUBECTL_RESOURCES)
+  .flatMap((aliases) => aliases)
+  .sort((left, right) => left.localeCompare(right))
 
-const restoreCaretAfterInterrupt = (): void => {
-  if (state.controller == null) {
-    return
+const findKubectlCommandByPath = (
+  path: readonly string[]
+): KubectlCommandSpec | undefined => {
+  let current: KubectlCommandSpec = KUBECTL_ROOT_COMMAND_SPEC
+  for (const segment of path) {
+    const nextCommand = current.subcommands.find((subcommand) => {
+      const commandSegment = subcommand.path[subcommand.path.length - 1]
+      return commandSegment === segment
+    })
+    if (nextCommand == null) {
+      return undefined
+    }
+    current = nextCommand
   }
-  // Ensure cursor is visible and focused right after Ctrl+C stream interruption.
-  state.controller.write('\x1b[?25h')
-  state.controller.focus()
+  return current
 }
 
-const createAutocompleteClusterState = (
-  environment: EmulatedEnvironment
-): AutocompleteClusterState => {
-  const apiServer = environment.apiServer
-  return {
-    getPods: (namespace?: string) => {
-      return apiServer.listResources('Pod', namespace)
-    },
-    getConfigMaps: (namespace?: string) => {
-      return apiServer.listResources('ConfigMap', namespace)
-    },
-    getSecrets: (namespace?: string) => {
-      return apiServer.listResources('Secret', namespace)
-    },
-    getNodes: () => {
-      return apiServer.listResources('Node')
-    },
-    getReplicaSets: (namespace?: string) => {
-      return apiServer.listResources('ReplicaSet', namespace)
-    },
-    getDaemonSets: (namespace?: string) => {
-      return apiServer.listResources('DaemonSet', namespace)
-    },
-    getDeployments: (namespace?: string) => {
-      return apiServer.listResources('Deployment', namespace)
-    },
-    getLeases: (namespace?: string) => {
-      return apiServer.listResources('Lease', namespace)
-    },
-    getNetworkPolicies: (namespace?: string) => {
-      return apiServer.listResources('NetworkPolicy', namespace)
-    },
-    getNamespaces: () => {
-      return apiServer.listResources('Namespace')
-    }
+const filterByPrefix = (
+  values: readonly string[],
+  prefix: string
+): string[] => {
+  const normalizedPrefix = prefix.trim()
+  if (normalizedPrefix.length === 0) {
+    return [...values]
   }
+  return values.filter((value) => value.startsWith(normalizedPrefix))
+}
+
+const getVisibleFlagSuggestions = (
+  commandSpec: KubectlCommandSpec | undefined,
+  prefix: string
+): string[] => {
+  if (commandSpec == null) {
+    return []
+  }
+  const flags = [
+    ...KUBECTL_ROOT_COMMAND_SPEC.flags,
+    ...commandSpec.flags
+  ]
+    .filter((flag) => !flag.hidden)
+    .flatMap((flag) => {
+      const longFlag = `--${flag.name}`
+      if (flag.short == null) {
+        return [longFlag]
+      }
+      return [longFlag, `-${flag.short}`]
+    })
+  const uniqueFlags = [...new Set(flags)]
+  return filterByPrefix(uniqueFlags, prefix)
+}
+
+const buildCompletionCandidates = (command: string): string[] => {
+  const shellCommands = [...getShellRegistryCommandNames()]
+  const commandLine = command.trimStart()
+
+  if (commandLine.length === 0) {
+    return ['kubectl', ...shellCommands]
+  }
+
+  const tokens = commandLine.split(/\s+/).filter((token) => token.length > 0)
+  if (tokens.length === 0) {
+    return ['kubectl', ...shellCommands]
+  }
+
+  if (tokens[0] !== 'kubectl') {
+    if (tokens.length > 1) {
+      return []
+    }
+    return filterByPrefix(['kubectl', ...shellCommands], tokens[0])
+  }
+
+  const kubectlRootCommands = KUBECTL_ROOT_COMMAND_SPEC.subcommands.map(
+    (subcommand) => subcommand.path[subcommand.path.length - 1]
+  )
+
+  if (tokens.length === 1) {
+    return kubectlRootCommands
+  }
+
+  const kubectlArgs = tokens.slice(1)
+  const activeToken = kubectlArgs[kubectlArgs.length - 1] ?? ''
+  const basePath = kubectlArgs.slice(0, -1)
+
+  if (basePath.length === 0) {
+    return filterByPrefix(kubectlRootCommands, activeToken)
+  }
+
+  if (activeToken.startsWith('-')) {
+    const resolvedCommand =
+      findKubectlCommandByPath(basePath) ??
+      findKubectlCommandByPath(basePath.slice(0, 1))
+    return getVisibleFlagSuggestions(resolvedCommand, activeToken)
+  }
+
+  const headCommand = basePath[0]
+  if (
+    (headCommand === 'get' ||
+      headCommand === 'describe' ||
+      headCommand === 'delete') &&
+    basePath.length === 1
+  ) {
+    return filterByPrefix(resourceAliasCandidates, activeToken)
+  }
+
+  const currentCommand = findKubectlCommandByPath(basePath)
+  if (currentCommand == null) {
+    return []
+  }
+
+  const subcommands = currentCommand.subcommands.map((subcommand) => {
+    return subcommand.path[subcommand.path.length - 1]
+  })
+  return filterByPrefix(subcommands, activeToken)
+}
+
+const applyThemeToContainer = (): void => {
+  if (state.container == null || state.options == null) {
+    return
+  }
+  const isLightTheme = state.options.theme() === 'light'
+  state.container.classList.toggle('jt-theme-light', isLightTheme)
+  state.container.classList.toggle('jt-theme-dark', !isLightTheme)
+}
+
+const refreshPrompt = (): void => {
+  if (state.terminal == null || state.currentEnvironment == null) {
+    return
+  }
+  const prompt = state.currentEnvironment.shellContextStack.getCurrentPrompt()
+  state.terminal.set_prompt(prompt)
 }
 
 const cleanup = () => {
@@ -133,172 +235,126 @@ const cleanup = () => {
     state.resizeObserver.disconnect()
     state.resizeObserver = null
   }
-  if (state.fitAddon) {
-    state.fitAddon.dispose()
-    state.fitAddon = null
-  }
-  if (state.dataDisposable) {
-    state.dataDisposable.dispose()
-    state.dataDisposable = null
-  }
-  if (state.keyHandlerDisposable) {
-    state.keyHandlerDisposable.dispose()
-    state.keyHandlerDisposable = null
-  }
-  if (state.controller) {
-    state.controller.dispose()
-    state.controller = null
-  }
-  if (state.terminal) {
+  if (state.renderer) {
     try {
-      state.terminal.dispose()
+      state.renderer.dispose()
     } catch {
       /* ignore */
     }
-    state.terminal = null
   }
+  state.terminal = null
   state.renderer = null
+  state.container = null
+  state.inputLocked = false
 }
 
 const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
   if (!state.options || !state.currentEnvironment) {
     return
   }
+  if (!jqueryTerminalInstalled) {
+    installJQueryTerminal(window, $)
+    jqueryTerminalInstalled = true
+  }
+  if (!unixFormattingInstalled) {
+    installUnixFormatting(window, $)
+    applyAnsiColorOverrides()
+    unixFormattingInstalled = true
+  }
 
-  // Create terminal instance
-  const colors = getThemeColors(state.options.theme())
-  state.terminal = new XTermTerminal({
-    cursorBlink: true,
-    scrollback: state.options.scrollback ?? 1000,
-    rows: state.options.rows ?? 30,
-    theme: colors,
-    fontSize: 15,
-    lineHeight: 1.2
-  })
+  container.innerHTML = ''
+  const terminalElement = document.createElement('div')
+  terminalElement.className = 'jt-terminal'
+  container.appendChild(terminalElement)
 
-  state.renderer = createXTermRenderer(state.terminal)
-
-  // Create and load FitAddon
-  state.fitAddon = new FitAddon()
-  state.terminal.loadAddon(state.fitAddon)
-
-  // Open terminal in container
-  state.terminal.open(container)
-
-  // Fit terminal to container dimensions - use double RAF to ensure terminal is fully initialized
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      if (state.fitAddon && state.terminal) {
-        try {
-          state.fitAddon.fit()
-        } catch (error) {
-          throw new Error(`Failed to fit terminal: ${error}`)
-        }
+  const terminal = ($(terminalElement) as unknown as {
+    terminal: (
+      interpreter: (command: string) => void,
+      options: {
+        greetings: false
+        completion: (command: string, callback: (values: string[]) => void) => void
+        keydown: (event: KeyboardEvent) => boolean
+        prompt: () => string
+        history: boolean
+        outputLimit: number
+        scrollOnEcho: boolean
+        height: number
       }
-    })
-  })
-
-  // Observe container size (e.g. terminal opened on mobile after being collapsed)
-  let fitTimeout: ReturnType<typeof setTimeout> | null = null
-  state.resizeObserver = new ResizeObserver(() => {
-    if (fitTimeout) {
-      clearTimeout(fitTimeout)
+    ) => JQueryTerminalInstance
+  }).terminal(
+    (command: string) => {
+      if (state.inputLocked || state.onCommandCallback == null) {
+        return
+      }
+      const normalizedCommand = command.trim()
+      if (normalizedCommand.length === 0) {
+        return
+      }
+      state.onCommandCallback(normalizedCommand)
+    },
+    {
+      greetings: false,
+      completion: function (
+        this: JQueryTerminalInstance,
+        commandValue: string,
+        callback: (values: string[]) => void
+      ): void {
+        const currentLine = this.get_command?.() ?? commandValue
+        callback(buildCompletionCandidates(currentLine))
+      },
+      keydown: (event: KeyboardEvent): boolean => {
+        if (
+          event.ctrlKey &&
+          event.key.toLowerCase() === 'c' &&
+          event.type === 'keydown'
+        ) {
+          const selectedText = window.getSelection()?.toString() ?? ''
+          if (selectedText.length > 0) {
+            return true
+          }
+          const interruptHandled = state.onInterruptCallback?.() === true
+          if (interruptHandled) {
+            terminal.set_command('')
+          }
+          return false
+        }
+        return true
+      },
+      prompt: () => {
+        if (state.currentEnvironment == null) {
+          return ''
+        }
+        return state.currentEnvironment.shellContextStack.getCurrentPrompt()
+      },
+      history: true,
+      outputLimit: 2000,
+      scrollOnEcho: true,
+      height: Math.max(120, container.clientHeight)
     }
-    fitTimeout = setTimeout(() => {
-      if (
-        state.fitAddon &&
-        state.terminal &&
-        container.offsetWidth > 0 &&
-        container.offsetHeight > 0
-      ) {
-        try {
-          state.fitAddon.fit()
-        } catch {
-          /* ignore */
-        }
-      }
-      fitTimeout = null
-    }, 50)
+  )
+
+  state.container = container
+  state.terminal = terminal
+  state.renderer = createJQueryTerminalRenderer(terminal)
+  applyThemeToContainer()
+  terminal.resize?.(container.clientWidth, Math.max(120, container.clientHeight))
+  terminal.scroll_to_bottom?.()
+
+  state.resizeObserver = new ResizeObserver(() => {
+    if (state.terminal == null || state.container == null) {
+      return
+    }
+    const height = Math.max(120, state.container.clientHeight)
+    state.terminal.resize?.(state.container.clientWidth, height)
+    state.terminal.scroll_to_bottom?.()
   })
   state.resizeObserver.observe(container)
 
-  // Create controller
-  state.controller = createTerminalController({
-    renderer: state.renderer,
-    shellContextStack: state.currentEnvironment.shellContextStack,
-    clusterState: createAutocompleteClusterState(state.currentEnvironment),
-    autocompleteEngine: createDefaultAutocompleteEngine()
-  })
-
-  // Connect command callback
-  if (state.onCommandCallback) {
-    state.controller.onCommand(state.onCommandCallback)
-  }
-
-  // Display optional top prompt + shell prompt
-  state.terminal.clear()
   if (topPrompt) {
-    state.renderer.write(topPrompt)
+    state.renderer.write(`${topPrompt}\r\n`)
   }
-  state.controller.showPrompt()
-
-  state.dataDisposable = state.terminal.onData((data: string) => {
-    state.controller?.handleInput(data)
-  })
-
-  // Handle Ctrl+C: copy if selection, else cancel input and new prompt
-  state.terminal.attachCustomKeyEventHandler((event: KeyboardEvent) => {
-    if (event.ctrlKey && event.key === 'c' && event.type === 'keydown') {
-      const selection = state.terminal?.getSelection()
-      if (selection) {
-        navigator.clipboard.writeText(selection)
-        return false
-      }
-      const interruptHandled = state.onInterruptCallback?.() === true
-      if (interruptHandled) {
-        state.controller?.cancelInput()
-        restoreCaretAfterInterrupt()
-        return false
-      }
-      state.controller?.cancelInput()
-      restoreCaretAfterInterrupt()
-      return false
-    }
-    return true
-  })
-
+  refreshPrompt()
   state.terminal.focus()
-}
-
-const createResizeObserver = (
-  container: HTMLElement,
-  expectedAttachId: number
-) => {
-  // Only observe window resize, not container resize (to avoid infinite loop)
-  let resizeTimeout: number | null = null
-
-  const handleWindowResize = () => {
-    if (resizeTimeout) {
-      clearTimeout(resizeTimeout)
-    }
-
-    resizeTimeout = window.setTimeout(() => {
-      if (state.attachId === expectedAttachId && state.fitAddon) {
-        state.fitAddon.fit()
-      }
-    }, 150)
-  }
-
-  window.addEventListener('resize', handleWindowResize)
-
-  // Store cleanup function
-  const terminalContainer = container as TerminalContainer
-  terminalContainer.__terminalResizeCleanup = () => {
-    if (resizeTimeout) {
-      clearTimeout(resizeTimeout)
-    }
-    window.removeEventListener('resize', handleWindowResize)
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -331,17 +387,13 @@ export const attachTerminal = (options: AttachOptions): number => {
   state.onInterruptCallback = onInterrupt ?? null
   state.currentEnvironment = environment
 
-  // Setup terminal - use RAF to ensure container is in DOM after render
+  // Setup terminal with RAF to ensure container is mounted.
   requestAnimationFrame(() => {
     // Verify attachment is still valid (prevents race conditions)
     if (state.attachId !== currentAttachId) {
       return
     }
-
-    // Container already has dimensions, setup terminal immediately
     setupTerminal(container, topPrompt)
-    // Create ResizeObserver to handle future resizes
-    createResizeObserver(container, currentAttachId)
   })
 
   return currentAttachId
@@ -359,17 +411,33 @@ export const detachTerminal = (attachId?: number): void => {
 }
 
 export const updateTerminalTheme = (): void => {
-  if (!state.terminal || !state.options) {
-    return
-  }
-  state.terminal.options.theme = getThemeColors(state.options.theme())
+  applyThemeToContainer()
 }
 
-export const getTerminalController = (): TerminalController | null =>
-  state.controller
+export const getTerminalRenderer = (): TerminalRenderer | null => state.renderer
 
 export const getCurrentTerminalEnvironment = (): EmulatedEnvironment | null =>
   state.currentEnvironment
+
+export const syncTerminalPrompt = (): void => {
+  if (state.currentEnvironment == null) {
+    return
+  }
+  state.currentEnvironment.shellContextStack.updateCurrentPrompt()
+  refreshPrompt()
+}
+
+export const lockTerminalInput = (): void => {
+  state.inputLocked = true
+  state.terminal?.disable()
+}
+
+export const unlockTerminalInput = (): void => {
+  state.inputLocked = false
+  state.terminal?.enable()
+}
+
+export const isTerminalInputLocked = (): boolean => state.inputLocked
 
 export const focusTerminal = (): void => {
   if (state.terminal) {

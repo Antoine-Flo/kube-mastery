@@ -11,11 +11,6 @@ import astroExpressiveCode from 'astro-expressive-code'
 export default defineConfig({
   site: 'https://kubemastery.com',
 
-  // Inline Astro-scoped CSS into HTML (fewer blocking stylesheet requests; larger HTML per response).
-  build: {
-    inlineStylesheets: 'always'
-  },
-
   experimental: {
     queuedRendering: {
       enabled: true
@@ -73,8 +68,8 @@ export default defineConfig({
         '@codemirror/language',
         '@codemirror/lang-yaml',
         '@codemirror/theme-one-dark',
-        '@xterm/xterm',
-        '@xterm/addon-fit'
+        'jquery',
+        'jquery.terminal'
       ]
     }
   },
@@ -85,6 +80,7 @@ export default defineConfig({
     '/': '/en',
     '/terms-of-service': '/en/terms-of-service',
     '/privacy-policy': '/en/privacy-policy',
+    '/changelog': '/en/changelog',
     '/courses': '/en/courses'
   },
 

@@ -19,3 +19,8 @@ type AstroCloudflareRuntime =
 declare namespace App {
   interface Locals extends AstroCloudflareRuntime {}
 }
+
+declare module 'jquery.terminal/js/unix_formatting' {
+  const installUnixFormatting: (root: Window, jQuery: JQueryStatic) => JQueryStatic
+  export default installUnixFormatting
+}

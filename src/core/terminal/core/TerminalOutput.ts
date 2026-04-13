@@ -9,7 +9,7 @@ import type { TerminalRenderer } from '../renderer/TerminalRenderer'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-/** Séquence de fin de ligne pour xterm.js (CRLF) */
+/** Terminal end-of-line sequence (CRLF) for kubectl-like output formatting */
 const EOL = '\r\n'
 
 /** Séquence ANSI pour masquer le curseur */
@@ -93,7 +93,7 @@ export const createTerminalOutput = (
       if (!output) {
         return
       }
-      // Normaliser les fins de ligne : \n -> \r\n (xterm.js a besoin de CRLF)
+      // Normalize all newline variants to the terminal output convention.
       const normalized = output.replace(/\r?\n/g, EOL)
       if (normalized.endsWith(EOL)) {
         renderer.write(normalized)

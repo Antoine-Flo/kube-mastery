@@ -48,7 +48,6 @@ const SKIP_DIRS = new Set([
   'refs'
 ])
 const KNOWN_EXTERNAL_CLASS_PATTERNS = [
-  /^xterm-/,
   /^cm-/,
   /^astro-/,
   /^language-/

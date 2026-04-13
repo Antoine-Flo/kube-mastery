@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // TERMINAL MOUNT
 // ═══════════════════════════════════════════════════════════════════════════
-// Mounts xterm with seed-based EmulatedEnvironment. CommandDispatcher on first command.
+// Mounts jQuery Terminal with seed-based EmulatedEnvironment.
 
 import {
   createEmulatedEnvironment,
@@ -17,8 +17,12 @@ import { createCommandDispatcher } from '../core/terminal/core/CommandDispatcher
 import {
   attachTerminal,
   detachTerminal,
-  getTerminalController,
+  getTerminalRenderer,
   initTerminalManager,
+  isTerminalInputLocked,
+  lockTerminalInput,
+  syncTerminalPrompt,
+  unlockTerminalInput,
   updateTerminalTheme
 } from '../core/terminal/TerminalManager'
 import { createLogger } from '../logger/Logger'
@@ -30,8 +34,6 @@ function getTheme(): 'dark' | 'light' {
 }
 
 export interface MountTerminalOptions {
-  rows?: number
-  scrollback?: number
   /** Language (en/fr). Default en. */
   lang?: 'en' | 'fr'
   /** Seed name for lesson pages (uses getSeed). If omitted, uses demo seed (home page). Ignored if env is set. */
@@ -48,14 +50,12 @@ export interface MountTerminalOptions {
   commandLimitMessage?: string
 }
 
-/** Mounts xterm, returns cleanup (detach + destroy env). */
+/** Mounts terminal, returns cleanup (detach + destroy env). */
 export function mountTerminal(
   container: HTMLElement,
   options: MountTerminalOptions = {}
 ): () => void {
   const {
-    rows = 20,
-    scrollback = 1000,
     seedName,
     topPrompt,
     env: providedEnv,
@@ -75,9 +75,7 @@ export function mountTerminal(
   const logger = createLogger({ mirrorToConsole: false })
 
   initTerminalManager({
-    theme: getTheme,
-    rows,
-    scrollback
+    theme: getTheme
   })
 
   let dispatcher: ReturnType<typeof createCommandDispatcher> | null = null
@@ -88,8 +86,8 @@ export function mountTerminal(
     topPrompt,
     onCommand(command: string) {
       if (!dispatcher) {
-        const controller = getTerminalController()
-        if (!controller) {
+        const renderer = getTerminalRenderer()
+        if (renderer == null) {
           return
         }
         try {
@@ -104,7 +102,7 @@ export function mountTerminal(
           dispatcher = createCommandDispatcher({
             fileSystem,
             editorModal,
-            renderer: controller.getRenderer(),
+            renderer,
             shellContextStack: env.shellContextStack,
             apiServer: env.apiServer,
             networkRuntime: env.networkRuntime,
@@ -112,9 +110,9 @@ export function mountTerminal(
             logger,
             commandLimit,
             commandLimitMessage,
-            lockInput: () => controller.lockInput(),
-            unlockInput: () => controller.unlockInput(),
-            isInputLocked: () => controller.isInputLocked()
+            lockInput: lockTerminalInput,
+            unlockInput: unlockTerminalInput,
+            isInputLocked: isTerminalInputLocked
           })
         } catch (err) {
           console.error('[Terminal] Failed to create dispatcher:', err)
@@ -122,7 +120,7 @@ export function mountTerminal(
         }
       }
       dispatcher.execute(command)
-      getTerminalController()?.updatePrompt()
+      syncTerminalPrompt()
     },
     onInterrupt() {
       if (dispatcher == null) {

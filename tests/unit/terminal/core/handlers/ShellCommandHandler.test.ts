@@ -136,10 +136,10 @@ describe('ShellCommandHandler', () => {
       )
     })
 
-    it('should execute clear command and clear terminal', () => {
+    it('should execute clear command without manual renderer clear', () => {
       const result = handler.execute('clear', context)
       expect(result.ok).toBe(true)
-      expect(renderer.getOutput()).toContain('\x1b[2J\x1b[H')
+      expect(renderer.getOutput()).toBe('')
     })
 
     it('should execute help command', () => {

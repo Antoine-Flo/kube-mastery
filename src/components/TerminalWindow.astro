@@ -1,7 +1,6 @@
 ---
 interface Props {
   class?: string
-  rows?: number
   lang?: 'en' | 'fr'
   /** Seed name for lesson page; omitted = home (demo). */
   seedName?: string
@@ -22,12 +21,11 @@ interface Props {
 }
 
 import { Minus, Save, Square, X } from '@lucide/astro'
-import '@xterm/xterm/css/xterm.css'
+import 'jquery.terminal/css/jquery.terminal.css'
 import Button from './ui/Button.astro'
 
 const {
   class: className = '',
-  rows = 20,
   lang = 'en',
   seedName,
   fullHeight = false,
@@ -48,7 +46,6 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
   id={persistId ?? undefined}
   transition:persist={persistId ?? undefined}
   data-terminal-window
-  data-rows={rows}
   data-lang={lang}
   data-seed-name={seedName ?? undefined}
   data-persist-id={persistId ?? undefined}
@@ -280,8 +277,8 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
         lessonLayoutRoot instanceof HTMLElement &&
         window.matchMedia('(max-width: 1024px)').matches &&
         lessonLayoutRoot.getAttribute('data-terminal-open') !== 'true'
-      // Déjà monté (évite double xterm après astro:page-load / view transitions)
-      if (box.querySelector('.xterm')) {
+      // Déjà monté (évite double terminal après astro:page-load / view transitions)
+      if (box.querySelector('.terminal')) {
         loader.style.display = 'none'
         wrapper.style.display = 'block'
         return
@@ -292,7 +289,6 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
         return
       }
 
-      const rows = Number(el.dataset.rows) || 20
       const lang = (el.dataset.lang === 'fr' ? 'fr' : 'en') as 'en' | 'fr'
       const seedName = el.dataset.seedName
       const topPromptRaw = el.dataset.topPrompt
@@ -332,7 +328,6 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
 
       if (!isLesson) {
         doMount({
-          rows,
           lang,
           ...(seedName && { seedName }),
           ...(topPrompt !== undefined && { topPrompt }),
@@ -354,7 +349,7 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
       }
       const withEnv = (env: typeof g.__lessonEnv) => {
         if (env) {
-          doMount({ env, rows, lang })
+          doMount({ env, lang })
         }
       }
       if (g.__lessonEnv) {
@@ -498,6 +493,7 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
     min-height: 200px;
     background-color: var(--color-gray-1);
     text-align: left;
+    overflow: hidden;
   }
   .t-win:not(.t-win--full) .t-box {
     height: 450px;
