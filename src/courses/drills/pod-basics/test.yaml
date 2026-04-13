@@ -1,0 +1,85 @@
+version: 1
+drillId: pod-basics
+resetKindBeforeRun: false
+timeoutMs: 60000
+
+manifests:
+  - path: pod.yaml
+    content: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        labels:
+          app: web
+          tier: frontend
+        name: web
+        namespace: exercise-01
+      spec:
+        containers:
+          - image: nginx:1.28
+            name: web
+            resources:
+              limits:
+                cpu: 250m
+                memory: 128Mi
+              requests:
+                cpu: 100m
+                memory: 64Mi
+
+steps:
+  - id: cleanup-namespace
+    run: kubectl delete namespace exercise-01 --ignore-not-found=true
+    expectParity: false
+  - id: create-namespace
+    run: kubectl create namespace exercise-01
+  - id: apply-pod
+    run: kubectl apply -f pod.yaml
+  - id: add-version-label
+    run: kubectl label pod web -n exercise-01 version=v1
+  - id: remove-tier-label
+    run: kubectl label pod web -n exercise-01 tier-
+
+checks:
+  cluster:
+    - id: app-label
+      kind: pod
+      namespace: exercise-01
+      name: web
+      path: '{.metadata.labels.app}'
+      expected: 'web'
+    - id: version-label
+      kind: pod
+      namespace: exercise-01
+      name: web
+      path: '{.metadata.labels.version}'
+      expected: 'v1'
+    - id: tier-label-removed
+      kind: pod
+      namespace: exercise-01
+      name: web
+      path: '{.metadata.labels.tier}'
+      expected: ''
+    - id: cpu-request
+      kind: pod
+      namespace: exercise-01
+      name: web
+      path: '{.spec.containers[0].resources.requests.cpu}'
+      expected: '100m'
+    - id: memory-limit
+      kind: pod
+      namespace: exercise-01
+      name: web
+      path: '{.spec.containers[0].resources.limits.memory}'
+      expected: '128Mi'
+
+  filesystem:
+    - id: pod-manifest-has-resources
+      path: pod.yaml
+      contains: 'resources:'
+    - id: pod-manifest-has-label
+      path: pod.yaml
+      contains: 'tier: frontend'
+
+compare:
+  normalize:
+    stripAgeValues: true

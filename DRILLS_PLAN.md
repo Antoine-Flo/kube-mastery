@@ -8,8 +8,6 @@
 
 Mode d’entraînement distinct des cours, orienté **répétition, vitesse et mémoire procédurale** pour le CKA. Le produit utilise le terme **Drill** pour ces exercices.
 
-L’ancienne infrastructure s’appelait `tasks` ; le code et les routes utilisent désormais **`drills`** partout.
-
 ---
 
 ## Principes pédagogiques
