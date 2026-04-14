@@ -4,11 +4,8 @@
 // Factory for a CodeMirror-based editor. Supports multiple languages via filename.
 
 import { EditorState } from '@codemirror/state'
-import { EditorView, keymap, lineNumbers } from '@codemirror/view'
+import { EditorView, keymap } from '@codemirror/view'
 import { defaultKeymap, indentWithTab } from '@codemirror/commands'
-import { yaml } from '@codemirror/lang-yaml'
-import { oneDark } from '@codemirror/theme-one-dark'
-import { defaultHighlightStyle, syntaxHighlighting } from '@codemirror/language'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -25,60 +22,66 @@ export interface CodeMirrorEditor {
 }
 
 export interface CodeMirrorEditorOptions {
-  onSave?: () => void
+  onRequestWriteOut?: () => void
+  onRequestExit?: () => void
   theme?: 'dark' | 'light'
   filename?: string
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LANGUAGE DETECTION
-// ═══════════════════════════════════════════════════════════════════════════
-
-const detectLanguage = (filename: string) => {
-  const ext = filename.split('.').pop()?.toLowerCase()
-
-  switch (ext) {
-    case 'yaml':
-    case 'yml':
-      return yaml()
-    default:
-      return []
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
 // THEME
 // ═══════════════════════════════════════════════════════════════════════════
 
-const lightTheme = EditorView.theme({
+const darkTheme = EditorView.theme({
   '&': {
-    backgroundColor: '#fcfcfc',
-    color: '#333'
+    backgroundColor: 'var(--color-gray-1)',
+    color: '#b4b4b4'
   },
   '.cm-content': {
-    caretColor: '#333'
+    caretColor: '#b4b4b4',
+    padding: '1.6em 0.75rem 0.5rem'
   },
   '.cm-cursor': {
-    borderLeftColor: '#333'
-  },
-  '.cm-gutters': {
-    backgroundColor: '#f5f5f5',
-    color: '#999',
-    borderRight: '1px solid #ddd'
-  },
-  '.cm-activeLineGutter': {
-    backgroundColor: '#e8e8e8'
+    borderLeftColor: '#b4b4b4'
   },
   '.cm-activeLine': {
-    backgroundColor: '#f0f0f0'
+    backgroundColor: 'var(--color-gray-2)'
+  },
+  '.cm-selectionBackground, &.cm-focused .cm-selectionBackground, ::selection': {
+    backgroundColor: 'var(--color-gray-4)'
+  }
+})
+
+const lightTheme = EditorView.theme({
+  '&': {
+    backgroundColor: '#f8f8f2',
+    color: '#1f2937'
+  },
+  '.cm-content': {
+    caretColor: '#1f2937',
+    padding: '1.6em 0.75rem 0.5rem'
+  },
+  '.cm-cursor': {
+    borderLeftColor: '#1f2937'
+  },
+  '.cm-gutters': {
+    backgroundColor: '#f3f4f6',
+    color: '#6b7280',
+    borderRight: '1px solid #d1d5db'
+  },
+  '.cm-activeLineGutter': {
+    backgroundColor: '#e5e7eb'
+  },
+  '.cm-activeLine': {
+    backgroundColor: '#eef2ff'
   }
 })
 
 const getThemeExtension = (theme: 'dark' | 'light') => {
   if (theme === 'dark') {
-    return oneDark
+    return darkTheme
   }
-  return [lightTheme, syntaxHighlighting(defaultHighlightStyle)]
+  return lightTheme
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -96,50 +99,49 @@ export const createCodeMirrorEditor = (
   let currentTheme = options.theme ?? 'dark'
 
   const createExtensions = () => {
-    const languageExtension = options.filename
-      ? detectLanguage(options.filename)
-      : []
-
     return [
       EditorView.theme({
         '&': {
           height: '100%',
           minHeight: '0',
-          // fontSize: '1rem',
+          fontSize: '0.95rem',
           lineHeight: '1.6'
         },
         '.cm-scroller': {
           overflow: 'auto',
           minHeight: '0'
         },
-        '.cm-gutters': {
-          fontSize: '1rem'
+        '.cm-content': {
+          fontFamily:
+            'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
         }
       }),
-      lineNumbers(),
-      languageExtension,
       getThemeExtension(currentTheme),
       keymap.of([
-        ...defaultKeymap,
-        indentWithTab,
         {
-          key: 'Ctrl-s',
+          key: 'Ctrl-o',
           run: () => {
-            if (options.onSave) {
-              options.onSave()
-            }
+            options.onRequestWriteOut?.()
             return true
           }
         },
         {
-          key: 'Mod-s',
+          key: 'Ctrl-x',
           run: () => {
-            if (options.onSave) {
-              options.onSave()
-            }
+            options.onRequestExit?.()
             return true
           }
-        }
+        },
+        {
+          key: 'Ctrl-s',
+          run: () => true
+        },
+        {
+          key: 'Mod-s',
+          run: () => true
+        },
+        ...defaultKeymap,
+        indentWithTab,
       ]),
       EditorView.updateListener.of((update) => {
         if (update.docChanged && changeCallback) {

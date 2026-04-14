@@ -20,9 +20,8 @@ interface Props {
   commandLimitMessage?: string
 }
 
-import { Minus, Save, Square, X } from '@lucide/astro'
+import { Minus, Square, X } from '@lucide/astro'
 import 'jquery.terminal/css/jquery.terminal.css'
-import Button from './ui/Button.astro'
 
 const {
   class: className = '',
@@ -72,32 +71,23 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
   <div class="t-load">
     <span class="t-load-txt">Loading terminal…</span>
   </div>
-  <div class="t-editor-overlay" hidden>
+  <div
+    class="t-editor-overlay"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Nano editor"
+    data-loading="false"
+    hidden
+  >
+    <div class="t-editor-header" aria-hidden="true">
+      <span class="t-editor-header-left">GNU nano</span>
+      <span class="t-editor-header-center"></span>
+      <span class="t-editor-header-right"></span>
+    </div>
     <div class="t-editor-box"></div>
     <div class="t-editor-footer">
-      <span class="t-editor-filename" aria-live="polite"></span>
-      <div class="t-editor-actions">
-        <Button
-          variant="outline"
-          size="xs"
-          color="ruby"
-          type="button"
-          class="t-editor-btn-close"
-          aria-label="Fermer (Esc)"
-        >
-          <X size={14} />
-        </Button>
-        <Button
-          variant="subtle"
-          size="xs"
-          color="cyan"
-          type="button"
-          class="t-editor-btn-save"
-          aria-label="Sauver (Ctrl+S)"
-        >
-          <Save size={14} />
-        </Button>
-      </div>
+      <span class="t-editor-shortcuts" aria-live="polite"></span>
     </div>
   </div>
   <div class="t-wrap" style="display: none;">
@@ -108,7 +98,11 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
 <script>
   import type { CodeMirrorEditor } from '../core/editor/CodeMirrorEditor'
   import type { EditorModal } from '../core/shell/commands'
-  import { focusTerminal } from '../core/terminal/TerminalManager'
+  import {
+    focusTerminal,
+    lockTerminalInput,
+    unlockTerminalInput
+  } from '../core/terminal/TerminalManager'
   import { mountTerminal } from './terminal-mount'
 
   type EditorModalWithLifecycle = EditorModal & {
@@ -156,22 +150,125 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
     overlayEl: HTMLElement,
     editorBoxEl: HTMLElement
   ): EditorModalWithLifecycle {
+    const DEFAULT_STATUS = '^O Write Out  ^X Exit'
+    const WRITE_OUT_STATUS = 'Write Out, press Enter to confirm, Esc to cancel'
+    const EXIT_CONFIRM_STATUS = 'Save modified buffer? Y Yes, N No, ^C Cancel'
     let currentEditor: CodeMirrorEditor | null = null
     let currentOnSave: ((content: string) => boolean | void) | null = null
     let currentOnCancel: (() => void) | null = null
-    const filenameEl = overlayEl.querySelector('.t-editor-filename')
-    const closeBtn = overlayEl.querySelector('.t-editor-btn-close')
-    const saveBtn = overlayEl.querySelector('.t-editor-btn-save')
+    let currentFilename = ''
+    let initialContent = ''
+    let isWriteOutPending = false
+    let isExitConfirmPending = false
+    let isDirty = false
+    let isClosing = false
+    const statusEl = overlayEl.querySelector('.t-editor-shortcuts')
+    const headerFilenameEl = overlayEl.querySelector('.t-editor-header-center')
+    const headerModifiedEl = overlayEl.querySelector('.t-editor-header-right')
+
+    const setStatus = (value: string) => {
+      if (statusEl) {
+        statusEl.textContent = value
+      }
+    }
+
+    const setHeaderFilename = (value: string) => {
+      if (headerFilenameEl) {
+        headerFilenameEl.textContent = value
+      }
+    }
+
+    const setHeaderModified = (modified: boolean) => {
+      if (headerModifiedEl) {
+        headerModifiedEl.textContent = modified ? 'Modified' : ''
+      }
+    }
+
+    const resetTransientState = () => {
+      isWriteOutPending = false
+      isExitConfirmPending = false
+    }
+
+    const saveCurrentBuffer = (): boolean => {
+      if (currentEditor == null || currentOnSave == null) {
+        return false
+      }
+      const shouldClose = currentOnSave(currentEditor.getValue())
+      if (shouldClose === false) {
+        setStatus(`Error writing ${currentFilename}`)
+        return false
+      }
+      close('save')
+      return true
+    }
 
     const handleKeydown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase()
+      if ((e.metaKey || e.ctrlKey) && key === 's') {
+        e.preventDefault()
+        e.stopPropagation()
+        return
+      }
+
+      if (isExitConfirmPending) {
+        if (!e.metaKey && !e.ctrlKey && !e.altKey && key === 'y') {
+          e.preventDefault()
+          e.stopPropagation()
+          isExitConfirmPending = false
+          saveCurrentBuffer()
+          return
+        }
+        if (!e.metaKey && !e.ctrlKey && !e.altKey && key === 'n') {
+          e.preventDefault()
+          e.stopPropagation()
+          close()
+          return
+        }
+        if (e.key === 'Escape' || (e.ctrlKey && key === 'c')) {
+          e.preventDefault()
+          e.stopPropagation()
+          isExitConfirmPending = false
+          setStatus(DEFAULT_STATUS)
+          return
+        }
+        e.preventDefault()
+        e.stopPropagation()
+        return
+      }
+
+      if (isWriteOutPending) {
+        if (e.key === 'Enter') {
+          e.preventDefault()
+          e.stopPropagation()
+          saveCurrentBuffer()
+          return
+        }
+        if (e.key === 'Escape' || (e.ctrlKey && key === 'c')) {
+          e.preventDefault()
+          e.stopPropagation()
+          isWriteOutPending = false
+          setStatus(DEFAULT_STATUS)
+          return
+        }
+        e.preventDefault()
+        e.stopPropagation()
+        return
+      }
+
       if (e.key === 'Escape') {
         e.preventDefault()
+        e.stopPropagation()
         close()
       }
     }
 
     const close = (reason: 'save' | 'cancel' = 'cancel') => {
+      if (isClosing || overlayEl.hidden) {
+        return
+      }
+      isClosing = true
       overlayEl.removeEventListener('keydown', handleKeydown, true)
+      overlayEl.dataset.loading = 'false'
       if (reason === 'cancel') {
         currentOnCancel?.()
       }
@@ -181,8 +278,17 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
       }
       currentOnSave = null
       currentOnCancel = null
+      currentFilename = ''
+      initialContent = ''
+      isDirty = false
+      resetTransientState()
+      setHeaderFilename('')
+      setHeaderModified(false)
+      setStatus('')
       overlayEl.hidden = true
+      unlockTerminalInput()
       focusTerminal()
+      isClosing = false
     }
 
     const updateThemeIfOpen = () => {
@@ -192,17 +298,34 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
     }
 
     const open: EditorModal['open'] = (filename, content, onSave, onCancel) => {
+      if (!overlayEl.hidden) {
+        close()
+      }
       if (currentEditor) {
         currentEditor.destroy()
         currentEditor = null
       }
       currentOnSave = onSave
       currentOnCancel = onCancel ?? null
-      if (filenameEl) {
-        filenameEl.textContent = filename
-      }
+      currentFilename = filename
+      initialContent = content
+      isDirty = false
+      resetTransientState()
+      setHeaderFilename(filename)
+      setHeaderModified(false)
+      setStatus('[ Loading editor... ]')
+      overlayEl.dataset.loading = 'true'
       overlayEl.hidden = false
       overlayEl.addEventListener('keydown', handleKeydown, true)
+      lockTerminalInput()
+      overlayEl.focus({ preventScroll: true })
+      queueMicrotask(() => {
+        if (overlayEl.hidden) {
+          return
+        }
+        lockTerminalInput()
+        overlayEl.focus({ preventScroll: true })
+      })
 
       scheduleCodeMirrorEditorPrefetch()
 
@@ -217,41 +340,50 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
           const editor = createCodeMirrorEditor({
             theme,
             filename,
-            onSave: () => {
-              if (currentEditor) {
-                const value = currentEditor.getValue()
-                const shouldClose = onSave(value)
-                if (shouldClose === false) {
-                  return
-                }
+            onRequestWriteOut: () => {
+              isWriteOutPending = true
+              isExitConfirmPending = false
+              setStatus(WRITE_OUT_STATUS)
+            },
+            onRequestExit: () => {
+              if (!isDirty) {
+                close()
+                return
               }
-              close('save')
+              isWriteOutPending = false
+              isExitConfirmPending = true
+              setStatus(EXIT_CONFIRM_STATUS)
             }
           })
           currentEditor = editor
           editor.mount(editorBoxEl)
           editor.setValue(content)
-          editor.focus()
+          editor.onChange((value) => {
+            isDirty = value !== initialContent
+            isExitConfirmPending = false
+            setHeaderModified(isDirty)
+            if (!isWriteOutPending) {
+              setStatus(DEFAULT_STATUS)
+            }
+          })
+          overlayEl.dataset.loading = 'false'
+          setStatus(DEFAULT_STATUS)
+          const ensureEditorFocus = () => {
+            if (overlayEl.hidden) {
+              return
+            }
+            lockTerminalInput()
+            editor.focus()
+          }
+          ensureEditorFocus()
+          requestAnimationFrame(ensureEditorFocus)
+          setTimeout(ensureEditorFocus, 0)
         } catch (err) {
           console.error('[TerminalWindow] CodeMirror load failed:', err)
           close()
         }
       })()
     }
-
-    closeBtn?.addEventListener('click', () => {
-      close()
-    })
-
-    saveBtn?.addEventListener('click', () => {
-      if (currentEditor) {
-        const shouldClose = currentOnSave?.(currentEditor.getValue())
-        if (shouldClose === false) {
-          return
-        }
-      }
-      close('save')
-    })
 
     return { open, close, updateThemeIfOpen }
   }
@@ -506,10 +638,11 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
     inset: 0;
     z-index: 10;
     display: grid;
-    grid-template-rows: 1fr auto;
+    grid-template-rows: auto 1fr auto;
     height: 100%;
     min-height: 0;
     background-color: var(--color-gray-1);
+    outline: none;
   }
   .t-editor-overlay[hidden] {
     display: none;
@@ -521,6 +654,31 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
     display: flex;
     flex-direction: column;
   }
+  .t-editor-header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: 2px var(--spacing-2);
+    background: #d6d6d6;
+    color: #1a1a1a;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-1);
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  .t-editor-header-left {
+    justify-self: start;
+  }
+  .t-editor-header-center {
+    justify-self: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  .t-editor-header-right {
+    justify-self: end;
+  }
   .t-editor-box .cm-editor {
     flex: 1;
     min-height: 0;
@@ -531,28 +689,20 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
     min-height: 0;
   }
   .t-editor-footer {
-    position: absolute;
-    bottom: var(--spacing-2);
-    right: var(--spacing-2);
-    left: var(--spacing-2);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--spacing-2);
-    z-index: 2;
-    opacity: 0.7;
-    transition: opacity var(--duration-fast);
-  }
-  .t-editor-footer:hover {
-    opacity: 1;
-  }
-  .t-editor-filename {
+    display: block;
+    padding: var(--spacing-2) var(--spacing-3);
+    background: var(--color-gray-1);
     font-family: var(--font-mono);
-    font-size: var(--font-size-2);
-    color: var(--color-gray-11);
   }
-  .t-editor-actions {
-    display: flex;
-    gap: var(--spacing-2);
+  .t-editor-shortcuts {
+    display: block;
+    font-size: var(--font-size-1);
+    color: var(--color-gray-10);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .t-editor-overlay[data-loading='true'] .t-editor-box {
+    opacity: 0.7;
   }
 </style>

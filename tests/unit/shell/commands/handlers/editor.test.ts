@@ -122,4 +122,45 @@ describe('Editor Handler (nano)', () => {
     saveCallback('updated content')
     expect(writeFileMock).toHaveBeenCalledWith('test.yaml', 'updated content')
   })
+
+  it('should keep editor open when creating a missing file fails', () => {
+    const openCallback = vi.fn()
+    const editorModal = {
+      open: openCallback
+    }
+    const createFileMock = vi.fn(() => error('Permission denied'))
+    const writeFileMock = vi.fn(() => success(undefined))
+    const fileSystem = createMockFileSystem({
+      readFile: () => error('File not found'),
+      createFile: createFileMock,
+      writeFile: writeFileMock
+    })
+    const handler = createNanoHandler(fileSystem, editorModal)
+    handler.execute(['new.yaml'], {})
+
+    const saveCallback = openCallback.mock.calls[0][2]
+    const shouldClose = saveCallback('new content')
+    expect(shouldClose).toBe(false)
+    expect(createFileMock).toHaveBeenCalledWith('new.yaml')
+    expect(writeFileMock).not.toHaveBeenCalled()
+  })
+
+  it('should keep editor open when writing file fails', () => {
+    const openCallback = vi.fn()
+    const editorModal = {
+      open: openCallback
+    }
+    const writeFileMock = vi.fn(() => error('Read-only file system'))
+    const fileSystem = createMockFileSystem({
+      readFile: () => success('old content'),
+      writeFile: writeFileMock
+    })
+    const handler = createNanoHandler(fileSystem, editorModal)
+    handler.execute(['test.yaml'], {})
+
+    const saveCallback = openCallback.mock.calls[0][2]
+    const shouldClose = saveCallback('updated content')
+    expect(shouldClose).toBe(false)
+    expect(writeFileMock).toHaveBeenCalledWith('test.yaml', 'updated content')
+  })
 })

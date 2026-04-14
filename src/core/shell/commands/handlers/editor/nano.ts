@@ -47,14 +47,13 @@ export const createNanoHandler = (
         if (!readResult.ok) {
           const createResult = fileSystem.createFile(filename)
           if (!createResult.ok) {
-            // Error creating file - could log here later
-            return true
+            return false
           }
         }
 
         const writeResult = fileSystem.writeFile(filename, newContent)
         if (!writeResult.ok) {
-          // Error writing file - could log here later
+          return false
         }
         return true
       })
