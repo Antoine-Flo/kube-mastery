@@ -1,87 +1,119 @@
-# Astro Starter Kit: Basics
+# KubeMastery
 
-```sh
-npm create astro@latest -- --template basics
-```
+**An in-browser Kubernetes simulator for people who learn by doing.**
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+[kubemastery.com](https://kubemastery.com) - free during early access.
 
-## 🚀 Project Structure
+---
 
-Inside of your Astro project, you'll see the following folders and files:
+## What is this?
 
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
-```
+KubeMastery is a lightweight JavaScript implementation of core Kubernetes behavior, running entirely in your browser. No setup, no cloud costs. You get a real terminal, a visual cluster view, and short structured lessons.
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+Think of it as a flight simulator for Kubernetes: practice `kubectl` commands, work through CKA-style drills, and build intuition before touching a real cluster.
 
-## 🧞 Commands
+**The platform:** [kubemastery.com](https://kubemastery.com)
 
-All commands are run from the root of the project, from a terminal:
+> This repository is **source-available**: the code is public to read and learn from. Contributions to course content and drills are welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md) and [LICENSE](./LICENSE) for details.
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+---
 
-## Local deployments (Cloudflare Workers)
+## Stack
 
-This project uses a single local deployment pipeline:
+| Layer | Technology |
+| :--- | :--- |
+| Frontend | [Astro 5](https://astro.build/) |
+| Deployment | [Cloudflare Workers](https://workers.cloudflare.com/) via [Wrangler](https://developers.cloudflare.com/workers/wrangler/) |
+| Auth & progress | [Supabase](https://supabase.com/) |
+| Terminal UI | [jQuery Terminal](https://terminal.jcubic.pl/) + [xterm.js](https://xtermjs.org/) |
+| Tests | [Vitest](https://vitest.dev/) |
 
-- `staging`: `npm run deploy:staging`
-- `production`: `npm run deploy:production`
+---
 
-Both commands run the same quality gate before deployment:
+## Running Locally
 
-- `npm ci`
-- `npm run check`
-- `npm run test`
-- `npm run build`
+> Running the full platform locally requires Supabase and Cloudflare credentials. The simulation core can be explored and tested without them.
 
 ### Prerequisites
 
-- Cloudflare auth configured via env vars:
-  - `CLOUDFLARE_API_TOKEN`
-  - `CLOUDFLARE_ACCOUNT_ID`
+- Node.js 20+
+- npm 10+
 
-### Runtime environment separation
+### Install
 
-- Staging build+deploy uses `CLOUDFLARE_ENV=staging` and `wrangler deploy --env staging`
-- Production build+deploy uses default environment and `wrangler deploy`
-- Set secrets separately for each environment:
-  - production: `wrangler secret put <KEY>`
-  - staging: `wrangler secret put <KEY> --env staging`
+```sh
+npm install
+```
 
-### Minimal rollback
+### Environment Variables
 
-- Redeploy a known-good git commit:
-  1. `git checkout <commit>`
-  2. `npm run deploy:staging` or `npm run deploy:production`
-  3. `git checkout main`
+Copy the example and fill in your values:
 
-## 👀 Want to learn more?
+```sh
+cp .env.example .env
+```
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Required variables are documented in `.env.example`.
 
-0187651955
+### Dev Server
 
-octogone
+```sh
+npm run dev
+```
 
-Show HN: Kubernetes cluster simulation that runs in the browser to prepare CKA
+Opens at `http://localhost:4321`.
+
+### Tests
+
+```sh
+npm run test
+```
+
+Run the conformance suite (requires a running kind cluster):
+
+```sh
+npm run conformance
+```
+
+---
+
+## Commands
+
+| Command | Description |
+| :--- | :--- |
+| `npm run dev` | Start local dev server at `localhost:4321` |
+| `npm run build` | Build for production |
+| `npm run preview` | Preview the production build locally |
+| `npm run test` | Run unit and integration tests |
+| `npm run coverage` | Run tests with coverage |
+| `npm run conformance` | Run kubectl conformance suite |
+| `npm run check` | Run Astro type checks |
+| `npm run format` | Format all files with Prettier |
+
+---
+
+## Deployment
+
+Both staging and production deployments run a quality gate (`ci`, `check`, `test`, `build`) before deploying to Cloudflare Workers.
+
+```sh
+# Staging
+npm run deploy:staging
+
+# Production
+npm run deploy:production
+```
+
+Required environment variables for deployment:
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+
+---
+
+## License
+
+Source-available. See [LICENSE](./LICENSE).
+
+The simulation code is not licensed for commercial use or self-hosting as a service.
+Course content and drills contributions are welcome under the same terms.

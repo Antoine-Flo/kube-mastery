@@ -1,0 +1,58 @@
+KubeMastery Source-Available License
+
+Copyright (c) 2024-present Antoine Feron
+
+---
+
+## Summary
+
+This project is source-available: the code is public to read, learn from, and contribute to (in a specific scope). It is not open source in the sense that it does not grant you a right to use it commercially or to run your own competing service.
+
+---
+
+## Permissions
+
+You are permitted to:
+
+- View, read, and study the source code for personal learning and educational purposes.
+- Run the project locally for personal, non-commercial use.
+- Submit contributions to course content and drills as described in CONTRIBUTING.md.
+- Fork the repository for the sole purpose of preparing a contribution.
+
+---
+
+## Restrictions
+
+You are not permitted to:
+
+- Use this software, or any substantial portion of it, for any commercial purpose.
+- Host, distribute, or make available this software (or any derivative) as a product or service, paid or free.
+- Sell, sublicense, or otherwise transfer rights to this software.
+- Use this codebase to build a competing product or service.
+- Remove or alter this license notice in any copy or derivative of this software.
+
+"Commercial purpose" means any use intended to generate revenue, including but not limited to: selling access, offering a hosted service, bundling in a commercial product, or using it as the basis of a business.
+
+---
+
+## Contributions
+
+Contributions submitted to this repository (via pull requests or otherwise) are accepted under the same license terms. Contributors retain authorship credit but grant the copyright holder a perpetual, irrevocable right to use, modify, and distribute the contributed content as part of this project.
+
+---
+
+## Course Content
+
+Lesson and drill content under `src/courses/` is licensed under the same terms. You may read it for learning. You may not republish or redistribute it, in whole or in part, without explicit written permission.
+
+---
+
+## No Warranty
+
+THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. THE COPYRIGHT HOLDER IS NOT LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OR INABILITY TO USE THIS SOFTWARE.
+
+---
+
+## Commercial Licensing
+
+If you want to use this codebase for commercial purposes, get in touch: kubemastery.com
