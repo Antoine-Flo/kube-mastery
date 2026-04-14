@@ -1077,7 +1077,26 @@ spec:
     }
 
     expect(result.value).toContain('kind: Pod')
+    expect(result.value).toContain('namespace: default')
     expect(result.value).not.toContain('creationTimestamp: null')
+  })
+
+  it('should include target namespace in run dry-run client yaml', () => {
+    const parsed = parseCommand(
+      'kubectl run run-dry-run-ns --image=busybox -n exercice-01 --dry-run=client -o yaml'
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleRun(apiServer, parsed.value)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value).toContain('namespace: exercice-01')
   })
 
   it('should return jsonpath value for create configmap dry-run client', () => {

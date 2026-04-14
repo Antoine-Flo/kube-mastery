@@ -56,6 +56,7 @@ const buildRunDryRunManifest = (
   parsed: ParsedCommand,
   image: string,
   envVars: EnvVar[],
+  namespace: string,
   runCommand?: string[],
   runArgs?: string[]
 ): Record<string, unknown> => {
@@ -102,7 +103,8 @@ const buildRunDryRunManifest = (
     kind: 'Pod',
     metadata: {
       labels: metadataLabels,
-      name: podName
+      name: podName,
+      namespace
     },
     spec: {
       containers: [containerSpec],
@@ -220,6 +222,7 @@ export const handleRun = (
       parsed,
       image,
       envVars,
+      runtimeNamespace,
       runCommand,
       runArgs
     )

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: web
+    tier: frontend
+  name: web
+  namespace: exercice-01
+spec:
+  containers:
+  - image: nginx:1.28
+    name: web
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}

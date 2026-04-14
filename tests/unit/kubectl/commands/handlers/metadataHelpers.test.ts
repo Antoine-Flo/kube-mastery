@@ -165,8 +165,9 @@ describe('metadataHelpers', () => {
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
-        expect(result.error).toContain('already exists')
-        expect(result.error).toContain('--overwrite')
+        expect(result.error).toBe(
+          "'app' already has a value (old-value), and --overwrite is false"
+        )
       }
     })
 
@@ -182,6 +183,26 @@ describe('metadataHelpers', () => {
         name: 'my-pod',
         labelChanges: { app: 'new-value' },
         flags: { overwrite: true }
+      })
+
+      apiServer.etcd.restore(state)
+      const result = handleMetadataChange(apiServer, parsed, labelConfig)
+
+      expect(result.ok).toBe(true)
+    })
+
+    it('should allow overwrite with --overwrite=true flag value', () => {
+      const pod = createPod({
+        name: 'my-pod',
+        namespace: 'default',
+        containers: [{ name: 'main', image: 'nginx:latest' }],
+        labels: { app: 'old-value' }
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        name: 'my-pod',
+        labelChanges: { app: 'new-value' },
+        flags: { overwrite: 'true' }
       })
 
       apiServer.etcd.restore(state)
@@ -320,8 +341,9 @@ describe('metadataHelpers', () => {
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
-        expect(result.error).toContain('annotation "contact" already exists')
-        expect(result.error).toContain('--overwrite')
+        expect(result.error).toBe(
+          "'contact' already has a value (platform-team@example.com), and --overwrite is false"
+        )
       }
     })
 

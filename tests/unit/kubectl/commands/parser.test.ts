@@ -1219,6 +1219,22 @@ describe('kubectl parser - metadata commands', () => {
     })
     expect(result.value.flags.overwrite).toBe(true)
   })
+
+  it('should parse label overwrite explicit boolean value', () => {
+    const result = parseCommand(
+      'kubectl label deployment/web app=api --overwrite=true'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('deployments')
+    expect(result.value.name).toBe('web')
+    expect(result.value.labelChanges).toEqual({ app: 'api' })
+    expect(result.value.flags.overwrite).toBe('true')
+  })
 })
 
 describe('kubectl parser - get raw', () => {

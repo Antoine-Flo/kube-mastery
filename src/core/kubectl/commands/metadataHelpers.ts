@@ -63,9 +63,9 @@ const applyMetadataChanges = (
     } else {
       // Addition or update
       if (currentMetadata[key] !== undefined && !overwrite) {
-        const type = metadataType === 'labels' ? 'label' : 'annotation'
+        const currentValue = currentMetadata[key]
         return error(
-          `${type} "${key}" already exists, use --overwrite to update`
+          `'${key}' already has a value (${currentValue}), and --overwrite is false`
         )
       }
       newMetadata = { ...newMetadata, [key]: value }
@@ -200,7 +200,7 @@ export const handleMetadataChange = (
     return error(`No ${changeName} changes provided`)
   }
 
-  const overwrite = parsed.flags['overwrite'] === true
+  const overwrite = isFlagEnabled(parsed.flags['overwrite'])
 
   return handleMetadataChangeWithEvents(
     parsed.resource,
@@ -211,6 +211,16 @@ export const handleMetadataChange = (
     config,
     apiServer
   )
+}
+
+const isFlagEnabled = (flagValue: string | boolean | undefined): boolean => {
+  if (flagValue === true) {
+    return true
+  }
+  if (typeof flagValue === 'string') {
+    return flagValue === 'true'
+  }
+  return false
 }
 
 /**
