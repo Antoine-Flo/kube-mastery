@@ -1,1 +1,0 @@
-Repond trés simplement, sans scanner la code base, en quelque phrases, à partir de tes connaissances, sans bullet point, straight to the point.
