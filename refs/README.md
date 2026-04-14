@@ -1,7 +1,5 @@
 # refs - Index de references Kubernetes
 
-## Meta (machine-friendly)
-
 ```yaml
 schema_version: 1
 index_type: kubernetes_reference_catalog
