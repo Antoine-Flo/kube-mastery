@@ -18,6 +18,7 @@ const SHELL_COMMANDS = [
   'touch',
   'cat',
   'rm',
+  'mv',
   'clear',
   'help',
   'debug',

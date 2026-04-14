@@ -92,6 +92,7 @@ describe('ShellCommandHandler', () => {
       expect(handler.canHandle('mkdir test')).toBe(true)
       expect(handler.canHandle('touch file.txt')).toBe(true)
       expect(handler.canHandle('rm file.txt')).toBe(true)
+      expect(handler.canHandle('mv file.txt renamed.txt')).toBe(true)
       expect(handler.canHandle('clear')).toBe(true)
       expect(handler.canHandle('help')).toBe(true)
       expect(handler.canHandle('env')).toBe(true)
@@ -283,6 +284,31 @@ describe('ShellCommandHandler', () => {
       context.fileSystem.createFile('test.txt')
       const result = handler.execute('cat test.txt', context)
       expect(result.ok).toBe(true)
+    })
+
+    it('should move file with mv command', () => {
+      context.fileSystem.createFile('test.txt', 'hello')
+      const result = handler.execute('mv test.txt moved.txt', context)
+      expect(result.ok).toBe(true)
+      const movedFile = context.fileSystem.readFile('moved.txt')
+      expect(movedFile.ok).toBe(true)
+      if (!movedFile.ok) {
+        return
+      }
+      expect(movedFile.value).toBe('hello')
+      const oldFile = context.fileSystem.readFile('test.txt')
+      expect(oldFile.ok).toBe(false)
+    })
+
+    it('should move directory with mv command', () => {
+      context.fileSystem.createDirectory('work')
+      context.fileSystem.createFile('work/data.txt', 'payload')
+      const result = handler.execute('mv work archive', context)
+      expect(result.ok).toBe(true)
+      const movedFile = context.fileSystem.readFile('archive/data.txt')
+      expect(movedFile.ok).toBe(true)
+      const oldFile = context.fileSystem.readFile('work/data.txt')
+      expect(oldFile.ok).toBe(false)
     })
 
     it('should return error for invalid command', () => {

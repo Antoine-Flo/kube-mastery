@@ -24,6 +24,7 @@ export const createHelpHandler = (): ShellCommandHandler => {
   vim <file>       Edit file with YAML editor (alias)
   rm <file>        Remove file
   rm -r <dir>      Remove directory
+  mv <src> <dest>  Move or rename file or directory
   env              Print environment variables
   nslookup <fqdn>  Resolve a service DNS record
   curl <url>       Simulate HTTP GET traffic

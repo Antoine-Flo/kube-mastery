@@ -21,6 +21,7 @@ import { createNanoHandler } from './handlers/editor/nano'
 import { createCatHandler } from './handlers/fileops/cat'
 import { createEchoHandler } from './handlers/fileops/echo'
 import { createMkdirHandler } from './handlers/fileops/mkdir'
+import { createMvHandler } from './handlers/fileops/mv'
 import { createRmHandler } from './handlers/fileops/rm'
 import { createTouchHandler } from './handlers/fileops/touch'
 import { createCdHandler } from './handlers/navigation/cd'
@@ -106,6 +107,7 @@ export const buildShellHandlersMap = (
   handlers.set('echo', createEchoHandler(fileSystem))
   handlers.set('rm', createRmHandler(fileSystem))
   handlers.set('mkdir', createMkdirHandler(fileSystem))
+  handlers.set('mv', createMvHandler(fileSystem))
 
   // Editor
   handlers.set('nano', createNanoHandler(fileSystem, editorModal))

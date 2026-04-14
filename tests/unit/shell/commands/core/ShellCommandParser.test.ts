@@ -53,6 +53,16 @@ describe('ShellCommandParser', () => {
       }
     })
 
+    it('should parse mv command with source and destination', () => {
+      const result = parseShellCommand('mv old.txt new.txt', registry)
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value.command).toBe('mv')
+        expect(result.value.args).toEqual(['old.txt', 'new.txt'])
+        expect(result.value.flags).toEqual({})
+      }
+    })
+
     it('should parse command with boolean flag', () => {
       const result = parseShellCommand('ls -l', registry)
       expect(result.ok).toBe(true)

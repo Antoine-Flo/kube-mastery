@@ -10,6 +10,7 @@ export type FileSystemOperation =
   | 'readFiles'
   | 'writeFile'
   | 'deleteFile'
+  | 'movePath'
 
 export type FileSystemErrorCode =
   | 'NOT_FOUND'

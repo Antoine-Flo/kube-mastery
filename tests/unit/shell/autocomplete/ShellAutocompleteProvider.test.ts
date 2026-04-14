@@ -128,6 +128,7 @@ describe('ShellAutocompleteProvider', () => {
         expect(commandTexts).toContain('touch')
         expect(commandTexts).toContain('cat')
         expect(commandTexts).toContain('rm')
+        expect(commandTexts).toContain('mv')
         expect(commandTexts).toContain('clear')
         expect(commandTexts).toContain('help')
         expect(commandTexts).toContain('debug')
@@ -135,8 +136,8 @@ describe('ShellAutocompleteProvider', () => {
         expect(commandTexts).toContain('vi')
         expect(commandTexts).toContain('vim')
 
-        // Should have exactly 14 commands (13 shell + 1 kubectl)
-        expect(commandTexts.length).toBe(14)
+        // Should have exactly 15 commands (14 shell + 1 kubectl)
+        expect(commandTexts.length).toBe(15)
       })
 
       it('should handle commands with complex partial prefixes', () => {

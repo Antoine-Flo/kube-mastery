@@ -98,6 +98,28 @@ const normalizePath = (path: string): string => {
   return '/' + parts.join('/')
 }
 
+const basename = (path: string): string => {
+  const parts = path.split('/').filter((part) => part.length > 0)
+  if (parts.length === 0) {
+    return ''
+  }
+  return parts[parts.length - 1]
+}
+
+const joinPath = (parentPath: string, name: string): string => {
+  if (parentPath === '/') {
+    return `/${name}`
+  }
+  return `${parentPath}/${name}`
+}
+
+const isNestedPath = (path: string, potentialParentPath: string): boolean => {
+  if (path === potentialParentPath) {
+    return true
+  }
+  return path.startsWith(`${potentialParentPath}/`)
+}
+
 const isPathInsideMount = (path: string, mountPath: string): boolean => {
   if (mountPath === '/') {
     return true
@@ -231,6 +253,24 @@ const removeNode = (tree: DirectoryNode, path: string): DirectoryNode => {
 
   parent.children.delete(name)
   return tree
+}
+
+const cloneNodeWithNewPath = (
+  node: FileSystemNode,
+  targetPath: string
+): FileSystemNode => {
+  const targetName = basename(targetPath)
+  if (node.type === 'file') {
+    return createFile(targetName, targetPath, node.content)
+  }
+
+  const directory = createDirectory(targetName, targetPath)
+  for (const [childName, childNode] of node.children) {
+    const childTargetPath = joinPath(targetPath, childName)
+    const clonedChild = cloneNodeWithNewPath(childNode, childTargetPath)
+    directory.children.set(childName, clonedChild)
+  }
+  return directory
 }
 
 /**
@@ -502,6 +542,7 @@ const createDirectoryOps = (
 
 const createFileOps = (
   getState: () => FileSystemState,
+  setState: (s: FileSystemState) => void,
   eventBus?: EventBus
 ) => {
   const readFileAtPath = (path: string): Result<string> => {
@@ -593,6 +634,104 @@ const createFileOps = (
       )
     }
 
+    return success(undefined)
+  }
+
+  const movePath = (sourcePath: string, destinationPath: string): Result<void> => {
+    const state = getState()
+    const absoluteSourcePath = resolvePath(state.currentPath, sourcePath)
+    const absoluteDestinationPath = resolvePath(
+      state.currentPath,
+      destinationPath
+    )
+
+    if (absoluteSourcePath === '/') {
+      return error(`mv: cannot move '${absoluteSourcePath}': Invalid argument`)
+    }
+
+    const sourceNode = findNode(state.tree, absoluteSourcePath)
+    if (sourceNode == null) {
+      return error(
+        `mv: cannot stat '${absoluteSourcePath}': No such file or directory`
+      )
+    }
+
+    const destinationNode = findNode(state.tree, absoluteDestinationPath)
+    const finalDestinationPath =
+      destinationNode != null && destinationNode.type === 'directory'
+        ? joinPath(absoluteDestinationPath, sourceNode.name)
+        : absoluteDestinationPath
+
+    if (finalDestinationPath === absoluteSourcePath) {
+      return success(undefined)
+    }
+
+    if (sourceNode.type === 'directory') {
+      if (isNestedPath(finalDestinationPath, absoluteSourcePath)) {
+        return error(
+          `mv: cannot move '${absoluteSourcePath}' to a subdirectory of itself, '${finalDestinationPath}'`
+        )
+      }
+    }
+
+    if (isWriteBlockedByReadOnlyMount(state, absoluteSourcePath)) {
+      return createReadOnlyError('mv', absoluteSourcePath, 'move')
+    }
+    if (isWriteBlockedByReadOnlyMount(state, finalDestinationPath)) {
+      return createReadOnlyError('mv', finalDestinationPath, 'move')
+    }
+
+    const destinationParentPath = dirname(finalDestinationPath)
+    const destinationParentNode = findNode(state.tree, destinationParentPath)
+    const destinationParentValidation = validateIsDirectory(
+      destinationParentNode,
+      destinationParentPath,
+      'mv'
+    )
+    if (!destinationParentValidation.ok) {
+      return error(
+        `mv: cannot move '${absoluteSourcePath}' to '${finalDestinationPath}': No such file or directory`
+      )
+    }
+
+    const existingTargetNode = findNode(state.tree, finalDestinationPath)
+    if (existingTargetNode != null && existingTargetNode.type !== sourceNode.type) {
+      return error(
+        `mv: cannot overwrite '${finalDestinationPath}' with incompatible type`
+      )
+    }
+
+    if (
+      existingTargetNode != null &&
+      existingTargetNode.type === 'directory' &&
+      sourceNode.type === 'directory'
+    ) {
+      return error(
+        `mv: cannot move '${absoluteSourcePath}' to '${finalDestinationPath}': File exists`
+      )
+    }
+
+    const movedNode = cloneNodeWithNewPath(sourceNode, finalDestinationPath)
+    removeNode(state.tree, absoluteSourcePath)
+    if (existingTargetNode != null) {
+      removeNode(state.tree, finalDestinationPath)
+    }
+    insertNode(state.tree, finalDestinationPath, movedNode)
+
+    const isCurrentPathInMovedTree = isNestedPath(
+      state.currentPath,
+      absoluteSourcePath
+    )
+    if (!isCurrentPathInMovedTree) {
+      return success(undefined)
+    }
+
+    const currentPathSuffix = state.currentPath.slice(absoluteSourcePath.length)
+    const updatedCurrentPath = `${finalDestinationPath}${currentPathSuffix}`
+    setState({
+      ...state,
+      currentPath: updatedCurrentPath
+    })
     return success(undefined)
   }
 
@@ -703,6 +842,19 @@ const createFileOps = (
       }
 
       return success(undefined)
+    },
+
+    movePath,
+
+    movePathDetailed: (
+      sourcePath: string,
+      destinationPath: string
+    ): FileSystemResult<void> => {
+      return toFileSystemResult(
+        movePath(sourcePath, destinationPath),
+        'movePath',
+        `${sourcePath} -> ${destinationPath}`
+      )
     }
   }
 }
@@ -794,7 +946,7 @@ export const createFileSystem = (
   return {
     ...createNavigationOps(getState, setState, eventBus),
     ...createDirectoryOps(getState, eventBus),
-    ...createFileOps(getState, eventBus),
+    ...createFileOps(getState, setState, eventBus),
     ...createStateOps(
       getState,
       setState,
