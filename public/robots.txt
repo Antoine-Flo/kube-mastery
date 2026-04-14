@@ -4,8 +4,6 @@ Allow: /
 Disallow: /api/
 Disallow: /en/profile
 Disallow: /fr/profile
-Disallow: /en/tasks
-Disallow: /fr/tasks
 Disallow: /en/checkout/success
 Disallow: /fr/checkout/success
 

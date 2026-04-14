@@ -8,6 +8,7 @@ import { error, success } from '../../../shared/result'
 import { toEqualitySelectorMap } from '../../../shared/labelSelector'
 import type { ParsedCommand } from '../types'
 import { createResourceWithEvents } from '../resourceCatalog'
+import { buildDryRunResponse } from './create'
 
 type ExposeServiceType = NonNullable<ServiceSpec['type']>
 type ExposeTargetResource = 'deployments' | 'pods'
@@ -260,6 +261,17 @@ export const handleExpose = (
   if (typeof parsedType !== 'string') {
     return parsedType
   }
+  const dryRunFlag = parsed.flags['dry-run']
+  if (
+    typeof dryRunFlag === 'string' &&
+    dryRunFlag !== 'none' &&
+    dryRunFlag !== 'server' &&
+    dryRunFlag !== 'client'
+  ) {
+    return error(
+      `error: Invalid dry-run value (${dryRunFlag}). Must be "none", "server", or "client".`
+    )
+  }
 
   const parsedNodePort = parseNodePort(parsed.flags['node-port'])
   if (typeof parsedNodePort !== 'number' && parsedNodePort !== undefined) {
@@ -327,6 +339,10 @@ export const handleExpose = (
       }
     ]
   })
+
+  if (dryRunFlag === 'client') {
+    return buildDryRunResponse(service, parsed)
+  }
 
   const createResult = createResourceWithEvents(service, apiServer)
   if (!createResult.ok) {

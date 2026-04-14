@@ -755,7 +755,7 @@ const scaleCommand = createLeafCommand({
 
 const exposeCommand = createLeafCommand({
   path: ['expose'],
-  use: 'expose TYPE NAME --port=PORT',
+  use: 'expose TYPE NAME --port=PORT [--dry-run=none|server|client] [-o output]',
   short: 'Expose a resource as a new Kubernetes service',
   handlerId: 'expose',
   completion: {
@@ -767,7 +767,19 @@ const exposeCommand = createLeafCommand({
     { kind: 'string', name: 'target-port', description: 'Target port' },
     { kind: 'string', name: 'type', description: 'Service type' },
     { kind: 'string', name: 'name', description: 'Service name override' },
-    { kind: 'string', name: 'selector', short: 'l', description: 'Selector' }
+    { kind: 'string', name: 'selector', short: 'l', description: 'Selector' },
+    {
+      kind: 'string',
+      name: 'output',
+      short: 'o',
+      description: 'Output format'
+    },
+    {
+      kind: 'enum',
+      name: 'dry-run',
+      description: 'Must be none, server or client',
+      enumValues: ['none', 'server', 'client']
+    }
   ]
 })
 

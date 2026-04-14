@@ -1,0 +1,194 @@
+{
+  "summary": {
+    "drillId": "pod-basics",
+    "matchedSteps": 4,
+    "mismatchedSteps": 0,
+    "passedChecks": 7,
+    "failedChecks": 0,
+    "pass": true
+  },
+  "stepComparisons": [
+    {
+      "stepId": "cleanup-namespace",
+      "command": "kubectl delete namespace exercise-01 --ignore-not-found=true",
+      "expectParity": false,
+      "matched": true,
+      "categories": [
+        "exit_code",
+        "output_wording"
+      ],
+      "simulation": {
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "error: unknown flag: --ignore-not-found\nSee 'kubectl delete --help' for usage."
+      },
+      "kind": {
+        "exitCode": 0,
+        "stdout": "namespace \"exercise-01\" deleted",
+        "stderr": ""
+      },
+      "normalizedDiff": {
+        "simulationStdout": "",
+        "kindStdout": "namespace \"exercise-01\" deleted",
+        "simulationStderr": "error: unknown flag: --ignore-not-found\nSee 'kubectl delete --help' for usage.",
+        "kindStderr": ""
+      }
+    },
+    {
+      "stepId": "create-namespace",
+      "command": "kubectl create namespace exercise-01",
+      "expectParity": true,
+      "matched": true,
+      "categories": [],
+      "simulation": {
+        "exitCode": 0,
+        "stdout": "namespace/exercise-01 created",
+        "stderr": ""
+      },
+      "kind": {
+        "exitCode": 0,
+        "stdout": "namespace/exercise-01 created",
+        "stderr": ""
+      },
+      "normalizedDiff": {
+        "simulationStdout": "namespace/exercise-01 created",
+        "kindStdout": "namespace/exercise-01 created",
+        "simulationStderr": "",
+        "kindStderr": ""
+      }
+    },
+    {
+      "stepId": "apply-pod",
+      "command": "kubectl apply -f /home/anto/code/kube-mastery/.tmp/drill-parity/pod-basics-manifests/pod.yaml",
+      "expectParity": true,
+      "matched": true,
+      "categories": [],
+      "simulation": {
+        "exitCode": 0,
+        "stdout": "pod/web created",
+        "stderr": ""
+      },
+      "kind": {
+        "exitCode": 0,
+        "stdout": "pod/web created",
+        "stderr": ""
+      },
+      "normalizedDiff": {
+        "simulationStdout": "pod/web created",
+        "kindStdout": "pod/web created",
+        "simulationStderr": "",
+        "kindStderr": ""
+      }
+    },
+    {
+      "stepId": "add-version-label",
+      "command": "kubectl label pod web -n exercise-01 version=v1",
+      "expectParity": true,
+      "matched": true,
+      "categories": [],
+      "simulation": {
+        "exitCode": 0,
+        "stdout": "pod/web labeled",
+        "stderr": ""
+      },
+      "kind": {
+        "exitCode": 0,
+        "stdout": "pod/web labeled",
+        "stderr": ""
+      },
+      "normalizedDiff": {
+        "simulationStdout": "pod/web labeled",
+        "kindStdout": "pod/web labeled",
+        "simulationStderr": "",
+        "kindStderr": ""
+      }
+    },
+    {
+      "stepId": "remove-tier-label",
+      "command": "kubectl label pod web -n exercise-01 tier-",
+      "expectParity": true,
+      "matched": true,
+      "categories": [],
+      "simulation": {
+        "exitCode": 0,
+        "stdout": "pod/web unlabeled",
+        "stderr": ""
+      },
+      "kind": {
+        "exitCode": 0,
+        "stdout": "pod/web unlabeled",
+        "stderr": ""
+      },
+      "normalizedDiff": {
+        "simulationStdout": "pod/web unlabeled",
+        "kindStdout": "pod/web unlabeled",
+        "simulationStderr": "",
+        "kindStderr": ""
+      }
+    }
+  ],
+  "checkResults": [
+    {
+      "checkId": "app-label",
+      "status": "pass",
+      "category": "resource_state",
+      "observed": "sim=web;kind=web",
+      "expected": "web",
+      "detail": "Cluster check passed on simulation and kind."
+    },
+    {
+      "checkId": "version-label",
+      "status": "pass",
+      "category": "resource_state",
+      "observed": "sim=v1;kind=v1",
+      "expected": "v1",
+      "detail": "Cluster check passed on simulation and kind."
+    },
+    {
+      "checkId": "tier-label-removed",
+      "status": "pass",
+      "category": "resource_state",
+      "observed": "sim=;kind=",
+      "expected": "",
+      "detail": "Cluster check passed on simulation and kind."
+    },
+    {
+      "checkId": "cpu-request",
+      "status": "pass",
+      "category": "resource_state",
+      "observed": "sim=100m;kind=100m",
+      "expected": "100m",
+      "detail": "Cluster check passed on simulation and kind."
+    },
+    {
+      "checkId": "memory-limit",
+      "status": "pass",
+      "category": "resource_state",
+      "observed": "sim=128Mi;kind=128Mi",
+      "expected": "128Mi",
+      "detail": "Cluster check passed on simulation and kind."
+    },
+    {
+      "checkId": "pod-manifest-has-resources",
+      "status": "pass",
+      "category": "filesystem_state",
+      "observed": "apiVersion: v1\nkind: Pod\nmetadata:\n  labels:\n    app: web\n    tier: frontend\n  name: web\n  namespace: exercise-01\nspec:\n  containers:\n    - image: nginx:1.28\n      name: web\n      resources:\n        limits:\n          cpu: 250m\n          memory: 128Mi\n        requests:\n          cpu: 100m\n          memory: 64Mi",
+      "expected": "resources:",
+      "detail": "Filesystem check passed for pod.yaml"
+    },
+    {
+      "checkId": "pod-manifest-has-label",
+      "status": "pass",
+      "category": "filesystem_state",
+      "observed": "apiVersion: v1\nkind: Pod\nmetadata:\n  labels:\n    app: web\n    tier: frontend\n  name: web\n  namespace: exercise-01\nspec:\n  containers:\n    - image: nginx:1.28\n      name: web\n      resources:\n        limits:\n          cpu: 250m\n          memory: 128Mi\n        requests:\n          cpu: 100m\n          memory: 64Mi",
+      "expected": "tier: frontend",
+      "detail": "Filesystem check passed for pod.yaml"
+    }
+  ],
+  "rootCauseHints": [],
+  "aiContext": {
+    "failingCommands": [],
+    "failingChecks": [],
+    "topCategories": []
+  }
+}

@@ -31,7 +31,7 @@ Show the exact final YAML that must work as-is.
 
 Task headings are short imperative sentences.
 Always include concrete names and values.
-After code blocks, write 1 or 2 short sentences.
+
 Add one lesson link for concept recall.
 Example: https://kubemastery.com/en/courses/common-core/why-replicasets
 Lesson list: `/home/af/code/kube-mastery/src/courses/learningPaths`

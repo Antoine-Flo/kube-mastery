@@ -64,6 +64,57 @@ describe('kubectl expose handler', () => {
     expect(serviceResult.value.spec.ports[0].targetPort).toBe(8080)
   })
 
+  it('should support --dry-run=client for expose and return yaml output', () => {
+    const apiServer = createApiServerFacade()
+    apiServer.createResource(
+      'Deployment',
+      createDeployment({
+        name: 'web',
+        namespace: 'default',
+        labels: { app: 'web' },
+        selector: { matchLabels: { app: 'web' } },
+        template: {
+          metadata: { labels: { app: 'web' } },
+          spec: {
+            containers: [
+              {
+                name: 'web',
+                image: 'nginx',
+                ports: [{ containerPort: 8080 }]
+              }
+            ]
+          }
+        }
+      })
+    )
+
+    const result = handleExpose(
+      apiServer,
+      createParsedExpose({
+        flags: {
+          port: '80',
+          'target-port': '8080',
+          type: 'NodePort',
+          'node-port': '30090',
+          'dry-run': 'client',
+          output: 'yaml'
+        },
+        output: 'yaml'
+      })
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('kind: Service')
+    expect(result.value).toContain('name: web')
+    expect(result.value).toContain('nodePort: 30090')
+
+    const serviceResult = apiServer.findResource('Service', 'web', 'default')
+    expect(serviceResult.ok).toBe(false)
+  })
+
   it('should return not found when deployment does not exist', () => {
     const apiServer = createApiServerFacade()
     const result = handleExpose(

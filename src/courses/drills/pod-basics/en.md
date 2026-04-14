@@ -1,6 +1,5 @@
 ---
 title: Pod Basics
-isDraft: true
 description: Create a pod with labels and resource constraints, then manage its labels.
 tag: cluster_architecture_installation
 environment: minimal
@@ -17,106 +16,110 @@ kubectl create namespace exercise-01
 
 Creates the namespace. All subsequent commands target this namespace with `-n exercise-01`.
 
-## Create a pod named `web` in namespace `exercise-01` with image `nginx:1.27`, labels `app=web` and `tier=frontend`, requests 64Mi memory and 100m CPU, limits 128Mi memory and 250m CPU
+## Create pod `web` in namespace `exercise-01` with image `nginx:1.28`, labels `app=web,tier=frontend`, requests `cpu=100m,memory=64Mi`, limits `cpu=250m,memory=128Mi`
 
 ### Solution
+
+Generate a base manifest quickly:
 
 ```bash
-kubectl run web -n exercise-01 --image=nginx:1.27 --labels=app=web,tier=frontend --dry-run=client -o yaml > pod.yaml
+kubectl run web -n exercise-01 --image=nginx:1.28 --labels=app=web,tier=frontend --dry-run=client -o yaml > pod.yaml
 ```
 
-Generates the pod manifest without creating anything. Edit `pod.yaml` to add `resources.requests` and `resources.limits` under `spec.containers[0]`, then apply it.
+Then edit `pod.yaml` so it matches this final manifest:
 
-## Apply the manifest to create the pod
-
-### Solution
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: web
+    tier: frontend
+  name: web
+  namespace: exercise-01
+spec:
+  containers:
+    - image: nginx:1.28
+      name: web
+      resources:
+        limits:
+          cpu: 250m
+          memory: 128Mi
+        requests:
+          cpu: 100m
+          memory: 64Mi
+```
 
 ```bash
 kubectl apply -f pod.yaml
 ```
 
-Creates the pod from the edited manifest.
+Reference lesson for recall: https://kubemastery.com/en/courses/common-core/what-is-a-pod
 
-## Wait until pod `web` is Ready
-
-### Solution
-
-```bash
-kubectl wait --for=condition=Ready pod/web -n exercise-01 --timeout=60s
-```
-
-Ready condition is a stronger success criterion than a visual `get` check.
+This step creates the pod with the expected metadata and resource constraints.
 
 ### Validation
 
 ```yaml
+- type: clusterResourceExists
+  kind: Pod
+  namespace: exercise-01
+  name: web
+  onFail: "Le pod `web` n'existe pas dans `exercise-01`. Vérifiez que `pod.yaml` a bien été appliqué dans le bon namespace."
 - type: clusterFieldEquals
   kind: Pod
   namespace: exercise-01
   name: web
-  path: '{.status.conditions[?(@.type=="Ready")].status}'
-  value: 'True'
-  onFail: "Le pod `web` n'est pas en état Ready."
-```
-
-## Validate labels and resource constraints on the created pod
-
-### Solution
-
-```bash
-kubectl get pod web -n exercise-01 -o jsonpath='{.metadata.labels.app} {.metadata.labels.tier} {.spec.containers[0].resources.requests.cpu} {.spec.containers[0].resources.limits.memory}'
-```
-
-Expected output should include `web frontend 100m 128Mi`.
-
-### Validation
-
-```yaml
+  path: '{.metadata.labels.app}'
+  value: 'web'
+  onFail: "Le label `app=web` est absent sur le pod `web`. Vérifiez la section `metadata.labels`."
+- type: clusterFieldEquals
+  kind: Pod
+  namespace: exercise-01
+  name: web
+  path: '{.metadata.labels.tier}'
+  value: 'frontend'
+  onFail: "Le label `tier=frontend` est absent sur le pod `web`. Vérifiez la section `metadata.labels`."
 - type: clusterFieldEquals
   kind: Pod
   namespace: exercise-01
   name: web
   path: '{.spec.containers[0].resources.requests.cpu}'
   value: '100m'
-  onFail: 'Les resources requests/limits du pod `web` ne correspondent pas aux attentes.'
+  onFail: "La request CPU de `web` n'est pas `100m`. Vérifiez `spec.containers[0].resources.requests`."
+- type: clusterFieldEquals
+  kind: Pod
+  namespace: exercise-01
+  name: web
+  path: '{.spec.containers[0].resources.requests.memory}'
+  value: '64Mi'
+  onFail: "La request mémoire de `web` n'est pas `64Mi`. Vérifiez `spec.containers[0].resources.requests`."
+- type: clusterFieldEquals
+  kind: Pod
+  namespace: exercise-01
+  name: web
+  path: '{.spec.containers[0].resources.limits.cpu}'
+  value: '250m'
+  onFail: "La limit CPU de `web` n'est pas `250m`. Vérifiez `spec.containers[0].resources.limits`."
 - type: clusterFieldEquals
   kind: Pod
   namespace: exercise-01
   name: web
   path: '{.spec.containers[0].resources.limits.memory}'
   value: '128Mi'
-  onFail: 'Les resources requests/limits du pod `web` ne correspondent pas aux attentes.'
+  onFail: "La limit mémoire de `web` n'est pas `128Mi`. Vérifiez `spec.containers[0].resources.limits`."
 ```
 
-## Add a new label `version=v1` to the running pod
+## Add label `version=v1` and remove label `tier` from pod `web`
 
 ### Solution
 
 ```bash
 kubectl label pod web -n exercise-01 version=v1
-```
-
-Adds the `version=v1` label. No restart required, labels are metadata changes only.
-
-## Remove the `tier` label from the pod
-
-### Solution
-
-```bash
 kubectl label pod web -n exercise-01 tier-
 ```
 
-Removes a label by appending a dash to the key. Verify with `--show-labels` afterwards.
-
-## Prove final label state after updates
-
-### Solution
-
-```bash
-kubectl get pod web -n exercise-01 -o jsonpath='{.metadata.labels.app} {.metadata.labels.version} {.metadata.labels.tier}'
-```
-
-Final state should keep `app` and `version` and remove `tier`.
+Labels are mutable metadata, no pod restart is required.
 
 ### Validation
 
@@ -127,21 +130,21 @@ Final state should keep `app` and `version` and remove `tier`.
   name: web
   path: '{.metadata.labels.app}'
   value: 'web'
-  onFail: 'Les labels finaux attendus (`app=web`, `version=v1`, `tier` supprimé) ne sont pas respectés.'
+  onFail: "Le label `app=web` est manquant après mise à jour. Vérifiez les commandes `kubectl label`."
 - type: clusterFieldEquals
   kind: Pod
   namespace: exercise-01
   name: web
   path: '{.metadata.labels.version}'
   value: 'v1'
-  onFail: 'Les labels finaux attendus (`app=web`, `version=v1`, `tier` supprimé) ne sont pas respectés.'
+  onFail: "Le label `version=v1` n'a pas été appliqué. Vérifiez la commande d'ajout du label."
 - type: clusterFieldEquals
   kind: Pod
   namespace: exercise-01
   name: web
   path: '{.metadata.labels.tier}'
   value: ''
-  onFail: 'Les labels finaux attendus (`app=web`, `version=v1`, `tier` supprimé) ne sont pas respectés.'
+  onFail: "Le label `tier` existe encore. Vérifiez l'utilisation de `tier-` pour supprimer un label."
 ```
 
 ## Optional clean up, delete the namespace

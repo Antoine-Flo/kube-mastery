@@ -570,6 +570,33 @@ describe('kubectl parser - expose', () => {
     expect(result.value.flags.type).toBe('NodePort')
   })
 
+  it('should parse expose with dry-run client and yaml output', () => {
+    const result = parseCommand(
+      'kubectl expose deployment web --port=80 --target-port=80 --dry-run=client -o yaml'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.flags['dry-run']).toBe('client')
+    expect(result.value.output).toBe('yaml')
+  })
+
+  it('should reject expose when dry-run value is invalid', () => {
+    const result = parseCommand(
+      'kubectl expose deployment web --port=80 --dry-run=local'
+    )
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain(
+        'error: Invalid dry-run value (local). Must be "none", "server", or "client".'
+      )
+    }
+  })
+
   it('should reject expose without name', () => {
     const result = parseCommand('kubectl expose deployment --port=80')
 
