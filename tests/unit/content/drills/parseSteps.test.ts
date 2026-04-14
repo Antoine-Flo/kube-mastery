@@ -56,6 +56,10 @@ Then inspect the output.
     expect(result!.tasks[0].commandBlocks).toEqual([
       { lang: 'bash', code: 'kubectl get pods -n app' }
     ])
+    expect(result!.tasks[0].solutionSegments).toEqual([
+      { kind: 'code', lang: 'bash', code: 'kubectl get pods -n app' },
+      { kind: 'text', markdown: 'Then inspect the output.' }
+    ])
     expect(result!.tasks[0].instructionMarkdown).toBe(
       'Optional instruction text.'
     )
@@ -99,9 +103,13 @@ title: "Mixed fences"
 
 ### Solution
 
+Intro before first command.
+
 \`\`\`bash
 kubectl run x --image=busybox --dry-run=client -o yaml > pod.yaml
 \`\`\`
+
+Between yaml and apply.
 
 \`\`\`yaml
 spec:
@@ -109,9 +117,13 @@ spec:
     - name: x
 \`\`\`
 
+After yaml block.
+
 \`\`\`bash
 kubectl apply -f pod.yaml
 \`\`\`
+
+Final note.
 `
     const result = parseDrillFile(markdown)
     expect(result).not.toBeNull()
@@ -125,6 +137,32 @@ kubectl apply -f pod.yaml
         code: 'spec:\n  containers:\n    - name: x'
       },
       { lang: 'bash', code: 'kubectl apply -f pod.yaml' }
+    ])
+    expect(result!.tasks[0].solutionSegments).toEqual([
+      {
+        kind: 'text',
+        markdown: 'Intro before first command.'
+      },
+      {
+        kind: 'code',
+        lang: 'bash',
+        code: 'kubectl run x --image=busybox --dry-run=client -o yaml > pod.yaml'
+      },
+      {
+        kind: 'text',
+        markdown: 'Between yaml and apply.'
+      },
+      {
+        kind: 'code',
+        lang: 'yaml',
+        code: 'spec:\n  containers:\n    - name: x'
+      },
+      {
+        kind: 'text',
+        markdown: 'After yaml block.'
+      },
+      { kind: 'code', lang: 'bash', code: 'kubectl apply -f pod.yaml' },
+      { kind: 'text', markdown: 'Final note.' }
     ])
   })
 

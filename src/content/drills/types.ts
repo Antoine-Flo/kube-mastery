@@ -122,10 +122,16 @@ export interface DrillCommandBlock {
   code: string
 }
 
+/** Preserves interleaved prose and fenced code order from drill solution markdown. */
+export type DrillSolutionSegment =
+  | { kind: 'text'; markdown: string }
+  | { kind: 'code'; lang: DrillSolutionCodeLang; code: string }
+
 export interface DrillTask {
   task: string
   commandBlocks: DrillCommandBlock[]
   explanation: string
+  solutionSegments: DrillSolutionSegment[]
   instructionMarkdown?: string
   solutionMarkdown?: string
   validation?: DrillValidation

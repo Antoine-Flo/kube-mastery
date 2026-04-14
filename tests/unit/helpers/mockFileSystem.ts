@@ -35,6 +35,7 @@ export const createMockFileSystem = (
     overrides.readFiles ?? ((paths: string[]) => success(paths.map(() => '')))
   const writeFile = overrides.writeFile ?? (() => success(undefined))
   const deleteFile = overrides.deleteFile ?? (() => success(undefined))
+  const movePath = overrides.movePath ?? (() => success(undefined))
 
   return {
     getCurrentPath: overrides.getCurrentPath ?? (() => '/home/kube'),
@@ -59,6 +60,14 @@ export const createMockFileSystem = (
       return toFileSystemResult(writeFile(path, content), 'writeFile', path)
     },
     deleteFile,
+    movePath,
+    movePathDetailed: (sourcePath: string, destinationPath: string) => {
+      return toFileSystemResult(
+        movePath(sourcePath, destinationPath),
+        'movePath',
+        `${sourcePath} -> ${destinationPath}`
+      )
+    },
     toJSON:
       overrides.toJSON ??
       (() => ({

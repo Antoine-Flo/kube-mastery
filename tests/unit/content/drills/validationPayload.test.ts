@@ -11,12 +11,20 @@ describe('drill validation payload', () => {
       {
         task: 'a',
         commandBlocks: [{ lang: 'bash', code: 'kubectl get pods' }],
-        explanation: 'a'
+        explanation: 'a',
+        solutionSegments: [
+          { kind: 'code', lang: 'bash', code: 'kubectl get pods' },
+          { kind: 'text', markdown: 'a' }
+        ]
       },
       {
         task: 'b',
         commandBlocks: [{ lang: 'bash', code: 'kubectl get ns' }],
         explanation: 'b',
+        solutionSegments: [
+          { kind: 'code', lang: 'bash', code: 'kubectl get ns' },
+          { kind: 'text', markdown: 'b' }
+        ],
         validation: {
           assertions: [
             {

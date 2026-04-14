@@ -7,6 +7,7 @@ import {
   type DrillFile,
   type DrillCommandBlock,
   type DrillSolutionCodeLang,
+  type DrillSolutionSegment,
   type DrillTask,
   type DrillValidation,
   type DrillAssertion,
@@ -252,25 +253,59 @@ function fenceLanguageToSolutionLang(
   return undefined
 }
 
-function extractSolutionCodeBlocks(markdown: string): DrillCommandBlock[] {
-  const blocks: DrillCommandBlock[] = []
-  const fenceRegex = /```([^\n`]*)\n([\s\S]*?)\n```/g
+const SOLUTION_FENCE_REGEX = /```([^\n`]*)\n([\s\S]*?)\n```/g
+
+function splitSolutionMarkdownIntoSegments(
+  markdown: string
+): DrillSolutionSegment[] {
+  const segments: DrillSolutionSegment[] = []
+  const fenceRegex = new RegExp(
+    SOLUTION_FENCE_REGEX.source,
+    SOLUTION_FENCE_REGEX.flags
+  )
+  let lastIndex = 0
   let match: RegExpExecArray | null
   while ((match = fenceRegex.exec(markdown)) !== null) {
-    const lang = fenceLanguageToSolutionLang(match[1])
-    if (!lang) {
-      continue
+    const textBefore = markdown.slice(lastIndex, match.index).trim()
+    if (textBefore.length > 0) {
+      segments.push({ kind: 'text', markdown: textBefore })
     }
+    const lang = fenceLanguageToSolutionLang(match[1])
     const code = match[2].trim()
-    if (code.length > 0) {
-      blocks.push({ lang, code })
+    if (lang && code.length > 0) {
+      segments.push({ kind: 'code', lang, code })
+    }
+    lastIndex = match.index + match[0].length
+  }
+  const tail = markdown.slice(lastIndex).trim()
+  if (tail.length > 0) {
+    segments.push({ kind: 'text', markdown: tail })
+  }
+  return segments
+}
+
+function commandBlocksFromSegments(
+  segments: DrillSolutionSegment[]
+): DrillCommandBlock[] {
+  const blocks: DrillCommandBlock[] = []
+  for (const segment of segments) {
+    if (segment.kind === 'code') {
+      blocks.push({ lang: segment.lang, code: segment.code })
     }
   }
   return blocks
 }
 
-function stripCodeFences(markdown: string): string {
-  return markdown.replace(/```[^\n`]*\n[\s\S]*?\n```/g, '').trim()
+function explanationTextFromSegments(
+  segments: DrillSolutionSegment[]
+): string {
+  const parts: string[] = []
+  for (const segment of segments) {
+    if (segment.kind === 'text') {
+      parts.push(segment.markdown)
+    }
+  }
+  return parts.join('\n\n').trim()
 }
 
 function splitSectionBySubHeading(
@@ -333,16 +368,18 @@ function parseMarkdownTask(
   }
   const validation = validationOrResult
 
-  const commandBlocks = extractSolutionCodeBlocks(solutionMarkdown)
+  const solutionSegments = splitSolutionMarkdownIntoSegments(solutionMarkdown)
+  const commandBlocks = commandBlocksFromSegments(solutionSegments)
   if (commandBlocks.length === 0) {
     return { kind: 'skip' }
   }
 
-  const explanationText = stripCodeFences(solutionMarkdown)
+  const explanationText = explanationTextFromSegments(solutionSegments)
   const task: DrillTask = {
     task: heading.trim(),
     commandBlocks,
     explanation: explanationText,
+    solutionSegments,
     instructionMarkdown:
       solutionParts.before.length > 0 ? solutionParts.before : undefined,
     solutionMarkdown

@@ -4,6 +4,7 @@ description: Create a pod with labels and resource constraints, then manage its 
 tag: cluster_architecture_installation
 environment: minimal
 ckaTargetMinutes: 6
+isFree: true
 ---
 
 ## Create a namespace called `exercise-01`
@@ -14,7 +15,7 @@ ckaTargetMinutes: 6
 kubectl create namespace exercise-01
 ```
 
-Creates the namespace. All subsequent commands target this namespace with `-n exercise-01`.
+Creates the namespace. All subsequent commands target this namespace with `-n exercise-01`. <a href="https://kubemastery.com/en/courses/common-core/what-are-namespaces" target="_blank" rel="noopener noreferrer">Reference lesson.</a>
 
 ## Create pod `web` in namespace `exercise-01` with image `nginx:1.28`, labels `app=web,tier=frontend`, requests `cpu=100m,memory=64Mi`, limits `cpu=250m,memory=128Mi`
 
@@ -54,9 +55,7 @@ spec:
 kubectl apply -f pod.yaml
 ```
 
-Reference lesson for recall: https://kubemastery.com/en/courses/common-core/what-is-a-pod
-
-This step creates the pod with the expected metadata and resource constraints.
+This step creates the pod with the expected metadata and resource constraints. <a href="https://kubemastery.com/en/courses/common-core/creating-your-first-pod" target="_blank" rel="noopener noreferrer">Reference lesson.</a>
 
 ### Validation
 
@@ -119,7 +118,7 @@ kubectl label pod web -n exercise-01 version=v1
 kubectl label pod web -n exercise-01 tier-
 ```
 
-Labels are mutable metadata, no pod restart is required.
+Labels are mutable metadata, no pod restart is required. <a href="https://kubemastery.com/en/courses/common-core/what-are-labels" target="_blank" rel="noopener noreferrer">Reference lesson.</a>
 
 ### Validation
 

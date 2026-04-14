@@ -1,6 +1,5 @@
 ---
 title: Create PV/PVC and Mount in a Pod
-isFree: true
 description: Provision static storage from scratch, bind a PVC to a PV, and mount the volume inside a running pod.
 tag: storage
 environment: minimal

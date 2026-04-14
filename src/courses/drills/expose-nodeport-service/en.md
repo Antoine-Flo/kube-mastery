@@ -55,7 +55,7 @@ spec:
 kubectl apply -f webapp-deploy.yaml
 ```
 
-Reference lesson for recall: https://kubemastery.com/en/courses/common-core/what-is-a-service
+Reference lesson for recall: <a href="https://kubemastery.com/en/courses/common-core/what-is-a-service" target="_blank" rel="noopener noreferrer">What is a Service</a>
 
 The `selector.matchLabels` and `template.metadata.labels` must match exactly.
 

@@ -9,7 +9,10 @@ import { getCourseOverview } from '../../../../content/overview/facade'
 import { getLayoutAuthContext } from '../../../../lib/auth/server'
 import { getProgressContext } from '../../../../lib/progress/server'
 import { getFirstNonPlaceholderLessonIdFromSections } from '../../../../lib/lesson/lessonTerminalAccess'
-import { inlineBackticksToHtml } from '../../../../lib/drills/inlineBackticksToHtml'
+import {
+  drillSolutionTextToHtml,
+  inlineBackticksToHtml
+} from '../../../../lib/drills/inlineBackticksToHtml'
 import DrillCodeBlock from '../../../../components/drills/DrillCodeBlock.astro'
 import '../../../../styles/components/lesson-content.css'
 import '../../../../styles/components/cluster-visualization.css'
@@ -136,15 +139,21 @@ const tasks = drillDetail.tasks
                     set:html={inlineBackticksToHtml(task.instructionMarkdown)}
                   />
                 )}
-                <p
-                  class="drill-task__explanation"
-                  set:html={inlineBackticksToHtml(task.explanation)}
-                />
-                <div class="drill-task__commands">
-                  {task.commandBlocks.map((block) => (
-                    <DrillCodeBlock lang={block.lang} code={block.code} />
-                  ))}
-                </div>
+                {task.solutionSegments.map((segment) =>
+                  segment.kind === 'text' ? (
+                    <p
+                      class="drill-task__explanation"
+                      set:html={drillSolutionTextToHtml(segment.markdown)}
+                    />
+                  ) : (
+                    <div class="drill-task__commands">
+                      <DrillCodeBlock
+                        lang={segment.lang}
+                        code={segment.code}
+                      />
+                    </div>
+                  )
+                )}
                 </details>
               </li>
             )
