@@ -317,6 +317,7 @@ describe('CommandDispatcher', () => {
         return
       }
       expect(result.error).toBe('Input locked')
+      expect(renderer.getOutput()).toContain('press Ctrl+C')
     })
 
     it('locks input and prints message at command limit', () => {
@@ -371,6 +372,38 @@ describe('CommandDispatcher', () => {
       streamingDispatcher.stopActiveStream()
       expect(unlockInput).toHaveBeenCalled()
       expect(streamingDispatcher.hasActiveStream()).toBe(false)
+    })
+
+    it('blocks new commands when stream is active even without ui lock callback', () => {
+      const streamingDispatcher = createCommandDispatcher({
+        fileSystem,
+        renderer,
+        shellContextStack,
+        apiServer,
+        networkRuntime,
+        logger
+      })
+
+      apiServer.createResource(
+        'Pod',
+        createPod({
+          name: 'watch-lock',
+          namespace: 'default',
+          containers: [{ name: 'app', image: 'nginx' }]
+        })
+      )
+      const streamResult = streamingDispatcher.execute('kubectl get pods -w')
+      expect(streamResult.ok).toBe(true)
+      expect(streamingDispatcher.hasActiveStream()).toBe(true)
+
+      renderer.clearOutput()
+      const blockedResult = streamingDispatcher.execute('kubectl get pods')
+      expect(blockedResult.ok).toBe(false)
+      if (blockedResult.ok) {
+        return
+      }
+      expect(blockedResult.error).toBe('Input locked')
+      expect(renderer.getOutput()).toContain('press Ctrl+C')
     })
   })
 })

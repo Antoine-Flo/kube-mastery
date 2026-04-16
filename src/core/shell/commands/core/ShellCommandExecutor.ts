@@ -9,7 +9,7 @@ import type { ExecutionResult } from '../../../shared/result'
 import { error } from '../../../shared/result'
 import type { ShellCommandHandler } from './ShellCommandHandler'
 import { parseShellCommand } from './ShellCommandParser'
-import type { ParsedShellCommand } from './types'
+import type { ParsedShellCommand, ShellCommandIO } from './types'
 
 export class ShellCommandExecutor {
   private handlers: Map<string, ShellCommandHandler>
@@ -23,7 +23,7 @@ export class ShellCommandExecutor {
    * @param input - Raw command string (e.g., "ls -l", "cd /manifests")
    * @returns ExecutionResult with output or error
    */
-  execute(input: string): ExecutionResult {
+  execute(input: string, io: ShellCommandIO = {}): ExecutionResult {
     const registeredCommands = [...this.handlers.keys()]
     const parseResult = parseShellCommand(input, registeredCommands)
 
@@ -31,13 +31,16 @@ export class ShellCommandExecutor {
       return error(parseResult.error)
     }
 
-    return this.routeCommand(parseResult.value)
+    return this.routeCommand(parseResult.value, io)
   }
 
   /**
    * Route parsed command to appropriate handler
    */
-  private routeCommand(parsed: ParsedShellCommand): ExecutionResult {
+  private routeCommand(
+    parsed: ParsedShellCommand,
+    io: ShellCommandIO
+  ): ExecutionResult {
     const { command, args, flags } = parsed
     const handler = this.handlers.get(command)
 
@@ -46,7 +49,7 @@ export class ShellCommandExecutor {
       return error(`Handler not found for command: ${command}`)
     }
 
-    return handler.execute(args, flags)
+    return handler.execute(args, flags, io)
   }
 }
 

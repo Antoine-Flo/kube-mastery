@@ -1,5 +1,6 @@
-/* Pricing Page */
-.pricing-page-halo .page-halo__bg {
+/* Pricing Page, Lab page (shared halo) */
+.pricing-page-halo .page-halo__bg,
+.lab-page-halo .page-halo__bg {
   background: radial-gradient(
       ellipse 46% 38% at 74% 0%,
       hsl(194, 55%, 87%) 0%,
@@ -9,7 +10,8 @@
     50% 0% / 100% 34% no-repeat;
 }
 
-[data-theme='dark'] .pricing-page-halo .page-halo__bg {
+[data-theme='dark'] .pricing-page-halo .page-halo__bg,
+[data-theme='dark'] .lab-page-halo .page-halo__bg {
   background: radial-gradient(
       ellipse 46% 38% at 74% 0%,
       hsl(192, 74%, 10%) 0%,
@@ -20,7 +22,8 @@
 }
 
 @media (max-width: 768px) {
-  .pricing-page-halo .page-halo__bg {
+  .pricing-page-halo .page-halo__bg,
+  .lab-page-halo .page-halo__bg {
     background: radial-gradient(
         ellipse 95% 86% at 72% 0%,
         hsl(194, 55%, 87%) 0%,
@@ -30,7 +33,8 @@
       50% 0% / 100% 42% no-repeat;
   }
 
-  [data-theme='dark'] .pricing-page-halo .page-halo__bg {
+  [data-theme='dark'] .pricing-page-halo .page-halo__bg,
+  [data-theme='dark'] .lab-page-halo .page-halo__bg {
     background: radial-gradient(
         ellipse 95% 86% at 72% 0%,
         hsl(192, 74%, 10%) 0%,

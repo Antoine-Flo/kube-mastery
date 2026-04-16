@@ -1176,6 +1176,22 @@ describe('KubectlCommandHandler', () => {
       expect(renderer.getOutput()).toBe('')
     })
 
+    it('should enable watch stream with short -w flag', () => {
+      const createResult = handler.execute(
+        'kubectl run watch-short --image=nginx',
+        context
+      )
+      expect(createResult.ok).toBe(true)
+      renderer.clearOutput()
+
+      const watchResult = handler.execute('kubectl get pods -w', context)
+      expect(watchResult.ok).toBe(true)
+      const initialOutput = renderer.getOutput()
+      expect(initialOutput).toContain('NAME')
+      expect(initialOutput).toContain('watch-short')
+      expect(streamStop).not.toBeNull()
+    })
+
     it('should not print initial output in watch-only mode', () => {
       const createResult = handler.execute(
         'kubectl run watch-only-pod --image=nginx',

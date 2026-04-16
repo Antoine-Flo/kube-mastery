@@ -19,6 +19,8 @@ export const createHelpHandler = (): ShellCommandHandler => {
   mkdir <name>     Create directory
   touch <file>     Create empty file
   cat <file>       Display file contents
+  grep <pattern>   Filter lines from file or pipe input
+  wc -l [file]     Count lines from file or pipe input
   nano <file>      Edit file with YAML editor
   vi <file>        Edit file with YAML editor (alias)
   vim <file>       Edit file with YAML editor (alias)

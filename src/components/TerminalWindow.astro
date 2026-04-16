@@ -412,7 +412,7 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
       // Déjà monté (évite double terminal après astro:page-load / view transitions)
       if (box.querySelector('.terminal')) {
         loader.style.display = 'none'
-        wrapper.style.display = 'block'
+        wrapper.style.display = 'flex'
         return
       }
 
@@ -450,7 +450,7 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
           })
           if (pid) persistIdByRoot.set(root, pid)
           loader.style.display = 'none'
-          wrapper.style.display = 'block'
+          wrapper.style.display = 'flex'
         } catch (err) {
           lessonPending.delete(root)
           console.error('[TerminalWindow] Mount failed:', err)

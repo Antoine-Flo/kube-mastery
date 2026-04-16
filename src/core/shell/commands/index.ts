@@ -20,10 +20,12 @@ import { createHostFileSystem } from '../../filesystem/debianFileSystem'
 import { createNanoHandler } from './handlers/editor/nano'
 import { createCatHandler } from './handlers/fileops/cat'
 import { createEchoHandler } from './handlers/fileops/echo'
+import { createGrepHandler } from './handlers/fileops/grep'
 import { createMkdirHandler } from './handlers/fileops/mkdir'
 import { createMvHandler } from './handlers/fileops/mv'
 import { createRmHandler } from './handlers/fileops/rm'
 import { createTouchHandler } from './handlers/fileops/touch'
+import { createWcHandler } from './handlers/fileops/wc'
 import { createCdHandler } from './handlers/navigation/cd'
 import { createLsHandler } from './handlers/navigation/ls'
 import { createPwdHandler } from './handlers/navigation/pwd'
@@ -40,7 +42,11 @@ import { createSleepHandler } from './handlers/system/sleep'
 export { parseShellCommand }
 export { executeSequentialShellScript } from './shellScriptRunner'
 export { parseSequentialShellScript } from './shellScriptRunner'
-export type { ParsedShellCommand, ShellCommandHandler }
+export type {
+  ParsedShellCommand,
+  ShellCommandExecutor,
+  ShellCommandHandler
+}
 
 // Re-export FileSystem from canonical source
 import type { FileSystem } from '../../filesystem/FileSystem'
@@ -105,9 +111,11 @@ export const buildShellHandlersMap = (
   handlers.set('touch', createTouchHandler(fileSystem))
   handlers.set('cat', createCatHandler(fileSystem))
   handlers.set('echo', createEchoHandler(fileSystem))
+  handlers.set('grep', createGrepHandler(fileSystem))
   handlers.set('rm', createRmHandler(fileSystem))
   handlers.set('mkdir', createMkdirHandler(fileSystem))
   handlers.set('mv', createMvHandler(fileSystem))
+  handlers.set('wc', createWcHandler(fileSystem))
 
   // Editor
   handlers.set('nano', createNanoHandler(fileSystem, editorModal))

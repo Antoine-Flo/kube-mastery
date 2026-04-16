@@ -12,6 +12,7 @@ import {
   parseShellCommand
 } from '../../../shell/commands'
 import { createShellExecutorFromContext } from '../../../shell/commands/executionContext'
+import type { ShellCommandExecutor } from '../../../shell/commands'
 import {
   buildContainerEnvironmentVariables,
   buildHostEnvironmentVariables
@@ -54,11 +55,25 @@ const restorePromptAfterSleep = (context: CommandContext): void => {
 
 export class ShellCommandHandler implements CommandHandler {
   canHandle(command: string): boolean {
-    const parseResult = parseShellCommand(
-      command,
-      getShellRegistryCommandNames()
-    )
-    return parseResult.ok
+    const scriptParseResult = parseSequentialShellScript(command)
+    if (!scriptParseResult.ok) {
+      return false
+    }
+    const steps = scriptParseResult.steps ?? []
+    if (steps.length === 0) {
+      return false
+    }
+    const registry = getShellRegistryCommandNames()
+    const commandsToValidate = steps.flatMap((step) => {
+      if (step.kind === 'single') {
+        return [step.command]
+      }
+      return step.commands
+    })
+    return commandsToValidate.every((singleCommand) => {
+      const parseResult = parseShellCommand(singleCommand, registry)
+      return parseResult.ok
+    })
   }
 
   execute(command: string, context: CommandContext): ExecutionResult {
@@ -67,27 +82,183 @@ export class ShellCommandHandler implements CommandHandler {
       context.output.writeError(scriptParseResult.error)
       return error(scriptParseResult.error)
     }
-    const commands = scriptParseResult.commands ?? []
-    if (commands.length === 0) {
+    const steps = scriptParseResult.steps ?? []
+    if (steps.length === 0) {
       return success('')
     }
 
+    const executor = this.createExecutor(context)
     const outputs: string[] = []
-    for (const singleCommand of commands) {
-      const singleResult = this.executeSingleCommand(singleCommand, context)
-      if (!singleResult.ok) {
-        return singleResult
+    for (const step of steps) {
+      if (step.kind === 'single') {
+        const singleResult = this.executeSingleCommand(
+          step.command,
+          context,
+          executor
+        )
+        if (!singleResult.ok) {
+          return singleResult
+        }
+        if (singleResult.value.length > 0) {
+          outputs.push(singleResult.value)
+        }
+        continue
       }
-      if (singleResult.value.length > 0) {
-        outputs.push(singleResult.value)
+      const pipelineResult = this.executePipelineStep(
+        step.commands,
+        context,
+        executor
+      )
+      if (!pipelineResult.ok) {
+        return pipelineResult
+      }
+      if (pipelineResult.value.length > 0) {
+        outputs.push(pipelineResult.value)
       }
     }
     return success(outputs.join('\n'))
   }
 
+  private createExecutor(context: CommandContext): ShellCommandExecutor {
+    const activeFileSystem = context.shellContextStack.getCurrentFileSystem()
+    return createShellExecutorFromContext({
+      fileSystem: activeFileSystem,
+      editorModal: context.editorModal,
+      runtimeOptions: {
+        resolveNamespace: () => {
+          const containerInfo = context.shellContextStack.getCurrentContainerInfo()
+          return containerInfo?.namespace ?? 'default'
+        },
+        runDnsLookup: (query, namespace) => {
+          if (context.networkRuntime == null) {
+            return error('network runtime is not available')
+          }
+          const dnsResult = context.networkRuntime.dnsResolver.resolveARecord(
+            query,
+            namespace
+          )
+          if (!dnsResult.ok) {
+            return error(dnsResult.error)
+          }
+          const address = dnsResult.value.addresses[0]
+          return success(
+            [
+              'Server:\t10.96.0.10',
+              'Address:\t10.96.0.10:53',
+              '',
+              `Name:\t${dnsResult.value.fqdn}`,
+              `Address:\t${address}`
+            ].join('\n')
+          )
+        },
+        getSimTrafficSourcePod: () => {
+          const containerInfo = context.shellContextStack.getCurrentContainerInfo()
+          if (containerInfo == null) {
+            return undefined
+          }
+          const podLookup = context.apiServer.findResource(
+            'Pod',
+            containerInfo.podName,
+            containerInfo.namespace
+          )
+          if (!podLookup.ok) {
+            return undefined
+          }
+          return {
+            name: containerInfo.podName,
+            namespace: containerInfo.namespace,
+            labels: podLookup.value.metadata.labels ?? {}
+          }
+        },
+        runCurl: (target, namespace, sourcePod) => {
+          if (context.networkRuntime == null) {
+            return error('network runtime is not available')
+          }
+          const curlResult = context.networkRuntime.trafficEngine.simulateHttpGet(
+            target,
+            {
+              sourceNamespace: namespace,
+              ...(sourcePod != null && { sourcePod })
+            }
+          )
+          if (!curlResult.ok) {
+            return error(curlResult.error)
+          }
+          return success(curlResult.value)
+        },
+        getEnvironmentVariables: () => {
+          const containerInfo = context.shellContextStack.getCurrentContainerInfo()
+          if (containerInfo == null) {
+            return success(buildHostEnvironmentVariables())
+          }
+          const podResult = context.apiServer.findResource(
+            'Pod',
+            containerInfo.podName,
+            containerInfo.namespace
+          )
+          if (!podResult.ok) {
+            return error(
+              `Error from server (NotFound): pods "${containerInfo.podName}" not found`
+            )
+          }
+          return buildContainerEnvironmentVariables(
+            podResult.value,
+            containerInfo.containerName,
+            context.apiServer
+          )
+        },
+        onExit: () => {
+          if (!context.shellContextStack.isInContainer()) {
+            return success('')
+          }
+          const popped = context.shellContextStack.popContext()
+          if (!popped) {
+            return success('')
+          }
+          context.shellContextStack.updateCurrentPrompt()
+          return success('')
+        }
+      }
+    })
+  }
+
+  private executePipelineStep(
+    commands: string[],
+    context: CommandContext,
+    executor: ShellCommandExecutor
+  ): ExecutionResult {
+    let pipedInput = ''
+    let pipelineOutput = ''
+    for (const command of commands) {
+      const parseResult = parseShellCommand(command, getShellRegistryCommandNames())
+      if (!parseResult.ok) {
+        context.output.writeError(parseResult.error)
+        return error(parseResult.error)
+      }
+      if (parseResult.value.command === 'sleep') {
+        const sleepInPipelineError =
+          'sleep is not supported in pipeline commands'
+        context.output.writeError(sleepInPipelineError)
+        return error(sleepInPipelineError)
+      }
+      const result = executor.execute(command, { stdin: pipedInput })
+      if (!result.ok) {
+        context.output.writeError(result.error)
+        return result
+      }
+      pipedInput = result.value
+      pipelineOutput = result.value
+    }
+    if (pipelineOutput.length > 0) {
+      context.output.writeOutput(pipelineOutput)
+    }
+    return success(pipelineOutput)
+  }
+
   private executeSingleCommand(
     command: string,
-    context: CommandContext
+    context: CommandContext,
+    executor: ShellCommandExecutor
   ): ExecutionResult {
     const parseResult = parseShellCommand(
       command,
@@ -122,109 +293,6 @@ export class ShellCommandHandler implements CommandHandler {
       })
       return success('')
     }
-
-    // Créer l'executor avec le filesystem et l'editor modal
-    const activeFileSystem = context.shellContextStack.getCurrentFileSystem()
-    const executor = createShellExecutorFromContext({
-      fileSystem: activeFileSystem,
-      editorModal: context.editorModal,
-      runtimeOptions: {
-        resolveNamespace: () => {
-          const containerInfo =
-            context.shellContextStack.getCurrentContainerInfo()
-          return containerInfo?.namespace ?? 'default'
-        },
-        runDnsLookup: (query, namespace) => {
-          if (context.networkRuntime == null) {
-            return error('network runtime is not available')
-          }
-          const dnsResult = context.networkRuntime.dnsResolver.resolveARecord(
-            query,
-            namespace
-          )
-          if (!dnsResult.ok) {
-            return error(dnsResult.error)
-          }
-          const address = dnsResult.value.addresses[0]
-          return success(
-            [
-              'Server:\t10.96.0.10',
-              'Address:\t10.96.0.10:53',
-              '',
-              `Name:\t${dnsResult.value.fqdn}`,
-              `Address:\t${address}`
-            ].join('\n')
-          )
-        },
-        getSimTrafficSourcePod: () => {
-          const containerInfo =
-            context.shellContextStack.getCurrentContainerInfo()
-          if (containerInfo == null) {
-            return undefined
-          }
-          const podLookup = context.apiServer.findResource(
-            'Pod',
-            containerInfo.podName,
-            containerInfo.namespace
-          )
-          if (!podLookup.ok) {
-            return undefined
-          }
-          return {
-            name: containerInfo.podName,
-            namespace: containerInfo.namespace,
-            labels: podLookup.value.metadata.labels ?? {}
-          }
-        },
-        runCurl: (target, namespace, sourcePod) => {
-          if (context.networkRuntime == null) {
-            return error('network runtime is not available')
-          }
-          const curlResult =
-            context.networkRuntime.trafficEngine.simulateHttpGet(target, {
-              sourceNamespace: namespace,
-              ...(sourcePod != null && { sourcePod })
-            })
-          if (!curlResult.ok) {
-            return error(curlResult.error)
-          }
-          return success(curlResult.value)
-        },
-        getEnvironmentVariables: () => {
-          const containerInfo =
-            context.shellContextStack.getCurrentContainerInfo()
-          if (containerInfo == null) {
-            return success(buildHostEnvironmentVariables())
-          }
-          const podResult = context.apiServer.findResource(
-            'Pod',
-            containerInfo.podName,
-            containerInfo.namespace
-          )
-          if (!podResult.ok) {
-            return error(
-              `Error from server (NotFound): pods "${containerInfo.podName}" not found`
-            )
-          }
-          return buildContainerEnvironmentVariables(
-            podResult.value,
-            containerInfo.containerName,
-            context.apiServer
-          )
-        },
-        onExit: () => {
-          if (!context.shellContextStack.isInContainer()) {
-            return success('')
-          }
-          const popped = context.shellContextStack.popContext()
-          if (!popped) {
-            return success('')
-          }
-          context.shellContextStack.updateCurrentPrompt()
-          return success('')
-        }
-      }
-    })
 
     // Exécuter la commande
     const result = executor.execute(command)

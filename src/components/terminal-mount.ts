@@ -120,7 +120,9 @@ export function mountTerminal(
         }
       }
       dispatcher.execute(command)
-      syncTerminalPrompt()
+      if (!dispatcher.hasActiveStream()) {
+        syncTerminalPrompt()
+      }
     },
     onInterrupt() {
       if (dispatcher == null) {

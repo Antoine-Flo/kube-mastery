@@ -22,4 +22,22 @@ describe('getDisabledLocaleRedirectPath', () => {
     expect(getDisabledLocaleRedirectPath('/api/auth/callback', '')).toBeNull()
     expect(getDisabledLocaleRedirectPath('/robots.txt', '')).toBeNull()
   })
+
+  it('does not redirect internal Astro and Vite dev paths', () => {
+    expect(
+      getDisabledLocaleRedirectPath(
+        '/@id/astro/runtime/client/dev-toolbar/astro_runtime_client_dev-toolbar_entrypoint__js.js.map',
+        ''
+      )
+    ).toBeNull()
+    expect(
+      getDisabledLocaleRedirectPath(
+        '/astro/runtime/client/dev-toolbar/astro_runtime_client_dev-toolbar_entrypoint__js.js.map',
+        ''
+      )
+    ).toBeNull()
+    expect(
+      getDisabledLocaleRedirectPath('/_astro/entry.C6LrgT3Y.js', '')
+    ).toBeNull()
+  })
 })

@@ -37,3 +37,19 @@ Example: `<a href="https://kubemastery.com/en/courses/common-core/why-replicaset
 Lesson list: `/home/af/code/kube-mastery/src/courses/learningPaths`
 `onFail` must state what is wrong and what to check.
 
+## Simulator shell constraints
+
+KubeMastery drills run in a constrained simulator shell.
+Use only supported shell patterns in solutions and hints.
+
+Supported:
+- pipes (`|`)
+- simple chaining with `&&`
+- built-ins: `pwd`, `cd`, `ls`, `cat`, `grep`, `wc -l`, `nano`, `touch`, `mkdir`, `rm`, `echo` (`>` and `>>`), `env`, `clear`, `sleep`, `nslookup`, `curl`
+
+Not supported:
+- `||`
+- `;`
+- command substitution (`$(...)`, backticks)
+- loops and here-documents
+

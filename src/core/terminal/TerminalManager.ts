@@ -77,6 +77,54 @@ const state: TerminalManagerState = {
 let jqueryTerminalInstalled = false
 let unixFormattingInstalled = false
 const autocompleteEngine = createDefaultAutocompleteEngine()
+const CTRL_C_OUTPUT = '^C\r\n'
+
+type CtrlCAction = 'copy-selection' | 'interrupt' | 'cancel-command' | 'noop'
+
+const isCtrlCKeydown = (event: KeyboardEvent): boolean => {
+  return (
+    event.ctrlKey &&
+    event.key.toLowerCase() === 'c' &&
+    event.type === 'keydown'
+  )
+}
+
+const handleCtrlC = (terminal: JQueryTerminalInstance): boolean => {
+  const selectedText = window.getSelection()?.toString() ?? ''
+  const interruptHandled = state.onInterruptCallback?.() === true
+  const currentCommand = terminal.get_command?.() ?? ''
+  const action = resolveCtrlCAction({
+    selectedText,
+    currentCommand,
+    interruptHandled
+  })
+  if (action === 'copy-selection') {
+    return true
+  }
+  if (action === 'interrupt' || action === 'cancel-command') {
+    state.renderer?.write(CTRL_C_OUTPUT)
+    terminal.set_command('')
+    refreshPrompt()
+  }
+  return false
+}
+
+export const resolveCtrlCAction = (params: {
+  selectedText: string
+  currentCommand: string
+  interruptHandled: boolean
+}): CtrlCAction => {
+  if (params.selectedText.length > 0) {
+    return 'copy-selection'
+  }
+  if (params.interruptHandled) {
+    return 'interrupt'
+  }
+  if (params.currentCommand.trim().length > 0) {
+    return 'cancel-command'
+  }
+  return 'noop'
+}
 
 const applyAnsiColorOverrides = (): void => {
   if ($.terminal == null || $.terminal.ansi_colors == null) {
@@ -184,6 +232,10 @@ const refreshPrompt = (): void => {
   if (state.terminal == null || state.currentEnvironment == null) {
     return
   }
+  if (state.inputLocked) {
+    state.terminal.set_prompt('')
+    return
+  }
   const prompt = state.currentEnvironment.shellContextStack.getCurrentPrompt()
   state.terminal.set_prompt(prompt)
 }
@@ -268,24 +320,18 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
         callback(buildCompletionCandidates(currentLine))
       },
       keydown: (event: KeyboardEvent): boolean => {
-        if (
-          event.ctrlKey &&
-          event.key.toLowerCase() === 'c' &&
-          event.type === 'keydown'
-        ) {
-          const selectedText = window.getSelection()?.toString() ?? ''
-          if (selectedText.length > 0) {
-            return true
-          }
-          const interruptHandled = state.onInterruptCallback?.() === true
-          if (interruptHandled) {
-            terminal.set_command('')
-          }
-          return false
+        if (state.inputLocked && !isCtrlCKeydown(event)) {
+            return false
+        }
+        if (isCtrlCKeydown(event)) {
+          return handleCtrlC(terminal)
         }
         return true
       },
       prompt: () => {
+        if (state.inputLocked) {
+          return ''
+        }
         if (state.currentEnvironment == null) {
           return ''
         }
@@ -304,6 +350,15 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
   applyThemeToContainer()
   terminal.resize?.(container.clientWidth, Math.max(120, container.clientHeight))
   terminal.scroll_to_bottom?.()
+
+  requestAnimationFrame(() => {
+    if (state.terminal == null || state.container == null) {
+      return
+    }
+    const h = Math.max(120, state.container.clientHeight)
+    state.terminal.resize?.(state.container.clientWidth, h)
+    state.terminal.scroll_to_bottom?.()
+  })
 
   state.resizeObserver = new ResizeObserver(() => {
     if (state.terminal == null || state.container == null) {
@@ -394,12 +449,13 @@ export const syncTerminalPrompt = (): void => {
 
 export const lockTerminalInput = (): void => {
   state.inputLocked = true
-  state.terminal?.disable()
+  state.terminal?.set_command('')
+  state.terminal?.set_prompt('')
 }
 
 export const unlockTerminalInput = (): void => {
   state.inputLocked = false
-  state.terminal?.enable()
+  refreshPrompt()
 }
 
 export const isTerminalInputLocked = (): boolean => state.inputLocked

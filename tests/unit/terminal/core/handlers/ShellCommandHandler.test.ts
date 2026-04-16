@@ -97,6 +97,9 @@ describe('ShellCommandHandler', () => {
       expect(handler.canHandle('help')).toBe(true)
       expect(handler.canHandle('env')).toBe(true)
       expect(handler.canHandle('nano file.txt')).toBe(true)
+      expect(handler.canHandle('echo hello | cat')).toBe(true)
+      expect(handler.canHandle('echo hello | grep hell')).toBe(true)
+      expect(handler.canHandle('echo hello | wc -l')).toBe(true)
     })
 
     it('should return false for invalid commands', () => {
@@ -122,6 +125,33 @@ describe('ShellCommandHandler', () => {
     it('should execute ls command', () => {
       const result = handler.execute('ls', context)
       expect(result.ok).toBe(true)
+    })
+
+    it('should execute pipeline command', () => {
+      const result = handler.execute('echo hello | cat', context)
+      expect(result.ok).toBe(true)
+      expect(renderer.getOutput()).toContain('hello')
+    })
+
+    it('should execute grep command from pipeline input', () => {
+      context.fileSystem.createFile(
+        'pods.txt',
+        'pod-a Ready\npod-b Pending\npod-c Ready'
+      )
+      const result = handler.execute('cat pods.txt | grep Ready -n', context)
+      expect(result.ok).toBe(true)
+      expect(renderer.getOutput()).toContain('1:pod-a Ready')
+      expect(renderer.getOutput()).toContain('3:pod-c Ready')
+    })
+
+    it('should execute wc line count from pipeline input', () => {
+      context.fileSystem.createFile(
+        'pods.txt',
+        'pod-a Ready\npod-b Pending\npod-c Ready\n'
+      )
+      const result = handler.execute('cat pods.txt | grep Ready | wc -l', context)
+      expect(result.ok).toBe(true)
+      expect(renderer.getOutput()).toContain('2')
     })
 
     it('should execute cd command and update prompt', () => {

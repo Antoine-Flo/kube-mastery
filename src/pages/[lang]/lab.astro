@@ -1,0 +1,85 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import TerminalWindow from '../../components/TerminalWindow.astro'
+import { useTranslations, useLocalePath } from '../../i18n/utils'
+import { getLayoutAuthContext } from '../../lib/auth/server'
+import '../../styles/components/page-halo.css'
+import '../../styles/routes/pricing.css'
+
+const locale = Astro.params.lang as 'en' | 'fr'
+const t = useTranslations(locale)
+const localePath = useLocalePath(locale)
+const labPath = localePath('/lab')
+
+const auth = await getLayoutAuthContext(
+  Astro.locals,
+  Astro.request,
+  Astro.cookies
+)
+
+if (!auth.isLoggedIn) {
+  return Astro.redirect(
+    `${localePath('/auth')}?redirect=${encodeURIComponent(labPath)}`
+  )
+}
+
+const labSeo = {
+  title: `${t('lab_title')} | KubeMastery`,
+  canonical: new URL(labPath, Astro.site ?? Astro.url).href,
+  openGraphType: 'website' as const
+}
+---
+
+<Layout seo={labSeo}>
+  <div class="page-halo lab-page-halo">
+    <div class="page-halo__bg" aria-hidden="true"></div>
+    <main>
+      <h1>{t('lab_title')}</h1>
+      <div class="lab-terminal">
+        <TerminalWindow
+          lang={locale}
+          fullHeight={true}
+        />
+      </div>
+    </main>
+  </div>
+</Layout>
+
+<style>
+  main {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    padding: 4rem 0;
+    height: calc(80dvh - 9rem);
+    min-height: calc(80dvh - 9rem);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  main h1 {
+    font-size: 1.875rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-gray-12);
+    text-align: center;
+    margin-bottom: 0.2rem;
+  }
+
+  .lab-terminal {
+    flex: 1;
+    min-height: 0;
+    margin-top: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-gray-1);
+    border: 1px solid var(--color-gray-6);
+    border-radius: var(--radius-md);
+  }
+
+  .lab-terminal :global(.t-win--full) {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+</style>

@@ -4,7 +4,10 @@ import type {
   EditorModal,
   FileSystem
 } from '../../../../src/core/shell/commands/index'
-import { createShellExecutor } from '../../../../src/core/shell/commands/index'
+import {
+  createShellExecutor,
+  executeSequentialShellScript
+} from '../../../../src/core/shell/commands/index'
 import {
   createFile as createFileNode,
   createDirectory
@@ -226,6 +229,42 @@ describe('Shell Commands Integration', () => {
     expect(result.ok).toBe(false)
     if (!result.ok) {
       expect(result.error).toBe('File not found')
+    }
+  })
+
+  it('should execute pipeline command with stdin propagation', () => {
+    const executor = createShellExecutor(fileSystem)
+    const result = executeSequentialShellScript(executor, 'echo piped | cat')
+
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.value).toBe('piped')
+    }
+  })
+
+  it('should execute grep with stdin in pipeline', () => {
+    const executor = createShellExecutor(fileSystem)
+    const result = executeSequentialShellScript(
+      executor,
+      'echo pod-a Ready | grep Ready'
+    )
+
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.value).toBe('pod-a Ready\n')
+    }
+  })
+
+  it('should execute grep and wc in pipeline', () => {
+    const executor = createShellExecutor(fileSystem)
+    const result = executeSequentialShellScript(
+      executor,
+      'echo pod-a Ready | grep Ready | wc -l'
+    )
+
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.value).toBe('1')
     }
   })
 

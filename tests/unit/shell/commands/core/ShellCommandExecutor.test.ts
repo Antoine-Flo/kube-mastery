@@ -95,4 +95,20 @@ describe('ShellCommandExecutor', () => {
       expect(result.error).toBe('Handler error')
     }
   })
+
+  it('should pass stdin to handler io context', () => {
+    let receivedStdin = ''
+    const mockHandler: ShellCommandHandler = {
+      execute: (_args, _flags, io) => {
+        receivedStdin = io?.stdin ?? ''
+        return success('ok')
+      }
+    }
+    handlers.set('cat', mockHandler)
+
+    const result = executor.execute('cat', { stdin: 'from-pipe' })
+
+    expect(result.ok).toBe(true)
+    expect(receivedStdin).toBe('from-pipe')
+  })
 })

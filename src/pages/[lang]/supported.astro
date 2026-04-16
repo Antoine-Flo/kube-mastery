@@ -354,6 +354,33 @@ const shellCommands: Array<{
     }
   },
   {
+    cmd: 'grep',
+    arg: '<pattern> [file]',
+    flags: '-i, -n, stdin via pipe',
+    desc: {
+      en: 'Filter matching lines from files or pipeline input',
+      fr: "Filtrer les lignes correspondantes depuis un fichier ou l'entree pipeline"
+    }
+  },
+  {
+    cmd: 'wc',
+    arg: '-l [file]',
+    flags: '-l, stdin via pipe',
+    desc: {
+      en: 'Count lines from files or pipeline input',
+      fr: "Compter les lignes depuis un fichier ou l'entree pipeline"
+    }
+  },
+  {
+    cmd: 'pipes',
+    arg: '<cmd1> | <cmd2>',
+    flags: 'quote-aware, linear pipelines',
+    desc: {
+      en: 'Pipe stdout from one command to stdin of the next',
+      fr: "Envoyer la sortie standard d'une commande vers l'entree standard de la suivante"
+    }
+  },
+  {
     cmd: 'rm',
     arg: '<target>',
     flags: '-r',

@@ -105,7 +105,12 @@ export class CommandDispatcher {
    * @returns Résultat d'exécution
    */
   execute(command: string): ExecutionResult {
-    if (this.context.isInputLocked?.()) {
+    const isLockedByStream = this.hasActiveStream()
+    const isLockedByUi = this.context.isInputLocked?.() === true
+    if (isLockedByStream || isLockedByUi) {
+      this.context.output.writeError(
+        'Input locked, press Ctrl+C to stop the active stream'
+      )
       return error('Input locked')
     }
 

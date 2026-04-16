@@ -35,7 +35,7 @@ type TourMessages = {
 
 function pickTourMessages(lang: LessonTourLang): TourMessages {
   const raw = lang === 'fr' ? fr : en
-  return raw as TourMessages
+  return raw
 }
 
 const TOUR_SEEN_KEY = 'lesson-layout-tour-seen'

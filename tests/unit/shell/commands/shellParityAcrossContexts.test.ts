@@ -289,4 +289,129 @@ describe('shell parity across host, exec and init containers', () => {
     expect(execResult.error).toContain('missing file operand after redirection')
     expect(initResult.error).toContain('missing file operand after redirection')
   })
+
+  it('executes equivalent pipeline script with identical filesystem effect', () => {
+    const script = 'mkdir -p /data && echo parity-pipe > /data/value.txt && cat /data/value.txt | cat'
+    const hostHandler = new ShellCommandHandler()
+    const hostResult = hostHandler.execute(script, context)
+    expect(hostResult.ok).toBe(true)
+    if (!hostResult.ok) {
+      return
+    }
+    const hostRead = context.fileSystem.readFile('/data/value.txt')
+    expect(hostRead.ok).toBe(true)
+    if (!hostRead.ok) {
+      return
+    }
+    expect(hostRead.value).toBe('parity-pipe')
+    expect(hostResult.value).toContain('parity-pipe')
+
+    const pod = createPod({
+      name: 'parity-pipe-pod',
+      namespace: 'default',
+      phase: 'Running',
+      containers: [{ name: 'main', image: 'busybox:1.36' }]
+    })
+    const createResult = context.apiServer.createResource('Pod', pod)
+    expect(createResult.ok).toBe(true)
+
+    const kubectlHandler = new KubectlCommandHandler()
+    const execResult = kubectlHandler.execute(
+      `kubectl exec parity-pipe-pod -- sh -c "${script}"`,
+      context
+    )
+    expect(execResult.ok).toBe(true)
+    if (!execResult.ok) {
+      return
+    }
+    expect(execResult.value).toContain('parity-pipe')
+    const updatedPodResult = context.apiServer.findResource(
+      'Pod',
+      'parity-pipe-pod',
+      'default'
+    )
+    expect(updatedPodResult.ok).toBe(true)
+    if (!updatedPodResult.ok) {
+      return
+    }
+    const execFileSystem = createFileSystem(
+      updatedPodResult.value._simulator.containers.main.fileSystem
+    )
+    const execRead = execFileSystem.readFile('/data/value.txt')
+    expect(execRead.ok).toBe(true)
+    if (!execRead.ok) {
+      return
+    }
+    expect(execRead.value).toBe('parity-pipe')
+
+    const initBaseFs = createFileSystem().toJSON()
+    const initResult = executeInitContainer(
+      {
+        name: 'init',
+        image: 'busybox:1.36',
+        command: ['sh'],
+        args: ['-c', script]
+      },
+      initBaseFs
+    )
+    expect(initResult.ok).toBe(true)
+    if (!initResult.ok) {
+      return
+    }
+    const initFileSystem = createFileSystem(initResult.value)
+    const initRead = initFileSystem.readFile('/data/value.txt')
+    expect(initRead.ok).toBe(true)
+    if (!initRead.ok) {
+      return
+    }
+    expect(initRead.value).toBe('parity-pipe')
+  })
+
+  it('returns equivalent error for invalid pipeline syntax', () => {
+    const script = 'echo broken |'
+    const hostHandler = new ShellCommandHandler()
+    const hostResult = hostHandler.execute(script, context)
+    expect(hostResult.ok).toBe(false)
+    if (hostResult.ok) {
+      return
+    }
+
+    const pod = createPod({
+      name: 'parity-invalid-pipe-pod',
+      namespace: 'default',
+      phase: 'Running',
+      containers: [{ name: 'main', image: 'busybox:1.36' }]
+    })
+    const createResult = context.apiServer.createResource('Pod', pod)
+    expect(createResult.ok).toBe(true)
+
+    const kubectlHandler = new KubectlCommandHandler()
+    const execResult = kubectlHandler.execute(
+      `kubectl exec parity-invalid-pipe-pod -- sh -c "${script}"`,
+      context
+    )
+    expect(execResult.ok).toBe(false)
+    if (execResult.ok) {
+      return
+    }
+
+    const initBaseFs = createFileSystem().toJSON()
+    const initResult = executeInitContainer(
+      {
+        name: 'init',
+        image: 'busybox:1.36',
+        command: ['sh'],
+        args: ['-c', script]
+      },
+      initBaseFs
+    )
+    expect(initResult.ok).toBe(false)
+    if (initResult.ok) {
+      return
+    }
+
+    expect(hostResult.error).toContain('invalid pipeline')
+    expect(execResult.error).toContain('invalid pipeline')
+    expect(initResult.error).toContain('invalid pipeline')
+  })
 })

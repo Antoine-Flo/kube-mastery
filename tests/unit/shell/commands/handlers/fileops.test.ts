@@ -165,6 +165,19 @@ describe('File Operations Handlers', () => {
       }
     })
 
+    it('should return stdin when no file operand is provided', () => {
+      const fileSystem = createMockFileSystem({
+        readFile: () => success('')
+      })
+      const handler = createCatHandler(fileSystem)
+      const result = handler.execute([], {}, { stdin: 'piped-content' })
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value).toBe('piped-content')
+      }
+    })
+
     it('should propagate filesystem errors', () => {
       const fileSystem = createMockFileSystem({
         readFile: () => error('File not found')

@@ -1,3 +1,9 @@
+## 2026-04-15
+
+- Added shell pipelines (`|`) with host/exec/init parity.
+- Added `grep` (`-i`, `-n`, stdin/files) and `wc -l` (stdin/files).
+- Fixed jQuery Terminal watch flow (`kubectl get -w`) and prompt lock behavior.
+
 ## 2026-04-14
 
 - Added the `mv` shell command to move and rename files and directories.
