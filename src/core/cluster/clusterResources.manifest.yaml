@@ -318,6 +318,81 @@ resources:
     kubectlYamlSupported: true
     kubectlGetSupported: true
 
+  - kind: ServiceAccount
+    apiVersion: v1
+    collectionKey: serviceAccounts
+    typeName: ServiceAccount
+    importPath: ./ressources/ServiceAccount
+    repoKindArg: ServiceAccount
+    facade: standardNamespaced
+    bootstrapEmpty: default
+    facadeSingular: ServiceAccount
+    facadePlural: ServiceAccounts
+    kubectlShortAliases: [sa]
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
+
+  - kind: Role
+    apiVersion: rbac.authorization.k8s.io/v1
+    collectionKey: roles
+    typeName: Role
+    importPath: ./ressources/Role
+    repoKindArg: Role
+    facade: standardNamespaced
+    bootstrapEmpty: default
+    openapiSource: external-crd
+    facadeSingular: Role
+    facadePlural: Roles
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
+
+  - kind: RoleBinding
+    apiVersion: rbac.authorization.k8s.io/v1
+    collectionKey: roleBindings
+    typeName: RoleBinding
+    importPath: ./ressources/RoleBinding
+    repoKindArg: RoleBinding
+    facade: standardNamespaced
+    bootstrapEmpty: default
+    openapiSource: external-crd
+    facadeSingular: RoleBinding
+    facadePlural: RoleBindings
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
+
+  - kind: ClusterRole
+    apiVersion: rbac.authorization.k8s.io/v1
+    collectionKey: clusterRoles
+    typeName: ClusterRole
+    importPath: ./ressources/ClusterRole
+    repoKindArg: ClusterRole
+    facade: clusterScopedEmptyNs
+    bootstrapEmpty: default
+    openapiSource: external-crd
+    facadeSingular: ClusterRole
+    facadePlural: ClusterRoles
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
+
+  - kind: ClusterRoleBinding
+    apiVersion: rbac.authorization.k8s.io/v1
+    collectionKey: clusterRoleBindings
+    typeName: ClusterRoleBinding
+    importPath: ./ressources/ClusterRoleBinding
+    repoKindArg: ClusterRoleBinding
+    facade: clusterScopedEmptyNs
+    bootstrapEmpty: default
+    openapiSource: external-crd
+    facadeSingular: ClusterRoleBinding
+    facadePlural: ClusterRoleBindings
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
+
   - kind: Namespace
     apiVersion: v1
     collectionKey: namespaces

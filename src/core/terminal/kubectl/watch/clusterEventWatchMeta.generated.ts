@@ -6,9 +6,7 @@ import type { Resource } from '../../../kubectl/commands/types'
 export const extractMetaFromGeneratedClusterEvent = (
   event: ClusterEvent,
   parsedResource: Resource
-):
-  | { name: string; namespace: string; labels?: Record<string, string> }
-  | undefined => {
+): { name: string; namespace: string; labels?: Record<string, string> } | undefined => {
   if (parsedResource === 'pods') {
     if (event.type === 'PodDeleted') {
       return {
@@ -489,6 +487,121 @@ export const extractMetaFromGeneratedClusterEvent = (
         name: event.payload.name,
         namespace: event.payload.namespace,
         labels: event.payload.persistentVolumeClaim.metadata.labels
+      }
+    }
+  }
+  if (parsedResource === 'serviceaccounts') {
+    if (event.type === 'ServiceAccountDeleted') {
+      return {
+        name: event.payload.name,
+        namespace: event.payload.namespace,
+        labels: event.payload.deletedServiceAccount.metadata.labels
+      }
+    }
+    if (event.type === 'ServiceAccountCreated') {
+      return {
+        name: event.payload.serviceAccount.metadata.name,
+        namespace: event.payload.serviceAccount.metadata.namespace,
+        labels: event.payload.serviceAccount.metadata.labels
+      }
+    }
+    if (event.type === 'ServiceAccountUpdated') {
+      return {
+        name: event.payload.name,
+        namespace: event.payload.namespace,
+        labels: event.payload.serviceAccount.metadata.labels
+      }
+    }
+  }
+  if (parsedResource === 'roles') {
+    if (event.type === 'RoleDeleted') {
+      return {
+        name: event.payload.name,
+        namespace: event.payload.namespace,
+        labels: event.payload.deletedRole.metadata.labels
+      }
+    }
+    if (event.type === 'RoleCreated') {
+      return {
+        name: event.payload.role.metadata.name,
+        namespace: event.payload.role.metadata.namespace,
+        labels: event.payload.role.metadata.labels
+      }
+    }
+    if (event.type === 'RoleUpdated') {
+      return {
+        name: event.payload.name,
+        namespace: event.payload.namespace,
+        labels: event.payload.role.metadata.labels
+      }
+    }
+  }
+  if (parsedResource === 'rolebindings') {
+    if (event.type === 'RoleBindingDeleted') {
+      return {
+        name: event.payload.name,
+        namespace: event.payload.namespace,
+        labels: event.payload.deletedRoleBinding.metadata.labels
+      }
+    }
+    if (event.type === 'RoleBindingCreated') {
+      return {
+        name: event.payload.roleBinding.metadata.name,
+        namespace: event.payload.roleBinding.metadata.namespace,
+        labels: event.payload.roleBinding.metadata.labels
+      }
+    }
+    if (event.type === 'RoleBindingUpdated') {
+      return {
+        name: event.payload.name,
+        namespace: event.payload.namespace,
+        labels: event.payload.roleBinding.metadata.labels
+      }
+    }
+  }
+  if (parsedResource === 'clusterroles') {
+    if (event.type === 'ClusterRoleDeleted') {
+      return {
+        name: event.payload.name,
+        namespace: '',
+        labels: event.payload.deletedClusterRole.metadata.labels
+      }
+    }
+    if (event.type === 'ClusterRoleCreated') {
+      return {
+        name: event.payload.clusterRole.metadata.name,
+        namespace: '',
+        labels: event.payload.clusterRole.metadata.labels
+      }
+    }
+    if (event.type === 'ClusterRoleUpdated') {
+      return {
+        name: event.payload.name,
+        namespace: '',
+        labels: event.payload.clusterRole.metadata.labels
+      }
+    }
+  }
+  if (parsedResource === 'clusterrolebindings') {
+    if (event.type === 'ClusterRoleBindingDeleted') {
+      return {
+        name: event.payload.name,
+        namespace: '',
+        labels: event.payload.deletedClusterRoleBinding.metadata.labels
+      }
+    }
+    if (event.type === 'ClusterRoleBindingCreated') {
+      return {
+        name: event.payload.clusterRoleBinding.metadata.name,
+        namespace: '',
+        labels: event.payload.clusterRoleBinding.metadata.labels
+      }
+    }
+    if (event.type === 'ClusterRoleBindingUpdated') {
+      return {
+        name: event.payload.name,
+        namespace: '',
+        labels: event.payload.clusterRoleBinding.metadata.labels
       }
     }
   }

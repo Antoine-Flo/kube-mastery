@@ -168,7 +168,11 @@ describe('KubectlAutocompleteProvider', () => {
           'cluste',
           mockContext
         )
-        expect(results).toEqual([{ text: 'clusterrole', suffix: ' ' }])
+        expect(results).toContainEqual({ text: 'clusterrole', suffix: ' ' })
+        expect(results).toContainEqual({
+          text: 'clusterrolebinding',
+          suffix: ' '
+        })
       })
 
       it('should complete replace action with unique prefix', () => {

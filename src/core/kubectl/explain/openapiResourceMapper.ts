@@ -1,5 +1,6 @@
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
+import { RESOURCE_OUTPUT_METADATA_BY_RESOURCE } from '../commands/resourceCatalog.generated'
 import type { Resource } from '../commands/types'
 
 export type OpenAPISpecFile =
@@ -21,54 +22,6 @@ type BaseTarget = {
   kind: string
 }
 
-const BASE_RESOURCE_TARGETS: Record<Resource, BaseTarget | undefined> = {
-  all: undefined,
-  pods: { group: '', version: 'v1', kind: 'Pod' },
-  deployments: { group: 'apps', version: 'v1', kind: 'Deployment' },
-  daemonsets: { group: 'apps', version: 'v1', kind: 'DaemonSet' },
-  statefulsets: { group: 'apps', version: 'v1', kind: 'StatefulSet' },
-  services: { group: '', version: 'v1', kind: 'Service' },
-  endpoints: { group: '', version: 'v1', kind: 'Endpoints' },
-  endpointslices: undefined,
-  namespaces: { group: '', version: 'v1', kind: 'Namespace' },
-  configmaps: { group: '', version: 'v1', kind: 'ConfigMap' },
-  controllerrevisions: {
-    group: 'apps',
-    version: 'v1',
-    kind: 'ControllerRevision'
-  },
-  secrets: { group: '', version: 'v1', kind: 'Secret' },
-  events: { group: '', version: 'v1', kind: 'Event' },
-  nodes: { group: '', version: 'v1', kind: 'Node' },
-  replicasets: { group: 'apps', version: 'v1', kind: 'ReplicaSet' },
-  ingresses: { group: 'networking.k8s.io', version: 'v1', kind: 'Ingress' },
-  networkpolicies: {
-    group: 'networking.k8s.io',
-    version: 'v1',
-    kind: 'NetworkPolicy'
-  },
-  ingressclasses: {
-    group: 'networking.k8s.io',
-    version: 'v1',
-    kind: 'IngressClass'
-  },
-  gateways: undefined,
-  gatewayclasses: undefined,
-  httproutes: undefined,
-  persistentvolumes: { group: '', version: 'v1', kind: 'PersistentVolume' },
-  persistentvolumeclaims: {
-    group: '',
-    version: 'v1',
-    kind: 'PersistentVolumeClaim'
-  },
-  storageclasses: undefined,
-  leases: {
-    group: 'coordination.k8s.io',
-    version: 'v1',
-    kind: 'Lease'
-  }
-}
-
 const parseApiVersion = (
   apiVersion: string
 ): Result<{ group: string; version: string }> => {
@@ -87,6 +40,29 @@ const parseApiVersion = (
   }
   return success({ group, version })
 }
+
+const buildBaseResourceTargets = (): Record<Resource, BaseTarget | undefined> => {
+  const map = { all: undefined } as Record<Resource, BaseTarget | undefined>
+  for (const [resource, metadata] of Object.entries(
+    RESOURCE_OUTPUT_METADATA_BY_RESOURCE
+  ) as Array<
+    [Exclude<Resource, 'all'>, { apiVersion: string; kind: string }]
+  >) {
+    const parsedApiVersion = parseApiVersion(metadata.apiVersion)
+    if (!parsedApiVersion.ok) {
+      map[resource] = undefined
+      continue
+    }
+    map[resource] = {
+      group: parsedApiVersion.value.group,
+      version: parsedApiVersion.value.version,
+      kind: metadata.kind
+    }
+  }
+  return map
+}
+
+const BASE_RESOURCE_TARGETS = buildBaseResourceTargets()
 
 const buildSchemaName = (
   group: string,

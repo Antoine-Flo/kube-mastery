@@ -1,4 +1,5 @@
-import { readFileSync, statSync } from 'fs'
+import { existsSync, readFileSync, statSync } from 'fs'
+import { homedir } from 'os'
 import { basename, join } from 'path'
 import { createApiServerFacade } from '../../../src/core/api/ApiServerFacade'
 import type { ApiServerFacade } from '../../../src/core/api/ApiServerFacade'
@@ -192,6 +193,37 @@ const createSingleFileSystem = (filePath: string) => {
     currentPath: '/',
     tree: root
   })
+}
+
+const seedKubeconfig = (
+  fileSystem: ReturnType<typeof createFileSystem>
+): void => {
+  const ensureDirectory = (path: string): boolean => {
+    const result = fileSystem.createDirectory(path)
+    if (result.ok) {
+      return true
+    }
+    return result.error.includes('already exists')
+  }
+  const hostKubeconfigPath = join(homedir(), '.kube', 'config')
+  if (!existsSync(hostKubeconfigPath)) {
+    return
+  }
+  if (!ensureDirectory('/home')) {
+    return
+  }
+  if (!ensureDirectory('/home/kube')) {
+    return
+  }
+  if (!ensureDirectory('/home/kube/.kube')) {
+    return
+  }
+  const kubeconfigContent = readFileSync(hostKubeconfigPath, 'utf-8')
+  const createResult = fileSystem.createFile('/home/kube/.kube/config')
+  if (!createResult.ok && !createResult.error.includes('already exists')) {
+    return
+  }
+  fileSystem.writeFile('/home/kube/.kube/config', kubeconfigContent)
 }
 
 const executionFromOutput = (
@@ -446,6 +478,7 @@ export const createRunnerExecutor = (
   const networkRuntime = initializeSimNetworkRuntime(apiServer)
   initializeSimPodIpAllocation(apiServer)
   const fileSystem = createFileSystem()
+  seedKubeconfig(fileSystem)
 
   const listScopedPods = (namespace?: string): Pod[] => {
     if (namespace != null && namespace.length > 0) {

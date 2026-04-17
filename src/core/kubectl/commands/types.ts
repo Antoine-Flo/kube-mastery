@@ -32,10 +32,22 @@ export type Action =
   | 'rollout'
   | 'options'
   | 'config'
+  | 'auth'
   | 'config-get-contexts'
   | 'config-current-context'
   | 'config-view'
   | 'config-set-context'
+  | 'config-use-context'
+  | 'config-get-clusters'
+  | 'config-get-users'
+  | 'config-set-credentials'
+  | 'config-set-cluster'
+  | 'config-unset'
+  | 'config-rename-context'
+  | 'auth-can-i'
+  | 'auth-whoami'
+  | 'auth-reconcile'
+  | 'create-token'
 
 // Resource types (canonical names only)
 export type Resource = KubectlResource
@@ -43,7 +55,18 @@ export type Resource = KubectlResource
 // Parsed command structure
 export interface ParsedCommand {
   action: Action
-  configSubcommand?: 'get-contexts' | 'current-context' | 'view' | 'set-context'
+  configSubcommand?:
+    | 'get-contexts'
+    | 'current-context'
+    | 'view'
+    | 'set-context'
+    | 'use-context'
+    | 'get-clusters'
+    | 'get-users'
+    | 'set-credentials'
+    | 'set-cluster'
+    | 'unset'
+    | 'rename-context'
   rolloutSubcommand?: 'status' | 'history' | 'restart' | 'undo'
   resource?: Resource // Optional for commands like 'version' that don't require a resource
   resourceList?: Resource[] // For kubectl get with comma-separated resources (e.g. pod,svc)
@@ -86,6 +109,16 @@ export interface ParsedCommand {
   configCurrent?: boolean // For kubectl config set-context --current
   configMinify?: boolean // For kubectl config view --minify
   configNamespace?: string // For kubectl config set-context --namespace
+  configContextName?: string // For kubectl config use-context and rename-context
+  configRenameContextTo?: string // For kubectl config rename-context
+  configPath?: string // For kubectl config unset
+  configUserName?: string // For kubectl config set-credentials
+  configClusterName?: string // For kubectl config set-cluster
+  configServer?: string // For kubectl config set-cluster --server
+  configToken?: string // For kubectl config set-credentials --token
+  authVerb?: string // For kubectl auth can-i <verb>
+  authResource?: string // For kubectl auth can-i <resource>
+  authSubject?: string // For kubectl auth can-i --as=...
   waitForCondition?: string // For kubectl wait: --for=condition=Ready
   waitTimeoutSeconds?: number // For kubectl wait: --timeout=60s
   rolloutRevision?: number // For kubectl rollout: --revision=N

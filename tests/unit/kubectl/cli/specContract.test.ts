@@ -25,9 +25,9 @@ describe('kubectl cli spec contracts', () => {
     expect(suggestions).toEqual([{ text: 'patch', suffix: ' ' }])
   })
 
-  it('completes create clusterrole from partial subcommand', () => {
-    const suggestions = completeKubectlFromSpec('kubectl create cluste')
-    expect(suggestions).toEqual([{ text: 'clusterrole', suffix: ' ' }])
+  it('returns no completion for ambiguous create clusterrole prefix', () => {
+    const suggestions = completeKubectlFromSpec('kubectl create clusterro')
+    expect(suggestions).toEqual([])
   })
 
   it('keeps parser results aligned with command spec handler', () => {

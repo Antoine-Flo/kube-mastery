@@ -200,32 +200,19 @@ const DNS1123_SUBDOMAIN_RULE: NameRule = {
 
 type SupportedKind = ResourceKind
 
-const NAME_RULE_BY_KIND: Record<SupportedKind, NameRule> = {
-  Pod: DNS1123_SUBDOMAIN_RULE,
-  Event: DNS1123_SUBDOMAIN_RULE,
-  ConfigMap: DNS1123_SUBDOMAIN_RULE,
-  ControllerRevision: DNS1123_SUBDOMAIN_RULE,
-  Secret: DNS1123_SUBDOMAIN_RULE,
-  Node: DNS1123_SUBDOMAIN_RULE,
-  Namespace: DNS1123_LABEL_RULE,
-  Ingress: DNS1123_SUBDOMAIN_RULE,
-  IngressClass: DNS1123_SUBDOMAIN_RULE,
-  GatewayClass: DNS1123_SUBDOMAIN_RULE,
-  Gateway: DNS1123_SUBDOMAIN_RULE,
-  HTTPRoute: DNS1123_SUBDOMAIN_RULE,
-  NetworkPolicy: DNS1123_SUBDOMAIN_RULE,
-  ReplicaSet: DNS1123_SUBDOMAIN_RULE,
-  Deployment: DNS1123_SUBDOMAIN_RULE,
-  DaemonSet: DNS1123_SUBDOMAIN_RULE,
-  StatefulSet: DNS1123_SUBDOMAIN_RULE,
-  PersistentVolume: DNS1123_SUBDOMAIN_RULE,
-  PersistentVolumeClaim: DNS1123_SUBDOMAIN_RULE,
-  Service: DNS1123_LABEL_RULE,
-  EndpointSlice: DNS1123_SUBDOMAIN_RULE,
-  Endpoints: DNS1123_SUBDOMAIN_RULE,
-  Lease: DNS1123_SUBDOMAIN_RULE,
-  StorageClass: DNS1123_SUBDOMAIN_RULE
+const LABEL_RULE_KIND_SET = new Set<SupportedKind>(['Namespace', 'Service'])
+
+const buildNameRuleByKind = (): Record<SupportedKind, NameRule> => {
+  const map = {} as Record<SupportedKind, NameRule>
+  for (const kind of SUPPORTED_RESOURCE_KINDS) {
+    map[kind] = LABEL_RULE_KIND_SET.has(kind)
+      ? DNS1123_LABEL_RULE
+      : DNS1123_SUBDOMAIN_RULE
+  }
+  return map
 }
+
+const NAME_RULE_BY_KIND = buildNameRuleByKind()
 
 const formatMetadataNameInvalidError = (
   kind: SupportedKind,

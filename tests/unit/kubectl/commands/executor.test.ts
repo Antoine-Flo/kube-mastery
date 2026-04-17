@@ -6,6 +6,7 @@ import { createNamespace } from '../../../../src/core/cluster/ressources/Namespa
 import { createReplicaSet } from '../../../../src/core/cluster/ressources/ReplicaSet'
 import { createService } from '../../../../src/core/cluster/ressources/Service'
 import { createConfigMap } from '../../../../src/core/cluster/ressources/ConfigMap'
+import { createServiceAccount } from '../../../../src/core/cluster/ressources/ServiceAccount'
 import { createHostFileSystem } from '../../../../src/core/filesystem/debianFileSystem'
 import {
   createFileSystem,
@@ -2042,6 +2043,213 @@ spec:
         }
         expect(getPodsResult.value).toContain('redis-pod')
         expect(getPodsResult.value).not.toContain('nginx-pod')
+      })
+
+      it('should support config use-context get-clusters and get-users', () => {
+        const kubeconfig = [
+          'apiVersion: v1',
+          'kind: Config',
+          'clusters:',
+          '- cluster:',
+          '    server: https://127.0.0.1:34001',
+          '  name: kind-main',
+          '- cluster:',
+          '    server: https://127.0.0.1:35001',
+          '  name: kind-alt',
+          'contexts:',
+          '- context:',
+          '    cluster: kind-main',
+          '    user: user-main',
+          '  name: kind-main',
+          '- context:',
+          '    cluster: kind-alt',
+          '    user: user-alt',
+          '  name: kind-alt',
+          'current-context: kind-main',
+          'users:',
+          '- name: user-main',
+          '  user:',
+          '    token: token-main',
+          '- name: user-alt',
+          '  user:',
+          '    token: token-alt'
+        ].join('\n')
+        const writeResult = fileSystem.writeFile('/home/kube/.kube/config', kubeconfig)
+        expect(writeResult.ok).toBe(true)
+
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+        const useContextResult = executor.execute('kubectl config use-context kind-alt')
+        expect(useContextResult.ok).toBe(true)
+        if (!useContextResult.ok) {
+          return
+        }
+        expect(useContextResult.value).toContain('Switched to context "kind-alt".')
+
+        const getClustersResult = executor.execute('kubectl config get-clusters')
+        expect(getClustersResult.ok).toBe(true)
+        if (!getClustersResult.ok) {
+          return
+        }
+        expect(getClustersResult.value).toContain('NAME')
+        expect(getClustersResult.value).toContain('kind-main')
+        expect(getClustersResult.value).toContain('kind-alt')
+
+        const getUsersResult = executor.execute('kubectl config get-users')
+        expect(getUsersResult.ok).toBe(true)
+        if (!getUsersResult.ok) {
+          return
+        }
+        expect(getUsersResult.value).toContain('NAME')
+        expect(getUsersResult.value).toContain('user-main')
+        expect(getUsersResult.value).toContain('user-alt')
+      })
+
+      it('should support config set-credentials set-cluster unset rename-context', () => {
+        seedConfigCommandKubeconfig()
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+
+        const setCredentialsResult = executor.execute(
+          'kubectl config set-credentials robot-user --token=token-robot'
+        )
+        expect(setCredentialsResult.ok).toBe(true)
+
+        const setClusterResult = executor.execute(
+          'kubectl config set-cluster robot-cluster --server=https://10.0.0.1:6443'
+        )
+        expect(setClusterResult.ok).toBe(true)
+
+        const renameContextResult = executor.execute(
+          'kubectl config rename-context kind-conformance kind-renamed'
+        )
+        expect(renameContextResult.ok).toBe(true)
+        if (!renameContextResult.ok) {
+          return
+        }
+        expect(renameContextResult.value).toContain(
+          'Context "kind-conformance" renamed to "kind-renamed".'
+        )
+
+        const setContextNamespaceResult = executor.execute(
+          'kubectl config set-context --current --namespace=dev'
+        )
+        expect(setContextNamespaceResult.ok).toBe(true)
+
+        const unsetResult = executor.execute(
+          'kubectl config unset contexts.kind-renamed.namespace'
+        )
+        expect(unsetResult.ok).toBe(true)
+        if (!unsetResult.ok) {
+          return
+        }
+        expect(unsetResult.value).toContain(
+          'Property "contexts.kind-renamed.namespace" unset.'
+        )
+
+        const kubeconfigResult = fileSystem.readFile('/home/kube/.kube/config')
+        expect(kubeconfigResult.ok).toBe(true)
+        if (!kubeconfigResult.ok) {
+          return
+        }
+        expect(kubeconfigResult.value).toContain('name: robot-user')
+        expect(kubeconfigResult.value).toContain('token: token-robot')
+        expect(kubeconfigResult.value).toContain('name: robot-cluster')
+        expect(kubeconfigResult.value).toContain('server: https://10.0.0.1:6443')
+        expect(kubeconfigResult.value).toContain('name: kind-renamed')
+        expect(kubeconfigResult.value).not.toContain('namespace: dev')
+      })
+
+      it('should support rbac create get describe and auth can-i flow', () => {
+        apiServer.createResource(
+          'ServiceAccount',
+          createServiceAccount({
+            name: 'robot',
+            namespace: 'default'
+          })
+        )
+
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+        const createRoleResult = executor.execute(
+          'kubectl create role pod-reader --verb=get,list --resource=pods'
+        )
+        expect(createRoleResult.ok).toBe(true)
+
+        const createRoleBindingResult = executor.execute(
+          'kubectl create rolebinding pod-reader-binding --role=pod-reader --serviceaccount=default:robot'
+        )
+        expect(createRoleBindingResult.ok).toBe(true)
+
+        const getRolesResult = executor.execute('kubectl get roles')
+        expect(getRolesResult.ok).toBe(true)
+        if (!getRolesResult.ok) {
+          return
+        }
+        expect(getRolesResult.value).toContain('pod-reader')
+
+        const describeRoleBindingResult = executor.execute(
+          'kubectl describe rolebinding pod-reader-binding'
+        )
+        expect(describeRoleBindingResult.ok).toBe(true)
+        if (!describeRoleBindingResult.ok) {
+          return
+        }
+        expect(describeRoleBindingResult.value).toContain('Role:')
+        expect(describeRoleBindingResult.value).toContain('Kind:  Role')
+        expect(describeRoleBindingResult.value).toContain('Name:  pod-reader')
+        expect(describeRoleBindingResult.value).toContain(
+          'ServiceAccount  robot            default'
+        )
+
+        const canIResult = executor.execute(
+          'kubectl auth can-i get pods --as=system:serviceaccount:default:robot'
+        )
+        expect(canIResult.ok).toBe(true)
+        if (!canIResult.ok) {
+          return
+        }
+        expect(canIResult.value).toBe('yes')
+      })
+
+      it('should support auth whoami and create token', () => {
+        apiServer.createResource(
+          'ServiceAccount',
+          createServiceAccount({
+            name: 'robot',
+            namespace: 'default'
+          })
+        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+
+        const whoAmIResult = executor.execute(
+          'kubectl auth whoami --as=system:serviceaccount:default:robot'
+        )
+        expect(whoAmIResult.ok).toBe(true)
+        if (!whoAmIResult.ok) {
+          return
+        }
+        expect(whoAmIResult.value).toContain(
+          'Username    system:serviceaccount:default:robot'
+        )
+
+        const createTokenResult = executor.execute('kubectl create token robot')
+        expect(createTokenResult.ok).toBe(true)
+        if (!createTokenResult.ok) {
+          return
+        }
+        const tokenParts = createTokenResult.value.split('.')
+        expect(tokenParts.length).toBe(3)
+      })
+
+      it('should render kubernetes-admin identity for auth whoami by default', () => {
+        seedConfigCommandKubeconfig()
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+        const whoAmIResult = executor.execute('kubectl auth whoami')
+        expect(whoAmIResult.ok).toBe(true)
+        if (!whoAmIResult.ok) {
+          return
+        }
+        expect(whoAmIResult.value).toContain('Username')
+        expect(whoAmIResult.value).toContain('kubernetes-admin')
+        expect(whoAmIResult.value).toContain('system:authenticated')
       })
 
       it('should handle kubectl cluster-info dump command', () => {

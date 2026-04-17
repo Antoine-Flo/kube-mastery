@@ -15,7 +15,14 @@ import { describePersistentVolume } from './describers/describePersistentVolume'
 import { describePersistentVolumeClaim } from './describers/describePersistentVolumeClaim'
 import { describePod } from './describers/describePod'
 import { describeReplicaSet } from './describers/describeReplicaSet'
+import {
+  describeClusterRole,
+  describeClusterRoleBinding,
+  describeRole,
+  describeRoleBinding
+} from './describers/describeRbac'
 import { describeSecret } from './describers/describeSecret'
+import { describeServiceAccount } from './describers/describeServiceAccount'
 import { describeStorageClass } from './describers/describeStorageClass'
 import * as extras from './describers/extras'
 
@@ -60,6 +67,13 @@ export const DESCRIBE_CONFIG: Record<string, DescribeResourceConfig> = {
       return describeSecret(item)
     },
     type: 'Secret'
+  },
+  serviceaccounts: {
+    items: 'serviceAccounts',
+    formatter: (item) => {
+      return describeServiceAccount(item)
+    },
+    type: 'ServiceAccount'
   },
   services: {
     items: 'services',
@@ -151,6 +165,36 @@ export const DESCRIBE_CONFIG: Record<string, DescribeResourceConfig> = {
       return describeNetworkPolicy(item)
     },
     type: 'NetworkPolicy'
+  },
+  roles: {
+    items: 'roles',
+    formatter: (item) => {
+      return describeRole(item)
+    },
+    type: 'Role'
+  },
+  rolebindings: {
+    items: 'roleBindings',
+    formatter: (item) => {
+      return describeRoleBinding(item)
+    },
+    type: 'RoleBinding'
+  },
+  clusterroles: {
+    items: 'clusterRoles',
+    formatter: (item) => {
+      return describeClusterRole(item)
+    },
+    type: 'ClusterRole',
+    isClusterScoped: true
+  },
+  clusterrolebindings: {
+    items: 'clusterRoleBindings',
+    formatter: (item) => {
+      return describeClusterRoleBinding(item)
+    },
+    type: 'ClusterRoleBinding',
+    isClusterScoped: true
   },
   nodes: {
     items: 'nodes',

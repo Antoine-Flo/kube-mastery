@@ -2,18 +2,32 @@ kubectl annotate | flags:all-namespaces(-A):boolean, namespace(-n):string, overw
 kubectl api-resources | flags:all-namespaces(-A):boolean, namespace(-n):string
 kubectl api-versions | flags:all-namespaces(-A):boolean, namespace(-n):string
 kubectl apply | flags:all-namespaces(-A):boolean, filename(-f):string, namespace(-n):string
+kubectl auth can-i | flags:all-namespaces(-A):boolean, as:string, namespace(-n):string
+kubectl auth reconcile | flags:all-namespaces(-A):boolean, filename(-f):string, namespace(-n):string
+kubectl auth whoami | flags:all-namespaces(-A):boolean, as:string, namespace(-n):string
 kubectl cluster-info | flags:all-namespaces(-A):boolean, namespace(-n):string
 kubectl cluster-info dump | flags:all-namespaces(-A):boolean, all-namespaces:boolean, namespace(-n):string, namespaces:string, output-directory:string
 kubectl config | flags:all-namespaces(-A):boolean, namespace(-n):string
+kubectl config get-clusters | flags:all-namespaces(-A):boolean, namespace(-n):string
 kubectl config current-context | flags:all-namespaces(-A):boolean, namespace(-n):string
 kubectl config get-contexts | flags:all-namespaces(-A):boolean, namespace(-n):string
+kubectl config get-users | flags:all-namespaces(-A):boolean, namespace(-n):string
+kubectl config rename-context | flags:all-namespaces(-A):boolean, namespace(-n):string
+kubectl config set-cluster | flags:all-namespaces(-A):boolean, namespace(-n):string, server:string
+kubectl config set-credentials | flags:all-namespaces(-A):boolean, namespace(-n):string, token:string
 kubectl config set-context | flags:all-namespaces(-A):boolean, current:boolean, namespace(-n):string, namespace:string
+kubectl config unset | flags:all-namespaces(-A):boolean, namespace(-n):string
+kubectl config use-context | flags:all-namespaces(-A):boolean, namespace(-n):string
 kubectl config view | flags:all-namespaces(-A):boolean, minify:boolean, namespace(-n):string, output(-o):string
 kubectl create | flags:all-namespaces(-A):boolean, cert:string, class:string, docker-email:string, docker-password:string, docker-server:string, docker-username:string, dry-run:enum{none,server,client}, external-name:string, filename(-f):string, from-env-file:string[], from-file:string[], from-literal:string[], image:string[], key:string, namespace(-n):string, node-port:string, output(-o):string, port:string, replicas:string, rule:string[], tcp:string
+kubectl create clusterrole | flags:all-namespaces(-A):boolean, namespace(-n):string, resource:string, verb:string
+kubectl create clusterrolebinding | flags:all-namespaces(-A):boolean, clusterrole:string, namespace(-n):string, serviceaccount:string
 kubectl create configmap | flags:all-namespaces(-A):boolean, dry-run:enum{none,server,client}, from-literal:string[], namespace(-n):string, output(-o):string
 kubectl create deployment | flags:all-namespaces(-A):boolean, dry-run:enum{none,server,client}, image:string[], namespace(-n):string, output(-o):string, port:string, replicas:string
 kubectl create ingress | flags:all-namespaces(-A):boolean, class:string, dry-run:enum{none,server,client}, namespace(-n):string, output(-o):string, rule:string[]
 kubectl create namespace | flags:all-namespaces(-A):boolean, dry-run:enum{none,server,client}, namespace(-n):string, output(-o):string
+kubectl create role | flags:all-namespaces(-A):boolean, namespace(-n):string, resource:string, verb:string
+kubectl create rolebinding | flags:all-namespaces(-A):boolean, namespace(-n):string, role:string, serviceaccount:string
 kubectl create secret | flags:all-namespaces(-A):boolean, namespace(-n):string
 kubectl create secret docker-registry | flags:all-namespaces(-A):boolean, docker-email:string, docker-password:string, docker-server:string, docker-username:string, dry-run:enum{none,server,client}, namespace(-n):string, output(-o):string
 kubectl create secret generic | flags:all-namespaces(-A):boolean, dry-run:enum{none,server,client}, from-env-file:string[], from-file:string[], from-literal:string[], namespace(-n):string, output(-o):string
@@ -23,9 +37,15 @@ kubectl create service clusterip | flags:all-namespaces(-A):boolean, dry-run:enu
 kubectl create service externalname | flags:all-namespaces(-A):boolean, dry-run:enum{none,server,client}, external-name:string, namespace(-n):string, node-port:string, output(-o):string, tcp:string
 kubectl create service loadbalancer | flags:all-namespaces(-A):boolean, dry-run:enum{none,server,client}, external-name:string, namespace(-n):string, node-port:string, output(-o):string, tcp:string
 kubectl create service nodeport | flags:all-namespaces(-A):boolean, dry-run:enum{none,server,client}, external-name:string, namespace(-n):string, node-port:string, output(-o):string, tcp:string
+kubectl create token | flags:all-namespaces(-A):boolean, namespace(-n):string
 kubectl delete | flags:all-namespaces(-A):boolean, filename(-f):string, force:boolean, grace-period:string, namespace(-n):string, selector(-l):string, wait:boolean
 kubectl describe | flags:all-namespaces(-A):boolean, namespace(-n):string, selector(-l):string
+kubectl describe clusterrole | flags:all-namespaces(-A):boolean, namespace(-n):string, selector(-l):string
+kubectl describe clusterrolebinding | flags:all-namespaces(-A):boolean, namespace(-n):string, selector(-l):string
 kubectl describe events | flags:all-namespaces(-A):boolean, namespace(-n):string
+kubectl describe role | flags:all-namespaces(-A):boolean, namespace(-n):string, selector(-l):string
+kubectl describe rolebinding | flags:all-namespaces(-A):boolean, namespace(-n):string, selector(-l):string
+kubectl describe serviceaccount | flags:all-namespaces(-A):boolean, namespace(-n):string, selector(-l):string
 kubectl diff | flags:all-namespaces(-A):boolean, filename(-f):string, namespace(-n):string
 kubectl edit | flags:all-namespaces(-A):boolean, namespace(-n):string
 kubectl exec | flags:all-namespaces(-A):boolean, container(-c):string, namespace(-n):string, stdin(-i):boolean, tty(-t):boolean
@@ -35,8 +55,13 @@ kubectl get | flags:all-namespaces(-A):boolean, allow-missing-template-keys:bool
 kubectl get events | flags:all-namespaces(-A):boolean, namespace(-n):string
 kubectl get events -A | flags:all-namespaces(-A):boolean
 kubectl get events --field-selector=involvedObject.name=<pod> | flags:all-namespaces(-A):boolean, field-selector:string, namespace(-n):string
+kubectl get clusterroles | flags:all-namespaces(-A):boolean, namespace(-n):string, output(-o):string
+kubectl get clusterrolebindings | flags:all-namespaces(-A):boolean, namespace(-n):string, output(-o):string
 kubectl get pods --field-selector=spec.nodeName=<node> | flags:all-namespaces(-A):boolean, field-selector:string, namespace(-n):string
 kubectl get pods --field-selector=status.phase=Running | flags:all-namespaces(-A):boolean, field-selector:string, namespace(-n):string
+kubectl get roles | flags:all-namespaces(-A):boolean, namespace(-n):string, output(-o):string
+kubectl get rolebindings | flags:all-namespaces(-A):boolean, namespace(-n):string, output(-o):string
+kubectl get serviceaccounts | flags:all-namespaces(-A):boolean, namespace(-n):string, output(-o):string
 kubectl label | flags:all-namespaces(-A):boolean, namespace(-n):string, overwrite:boolean
 kubectl logs | flags:all-namespaces(-A):boolean, container(-c):string, follow(-f):boolean, namespace(-n):string, previous(-p):boolean, selector(-l):string, since:string, tail:string
 kubectl options | flags:all-namespaces(-A):boolean, namespace(-n):string

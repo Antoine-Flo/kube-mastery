@@ -35,14 +35,11 @@ const {
   terminalDocsTabLabel = 'Docs',
   terminalShellTabLabel = 'Terminal'
 } = Astro.props
+
 const t = useTranslations(lang)
-const terminalLockTitle = t('lesson_terminalLock_title')
-const terminalLockBody = t('lesson_terminalLock_body')
-const terminalLockPrimaryLabel = t('lesson_terminalLock_ctaUpgrade')
-const terminalLockSecondaryLabel = t('lesson_terminalLock_tryFreeCrashCourse')
-const showTerminalActions = terminalInteractive
+
 const hasTerminalDocsTab = terminalDocsHref.trim().length > 0
-/** Keeps kubernetes.io usable in-frame while blocking navigation that replaces the parent page. */
+
 const KUBERNETES_DOCS_IFRAME_SANDBOX =
   'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads allow-modals'
 ---
@@ -64,6 +61,7 @@ const KUBERNETES_DOCS_IFRAME_SANDBOX =
             id="lesson-sidebar"
             class="lesson-layout__sidebar"
             aria-label="Plan du cours"
+            data-lesson-sidebar="true"
             data-lesson-tour="sidebar"
           >
             <div class="lesson-layout__sidebar-content">
@@ -204,9 +202,9 @@ const KUBERNETES_DOCS_IFRAME_SANDBOX =
                       </div>
                       <div class="lesson-terminal-lock__card">
                         <h2 class="lesson-terminal-lock__title">
-                          {terminalLockTitle}
+                          {t('lesson_terminalLock_title')}
                         </h2>
-                        <p class="lesson-terminal-lock__body">{terminalLockBody}</p>
+                        <p class="lesson-terminal-lock__body">{t('lesson_terminalLock_body')}</p>
                         <div class="lesson-terminal-lock__ctas">
                           <Button
                             href={terminalLockPrimaryHref}
@@ -214,7 +212,7 @@ const KUBERNETES_DOCS_IFRAME_SANDBOX =
                             color="cyan"
                             size="sm"
                           >
-                            {terminalLockPrimaryLabel}
+                            {t('lesson_terminalLock_ctaUpgrade')}
                           </Button>
                           <Button
                             href={terminalLockSecondaryHref}
@@ -222,7 +220,7 @@ const KUBERNETES_DOCS_IFRAME_SANDBOX =
                             color="gray"
                             size="sm"
                           >
-                            {terminalLockSecondaryLabel}
+                            {t('lesson_terminalLock_tryFreeCrashCourse')}
                           </Button>
                         </div>
                       </div>
@@ -256,7 +254,7 @@ const KUBERNETES_DOCS_IFRAME_SANDBOX =
           <LessonClusterPanel />
           <LessonContentBar
             lang={lang}
-            showTerminalActions={showTerminalActions}
+            showTerminalActions={terminalInteractive}
             showOutlineAction={showSidebar}
           />
         </div>
@@ -290,487 +288,9 @@ const KUBERNETES_DOCS_IFRAME_SANDBOX =
 </div>
 
 <script>
-  import type { EmulatedEnvironment } from '../../core/emulatedEnvironment/EmulatedEnvironment'
-  import { setupMermaidZoom } from './setupMermaidZoom.client'
+  import { initializeContentWithTerminalLayout } from '../../lib/lesson/lessonContentWithTerminalLayout'
 
-  const STORAGE_KEY = 'lesson-sidebar-collapsed'
-  const PANEL_RESIZE_STORAGE_KEY = 'lesson-terminal-width'
-  const DESKTOP_BREAKPOINT = '(min-width: 1025px)'
-  const MIN_TERMINAL_WIDTH = 320
-  const MIN_CONTENT_WIDTH = 420
-  let lessonEnv: EmulatedEnvironment | null = null
-  let cachedDestroy: ((env: EmulatedEnvironment) => void) | null = null
-
-  async function teardownGlobalLessonEnv() {
-    const globalState = globalThis as {
-      __lessonEnv?: EmulatedEnvironment
-      __lessonEnvSeed?: string
-    }
-    if (!globalState.__lessonEnv) {
-      lessonEnv = null
-      return
-    }
-    const env = globalState.__lessonEnv
-    delete globalState.__lessonEnv
-    delete globalState.__lessonEnvSeed
-    lessonEnv = null
-
-    if (cachedDestroy) {
-      cachedDestroy(env)
-      return
-    }
-    const mod = await import('./lessonEmulatedEnvironment')
-    cachedDestroy = mod.destroyEmulatedEnvironment
-    mod.destroyEmulatedEnvironment(env)
-  }
-
-  function isTerminalInteractiveFromDom(): boolean {
-    const root = document.querySelector('.lesson-layout-root')
-    if (!root) {
-      return true
-    }
-    return root.getAttribute('data-terminal-interactive') !== 'false'
-  }
-
-  let panelResizeBound = false
-  let panelResizeState: {
-    body: HTMLElement
-    content: HTMLElement
-    terminalWrap: HTMLElement
-    resizer: HTMLElement
-  } | null = null
-
-  async function setupLessonEnv() {
-    const root = document.querySelector('.lesson-layout-root')
-    if (!root) {
-      return
-    }
-    const seedName = root.getAttribute('data-seed-name') ?? 'minimal'
-    const globalState = globalThis as {
-      __lessonEnv?: EmulatedEnvironment
-      __lessonEnvSeed?: string
-    }
-
-    if (globalState.__lessonEnv && globalState.__lessonEnvSeed === seedName) {
-      lessonEnv = globalState.__lessonEnv
-    } else {
-      if (globalState.__lessonEnv) {
-        await teardownGlobalLessonEnv()
-      }
-      const mod = await import('./lessonEmulatedEnvironment')
-      cachedDestroy = mod.destroyEmulatedEnvironment
-      lessonEnv = mod.createLessonEmulatedEnvironment(seedName)
-      globalState.__lessonEnv = lessonEnv
-      globalState.__lessonEnvSeed = seedName
-    }
-
-    if (!lessonEnv) {
-      return
-    }
-
-    document.dispatchEvent(
-      new CustomEvent('cluster-env-ready', {
-        detail: { env: lessonEnv }
-      })
-    )
-    document.dispatchEvent(
-      new CustomEvent('lesson-env-ready', {
-        detail: { env: lessonEnv }
-      })
-    )
-  }
-
-  async function cleanupLessonEnv() {
-    await teardownGlobalLessonEnv()
-  }
-
-  function setupSidebarToggle() {
-    const sidebar = document.getElementById('lesson-sidebar')
-    const toggle = document.getElementById('lesson-sidebar-toggle')
-    if (!sidebar || !toggle) {
-      return
-    }
-
-    const updateUi = () => {
-      const collapsed = sidebar.classList.contains(
-        'lesson-layout__sidebar--collapsed'
-      )
-      toggle.setAttribute(
-        'aria-label',
-        collapsed ? 'Afficher le plan du cours' : 'Réduire le plan du cours'
-      )
-      toggle.setAttribute('aria-expanded', String(!collapsed))
-    }
-
-    const init = () => {
-      const collapsed = localStorage.getItem(STORAGE_KEY) === 'true'
-      sidebar.classList.toggle('lesson-layout__sidebar--collapsed', collapsed)
-      updateUi()
-    }
-
-    init()
-    toggle.onclick = () => {
-      const collapsed = !sidebar.classList.contains(
-        'lesson-layout__sidebar--collapsed'
-      )
-      sidebar.classList.toggle('lesson-layout__sidebar--collapsed', collapsed)
-      localStorage.setItem(STORAGE_KEY, String(collapsed))
-      updateUi()
-    }
-  }
-
-  let terminalToggleBound = false
-  let outlineToggleBound = false
-  let terminalTabsBound = false
-
-  function setupTerminalToggle() {
-    const root = document.querySelector('.lesson-layout-root')
-    if (root && window.matchMedia('(min-width: 1025px)').matches) {
-      root.setAttribute('data-terminal-open', 'true')
-    }
-    if (terminalToggleBound) {
-      document.dispatchEvent(new CustomEvent('lesson-terminal-state-changed'))
-      return
-    }
-    terminalToggleBound = true
-
-    document.addEventListener('lesson-terminal-toggle', () => {
-      const root = document.querySelector('.lesson-layout-root')
-      if (!root) {
-        return
-      }
-      const open = root.getAttribute('data-terminal-open') !== 'false'
-      const nextOpen = !open
-      root.setAttribute('data-terminal-open', nextOpen ? 'true' : 'false')
-      document.dispatchEvent(new CustomEvent('lesson-terminal-state-changed'))
-      if (nextOpen) {
-        document.dispatchEvent(new CustomEvent('lesson-terminal-open'))
-      }
-    })
-
-    document.addEventListener('lesson-terminal-reload', () => {
-      if (!isTerminalInteractiveFromDom()) {
-        return
-      }
-      void cleanupLessonEnv().then(() => setupLessonEnv())
-    })
-
-    document.dispatchEvent(new CustomEvent('lesson-terminal-state-changed'))
-  }
-
-  function setActiveTerminalTab(tabName: 'shell' | 'docs') {
-    const triggers = document.querySelectorAll<HTMLElement>('[data-terminal-tab-trigger]')
-    const panels = document.querySelectorAll<HTMLElement>('[data-terminal-tab-panel]')
-    const root = document.querySelector('.lesson-layout-root')
-
-    triggers.forEach((trigger) => {
-      const isActive = trigger.dataset.terminalTabTrigger === tabName
-      trigger.setAttribute('aria-selected', isActive ? 'true' : 'false')
-      trigger.classList.toggle('lesson-layout__terminal-tab--active', isActive)
-    })
-
-    panels.forEach((panel) => {
-      const isActive = panel.dataset.terminalTabPanel === tabName
-      panel.hidden = !isActive
-    })
-
-    if (root instanceof HTMLElement && tabName === 'docs') {
-      root.setAttribute('data-terminal-open', 'true')
-      document.dispatchEvent(new CustomEvent('lesson-terminal-state-changed'))
-    }
-  }
-
-  function setupTerminalTabs() {
-    const hasTabs = document.querySelector('[data-terminal-tab-trigger="docs"]')
-    if (!hasTabs) {
-      return
-    }
-
-    if (terminalTabsBound) {
-      return
-    }
-    terminalTabsBound = true
-    setActiveTerminalTab('shell')
-
-    document.addEventListener('click', (event) => {
-      const target = event.target
-      if (!(target instanceof Element)) {
-        return
-      }
-      const trigger = target.closest<HTMLElement>('[data-terminal-tab-trigger]')
-      if (!trigger) {
-        return
-      }
-      const tabName = trigger.dataset.terminalTabTrigger
-      if (tabName !== 'shell' && tabName !== 'docs') {
-        return
-      }
-      event.preventDefault()
-      setActiveTerminalTab(tabName)
-    })
-  }
-
-  function updateMobileOutlineUi(isOpen: boolean) {
-    const root = document.querySelector('.lesson-layout-root')
-    if (!(root instanceof HTMLElement)) {
-      return
-    }
-    root.setAttribute('data-outline-open', isOpen ? 'true' : 'false')
-    const backdrop = document.querySelector(
-      '[data-lesson-outline-backdrop]'
-    ) as HTMLElement | null
-    if (backdrop) {
-      backdrop.setAttribute('aria-hidden', isOpen ? 'false' : 'true')
-    }
-    const outlineToggles = document.querySelectorAll('[data-lesson-outline-toggle]')
-    outlineToggles.forEach((toggleEl) => {
-      if (toggleEl instanceof HTMLElement) {
-        toggleEl.setAttribute('aria-expanded', isOpen ? 'true' : 'false')
-      }
-    })
-  }
-
-  function setupOutlineToggle() {
-    updateMobileOutlineUi(false)
-    if (outlineToggleBound) {
-      return
-    }
-    outlineToggleBound = true
-
-    document.addEventListener('lesson-outline-toggle', () => {
-      if (!window.matchMedia('(max-width: 1024px)').matches) {
-        return
-      }
-      const root = document.querySelector('.lesson-layout-root')
-      const sidebar = document.getElementById('lesson-sidebar')
-      if (!(root instanceof HTMLElement) || !(sidebar instanceof HTMLElement)) {
-        return
-      }
-      const isOpen = root.getAttribute('data-outline-open') === 'true'
-      updateMobileOutlineUi(!isOpen)
-    })
-
-    document.addEventListener('click', (event) => {
-      const target = event.target
-      if (!(target instanceof Element)) {
-        return
-      }
-      if (!target.closest('[data-lesson-outline-backdrop]')) {
-        return
-      }
-      updateMobileOutlineUi(false)
-    })
-
-    window.addEventListener('resize', () => {
-      if (window.matchMedia('(min-width: 1025px)').matches) {
-        updateMobileOutlineUi(false)
-      }
-    })
-  }
-
-  function getPanelElements() {
-    const body = document.querySelector('.lesson-layout__body')
-    const content = document.querySelector('.lesson-layout__content')
-    const terminalWrap = document.querySelector(
-      '[data-lesson-term-wrap]'
-    ) as HTMLElement | null
-    const resizer = document.querySelector(
-      '[data-lesson-resizer]'
-    ) as HTMLElement | null
-
-    if (
-      !(body instanceof HTMLElement) ||
-      !(content instanceof HTMLElement) ||
-      !(terminalWrap instanceof HTMLElement) ||
-      !(resizer instanceof HTMLElement)
-    ) {
-      return null
-    }
-
-    return {
-      body,
-      content,
-      terminalWrap,
-      resizer
-    }
-  }
-
-  function clampTerminalWidth(layoutWidth: number, desiredWidth: number) {
-    const maxTerminalWidth = Math.max(
-      MIN_TERMINAL_WIDTH,
-      layoutWidth - MIN_CONTENT_WIDTH
-    )
-    return Math.min(
-      Math.max(desiredWidth, MIN_TERMINAL_WIDTH),
-      maxTerminalWidth
-    )
-  }
-
-  function applyTerminalWidth(desiredWidth: number) {
-    const desktopQuery = window.matchMedia(DESKTOP_BREAKPOINT)
-    const panelElements = getPanelElements()
-    if (!panelElements) {
-      return
-    }
-
-    const { body, content, terminalWrap } = panelElements
-
-    if (!desktopQuery.matches) {
-      terminalWrap.style.removeProperty('flex')
-      content.style.removeProperty('flex')
-      return
-    }
-
-    const clampedWidth = clampTerminalWidth(body.clientWidth, desiredWidth)
-    terminalWrap.style.flex = `0 0 ${clampedWidth}px`
-    content.style.flex = '1 1 auto'
-  }
-
-  function setupPanelResize() {
-    const desktopQuery = window.matchMedia(DESKTOP_BREAKPOINT)
-    const panelElements = getPanelElements()
-    if (!panelElements) {
-      return
-    }
-
-    const { body } = panelElements
-
-    const storedWidth = Number(localStorage.getItem(PANEL_RESIZE_STORAGE_KEY))
-    if (Number.isFinite(storedWidth) && storedWidth > 0) {
-      applyTerminalWidth(storedWidth)
-    } else {
-      applyTerminalWidth(Math.round(body.clientWidth * 0.5))
-    }
-
-    if (panelResizeBound) {
-      return
-    }
-    panelResizeBound = true
-
-    const stopResize = () => {
-      if (!panelResizeState) {
-        return
-      }
-      panelResizeState.resizer.classList.remove(
-        'lesson-layout__resizer--dragging'
-      )
-      document.body.classList.remove('lesson-layout--resizing')
-      panelResizeState = null
-    }
-
-    document.addEventListener('pointerdown', (event) => {
-      if (!(event.target instanceof Element)) {
-        return
-      }
-      const resizer = event.target.closest('[data-lesson-resizer]')
-      if (!(resizer instanceof HTMLElement)) {
-        return
-      }
-      if (!desktopQuery.matches) {
-        return
-      }
-
-      const currentPanelElements = getPanelElements()
-      if (!currentPanelElements) {
-        return
-      }
-
-      event.preventDefault()
-      panelResizeState = {
-        body: currentPanelElements.body,
-        content: currentPanelElements.content,
-        terminalWrap: currentPanelElements.terminalWrap,
-        resizer
-      }
-      panelResizeState.resizer.classList.add('lesson-layout__resizer--dragging')
-      document.body.classList.add('lesson-layout--resizing')
-    })
-
-    document.addEventListener('pointermove', (event) => {
-      if (!panelResizeState) {
-        return
-      }
-
-      const { body, terminalWrap, content } = panelResizeState
-      const bodyRect = body.getBoundingClientRect()
-      const rawTerminalWidth = bodyRect.right - event.clientX
-      const nextTerminalWidth = clampTerminalWidth(
-        bodyRect.width,
-        rawTerminalWidth
-      )
-
-      terminalWrap.style.flex = `0 0 ${nextTerminalWidth}px`
-      content.style.flex = '1 1 auto'
-      localStorage.setItem(
-        PANEL_RESIZE_STORAGE_KEY,
-        String(Math.round(nextTerminalWidth))
-      )
-    })
-
-    document.addEventListener('pointerup', () => {
-      stopResize()
-    })
-
-    document.addEventListener('pointercancel', () => {
-      stopResize()
-    })
-
-    window.addEventListener('resize', () => {
-      const currentPanelElements = getPanelElements()
-      if (!currentPanelElements) {
-        return
-      }
-      const currentWidth = Number.parseFloat(
-        currentPanelElements.terminalWrap.style.flexBasis
-      )
-      if (Number.isFinite(currentWidth) && currentWidth > 0) {
-        applyTerminalWidth(currentWidth)
-      }
-    })
-  }
-
-  async function initLessonEmulation() {
-    if (!isTerminalInteractiveFromDom()) {
-      await teardownGlobalLessonEnv()
-      return
-    }
-    await setupLessonEnv()
-  }
-
-  setupSidebarToggle()
-  setupTerminalToggle()
-  setupTerminalTabs()
-  setupOutlineToggle()
-  setupPanelResize()
-  setupMermaidZoom()
-  requestAnimationFrame(() => {
-    void initLessonEmulation()
-  })
-  document.addEventListener('astro:page-load', () => {
-    setupSidebarToggle()
-    setupTerminalToggle()
-    setupTerminalTabs()
-    setupOutlineToggle()
-    setupPanelResize()
-    setupMermaidZoom()
-    requestAnimationFrame(() => {
-      void initLessonEmulation()
-    })
-  })
-  // Keep shared env alive across page transitions for persistent lesson terminal.
-  window.addEventListener('beforeunload', () => {
-    if (cachedDestroy) {
-      const globalState = globalThis as { __lessonEnv?: EmulatedEnvironment }
-      const env = globalState.__lessonEnv
-      if (env) {
-        cachedDestroy(env)
-        delete globalState.__lessonEnv
-      }
-      const g = globalThis as { __lessonEnvSeed?: string }
-      delete g.__lessonEnvSeed
-      lessonEnv = null
-    }
-  })
+  initializeContentWithTerminalLayout()
 </script>
 
 <style>

@@ -6,6 +6,7 @@ import {
   type DescribeResourceConfig
 } from '../../describe/registry'
 import type { DescribeDependencies } from '../../describe/interface'
+import { toPluralResourceKindReference } from '../resourceCatalog'
 import { applyFilters, noResourcesMessage } from './internal/get/filters'
 import type { ParsedCommand } from '../types'
 
@@ -34,31 +35,6 @@ const sortDescribeResources = (
     }
     return left.metadata.name.localeCompare(right.metadata.name)
   })
-}
-
-const getNotFoundResourceReference = (resourceType: string): string => {
-  if (resourceType === 'deployments') {
-    return 'deployments.apps'
-  }
-  if (resourceType === 'replicasets') {
-    return 'replicasets.apps'
-  }
-  if (resourceType === 'networkpolicies') {
-    return 'networkpolicies.networking.k8s.io'
-  }
-  if (resourceType === 'ingressclasses') {
-    return 'ingressclasses.networking.k8s.io'
-  }
-  if (resourceType === 'gatewayclasses') {
-    return 'gatewayclasses.gateway.networking.k8s.io'
-  }
-  if (resourceType === 'gateways') {
-    return 'gateways.gateway.networking.k8s.io'
-  }
-  if (resourceType === 'httproutes') {
-    return 'httproutes.gateway.networking.k8s.io'
-  }
-  return resourceType
 }
 
 /**
@@ -118,7 +94,7 @@ export const handleDescribe = (
   const resourcesToDescribe = sortDescribeResources(filteredResources)
 
   if (parsed.name && resourcesToDescribe.length === 0) {
-    const reference = getNotFoundResourceReference(resourceType)
+    const reference = toPluralResourceKindReference(resourceType)
     return error(
       `Error from server (NotFound): ${reference} "${parsed.name}" not found`
     )

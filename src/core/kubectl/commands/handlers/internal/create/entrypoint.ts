@@ -1,4 +1,8 @@
 import type { ApiServerFacade } from '../../../../../api/ApiServerFacade'
+import { createClusterRole } from '../../../../../cluster/ressources/ClusterRole'
+import { createClusterRoleBinding } from '../../../../../cluster/ressources/ClusterRoleBinding'
+import { createRole } from '../../../../../cluster/ressources/Role'
+import { createRoleBinding } from '../../../../../cluster/ressources/RoleBinding'
 import type { FileSystem } from '../../../../../filesystem/FileSystem'
 import type { ExecutionResult } from '../../../../../shared/result'
 import { error } from '../../../../../shared/result'
@@ -50,6 +54,33 @@ const getFilenameFromFlags = (parsed: ParsedCommand): string | undefined => {
     return undefined
   }
   return filename
+}
+
+const splitCsvValues = (raw: string): string[] => {
+  return raw
+    .split(',')
+    .map((item) => {
+      return item.trim()
+    })
+    .filter((item) => {
+      return item.length > 0
+    })
+}
+
+const parseServiceAccountSubject = (
+  value: string
+): { namespace: string; name: string } | undefined => {
+  const [namespace, name] = value.split(':', 2)
+  if (namespace == null || namespace.length === 0) {
+    return undefined
+  }
+  if (name == null || name.length === 0) {
+    return undefined
+  }
+  return {
+    namespace,
+    name
+  }
 }
 
 const loadAndParseYaml = (
@@ -152,6 +183,111 @@ export const handleCreate = (
       return buildDryRunResponse(dryRunManifest, parsed)
     }
     return createSecretFromFlags(fileSystem, parsed, apiServer)
+  }
+
+  if (parsed.resource === 'roles' && parsed.name != null) {
+    const verbFlag = parsed.flags.verb
+    const resourceFlag = parsed.flags.resource
+    if (typeof verbFlag !== 'string' || typeof resourceFlag !== 'string') {
+      return error('error: create role requires --verb and --resource')
+    }
+    const role = createRole({
+      name: parsed.name,
+      namespace: parsed.namespace ?? 'default',
+      rules: [
+        {
+          verbs: splitCsvValues(verbFlag),
+          resources: splitCsvValues(resourceFlag),
+          apiGroups: ['']
+        }
+      ]
+    })
+    return createResourceWithEvents(role, apiServer)
+  }
+
+  if (parsed.resource === 'clusterroles' && parsed.name != null) {
+    const verbFlag = parsed.flags.verb
+    const resourceFlag = parsed.flags.resource
+    if (typeof verbFlag !== 'string' || typeof resourceFlag !== 'string') {
+      return error('error: create clusterrole requires --verb and --resource')
+    }
+    const clusterRole = createClusterRole({
+      name: parsed.name,
+      rules: [
+        {
+          verbs: splitCsvValues(verbFlag),
+          resources: splitCsvValues(resourceFlag),
+          apiGroups: ['']
+        }
+      ]
+    })
+    return createResourceWithEvents(clusterRole, apiServer)
+  }
+
+  if (parsed.resource === 'rolebindings' && parsed.name != null) {
+    const roleFlag = parsed.flags.role
+    const serviceAccountFlag = parsed.flags.serviceaccount
+    if (typeof roleFlag !== 'string' || typeof serviceAccountFlag !== 'string') {
+      return error('error: create rolebinding requires --role and --serviceaccount')
+    }
+    const subject = parseServiceAccountSubject(serviceAccountFlag)
+    if (subject == null) {
+      return error(
+        'error: create rolebinding --serviceaccount must use namespace:name'
+      )
+    }
+    const roleBinding = createRoleBinding({
+      name: parsed.name,
+      namespace: parsed.namespace ?? 'default',
+      roleRef: {
+        apiGroup: 'rbac.authorization.k8s.io',
+        kind: 'Role',
+        name: roleFlag
+      },
+      subjects: [
+        {
+          kind: 'ServiceAccount',
+          name: subject.name,
+          namespace: subject.namespace
+        }
+      ]
+    })
+    return createResourceWithEvents(roleBinding, apiServer)
+  }
+
+  if (parsed.resource === 'clusterrolebindings' && parsed.name != null) {
+    const clusterRoleFlag = parsed.flags.clusterrole
+    const serviceAccountFlag = parsed.flags.serviceaccount
+    if (
+      typeof clusterRoleFlag !== 'string' ||
+      typeof serviceAccountFlag !== 'string'
+    ) {
+      return error(
+        'error: create clusterrolebinding requires --clusterrole and --serviceaccount'
+      )
+    }
+    const subject = parseServiceAccountSubject(serviceAccountFlag)
+    if (subject == null) {
+      return error(
+        'error: create clusterrolebinding --serviceaccount must use namespace:name'
+      )
+    }
+    const clusterRoleBinding = createClusterRoleBinding({
+      name: parsed.name,
+      roleRef: {
+        apiGroup: 'rbac.authorization.k8s.io',
+        kind: 'ClusterRole',
+        name: clusterRoleFlag
+      },
+      subjects: [
+        {
+          kind: 'ServiceAccount',
+          name: subject.name,
+          namespace: subject.namespace
+        }
+      ]
+    })
+    return createResourceWithEvents(clusterRoleBinding, apiServer)
   }
 
   const loadResult = loadAndParseYaml(fileSystem, parsed)

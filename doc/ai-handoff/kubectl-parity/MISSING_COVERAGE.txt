@@ -3,18 +3,6 @@
 Supprimer une ligne uniquement quand la parity stricte est validée sur kind.
 
 RBAC
-- kubectl get roles
-- kubectl get rolebindings
-- kubectl get clusterroles
-- kubectl get clusterrolebindings
-- kubectl describe role <name>
-- kubectl describe rolebinding <name>
-- kubectl describe clusterrole <name>
-- kubectl describe clusterrolebinding <name>
-- kubectl create role <name> --verb=get --resource=pods
-- kubectl create rolebinding <name> --role=<role> --serviceaccount=<ns>:<sa>
-- kubectl create clusterrole <name> --verb=get --resource=pods
-- kubectl create clusterrolebinding <name> --clusterrole=<role> --serviceaccount=<ns>:<sa>
 - kubectl auth reconcile -f <file>
 
 Jobs
@@ -28,9 +16,6 @@ Jobs
 - kubectl delete cronjob <name>
 
 Auth
-- kubectl auth can-i <verb> <resource>
-- kubectl auth whoami
-- kubectl auth can-i --as=<user> <verb> <resource>
 
 Certificates
 - kubectl certificate approve <csr>
@@ -71,13 +56,6 @@ Debug and troubleshooting
 - kubectl debug pod/<name> -it --image=busybox
 
 Context and kubeconfig
-- kubectl config use-context <context>
-- kubectl config get-clusters
-- kubectl config get-users
-- kubectl config set-credentials <user> --token=<token>
-- kubectl config set-cluster <name> --server=<url>
-- kubectl config unset <path>
-- kubectl config rename-context <old> <new>
 
 Plugin and extension surface
 - kubectl plugin list
@@ -95,9 +73,6 @@ Custom resources and CRD
 - kubectl get <crd-plural>
 
 Authentication plumbing and identity
-- kubectl create token <serviceaccount>
-- kubectl get serviceaccounts
-- kubectl describe serviceaccount <name>
 
 Autoscaling
 - kubectl autoscale deployment <name> --cpu-percent=50 --min=1 --max=10

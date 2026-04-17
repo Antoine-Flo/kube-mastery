@@ -61,10 +61,10 @@ export const courseStructure: CourseStructure = {
     {
       title: { en: 'Security & auth' },
       moduleIds: [
-        'service-accounts',
         'authentication',
-        'tls-certificates',
+        'service-accounts',
         'kubeconfig',
+        'tls-certificates',
         'rbac',
         'security-contexts',
         'image-security',

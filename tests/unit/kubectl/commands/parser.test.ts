@@ -1643,6 +1643,155 @@ describe('kubectl parser - config', () => {
   })
 })
 
+describe('kubectl parser - config advanced', () => {
+  it('should parse config use-context command', () => {
+    const result = parseCommand('kubectl config use-context kind-dev')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('config-use-context')
+    expect(result.value.configContextName).toBe('kind-dev')
+  })
+
+  it('should parse config get-clusters command', () => {
+    const result = parseCommand('kubectl config get-clusters')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('config-get-clusters')
+  })
+
+  it('should parse config get-users command', () => {
+    const result = parseCommand('kubectl config get-users')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('config-get-users')
+  })
+
+  it('should parse config set-credentials command', () => {
+    const result = parseCommand(
+      'kubectl config set-credentials e2e-user --token=abc123'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('config-set-credentials')
+    expect(result.value.configUserName).toBe('e2e-user')
+    expect(result.value.configToken).toBe('abc123')
+  })
+
+  it('should parse config set-cluster command', () => {
+    const result = parseCommand(
+      'kubectl config set-cluster kind-dev --server=https://127.0.0.1:6443'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('config-set-cluster')
+    expect(result.value.configClusterName).toBe('kind-dev')
+    expect(result.value.configServer).toBe('https://127.0.0.1:6443')
+  })
+
+  it('should parse config unset command', () => {
+    const result = parseCommand('kubectl config unset contexts.kind-dev.namespace')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('config-unset')
+    expect(result.value.configPath).toBe('contexts.kind-dev.namespace')
+  })
+
+  it('should parse config rename-context command', () => {
+    const result = parseCommand(
+      'kubectl config rename-context kind-dev kind-stage'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('config-rename-context')
+    expect(result.value.configContextName).toBe('kind-dev')
+    expect(result.value.configRenameContextTo).toBe('kind-stage')
+  })
+})
+
+describe('kubectl parser - auth and token', () => {
+  it('should parse create token command', () => {
+    const result = parseCommand('kubectl create token robot')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('create-token')
+    expect(result.value.name).toBe('robot')
+  })
+
+  it('should parse auth can-i command with --as', () => {
+    const result = parseCommand(
+      'kubectl auth can-i get pods -n default --as=system:serviceaccount:default:robot'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('auth-can-i')
+    expect(result.value.authVerb).toBe('get')
+    expect(result.value.authResource).toBe('pods')
+    expect(result.value.authSubject).toBe(
+      'system:serviceaccount:default:robot'
+    )
+  })
+
+  it('should parse auth whoami command with --as', () => {
+    const result = parseCommand('kubectl auth whoami --as=e2e-user')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('auth-whoami')
+    expect(result.value.authSubject).toBe('e2e-user')
+  })
+
+  it('should parse auth reconcile command with filename', () => {
+    const result = parseCommand('kubectl auth reconcile -f rbac.yaml')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('auth-reconcile')
+    expect(result.value.flags.f).toBe('rbac.yaml')
+  })
+})
+
 describe('kubectl parser - wait', () => {
   it('parses kubectl wait --for=condition=Ready pod/web --timeout=60s', () => {
     const result = parseCommand(

@@ -8,59 +8,34 @@ import type {
 
 export interface ClusterStateData {
   pods: ResourceCollection<ClusterResourceTypeByCollectionKey['pods']>
-  configMaps: ResourceCollection<
-    ClusterResourceTypeByCollectionKey['configMaps']
-  >
-  controllerRevisions: ResourceCollection<
-    ClusterResourceTypeByCollectionKey['controllerRevisions']
-  >
+  configMaps: ResourceCollection<ClusterResourceTypeByCollectionKey['configMaps']>
+  controllerRevisions: ResourceCollection<ClusterResourceTypeByCollectionKey['controllerRevisions']>
   secrets: ResourceCollection<ClusterResourceTypeByCollectionKey['secrets']>
   nodes: ResourceCollection<ClusterResourceTypeByCollectionKey['nodes']>
-  replicaSets: ResourceCollection<
-    ClusterResourceTypeByCollectionKey['replicaSets']
-  >
-  deployments: ResourceCollection<
-    ClusterResourceTypeByCollectionKey['deployments']
-  >
-  daemonSets: ResourceCollection<
-    ClusterResourceTypeByCollectionKey['daemonSets']
-  >
-  statefulSets: ResourceCollection<
-    ClusterResourceTypeByCollectionKey['statefulSets']
-  >
+  replicaSets: ResourceCollection<ClusterResourceTypeByCollectionKey['replicaSets']>
+  deployments: ResourceCollection<ClusterResourceTypeByCollectionKey['deployments']>
+  daemonSets: ResourceCollection<ClusterResourceTypeByCollectionKey['daemonSets']>
+  statefulSets: ResourceCollection<ClusterResourceTypeByCollectionKey['statefulSets']>
   services: ResourceCollection<ClusterResourceTypeByCollectionKey['services']>
-  endpointSlices: ResourceCollection<
-    ClusterResourceTypeByCollectionKey['endpointSlices']
-  >
+  endpointSlices: ResourceCollection<ClusterResourceTypeByCollectionKey['endpointSlices']>
   endpoints: ResourceCollection<ClusterResourceTypeByCollectionKey['endpoints']>
   events: ResourceCollection<ClusterResourceTypeByCollectionKey['events']>
   ingresses: ResourceCollection<ClusterResourceTypeByCollectionKey['ingresses']>
-  ingressClasses: ResourceCollection<
-    ClusterResourceTypeByCollectionKey['ingressClasses']
-  >
-  networkPolicies: ResourceCollection<
-    ClusterResourceTypeByCollectionKey['networkPolicies']
-  >
-  gatewayClasses: ResourceCollection<
-    ClusterResourceTypeByCollectionKey['gatewayClasses']
-  >
+  ingressClasses: ResourceCollection<ClusterResourceTypeByCollectionKey['ingressClasses']>
+  networkPolicies: ResourceCollection<ClusterResourceTypeByCollectionKey['networkPolicies']>
+  gatewayClasses: ResourceCollection<ClusterResourceTypeByCollectionKey['gatewayClasses']>
   gateways: ResourceCollection<ClusterResourceTypeByCollectionKey['gateways']>
-  httpRoutes: ResourceCollection<
-    ClusterResourceTypeByCollectionKey['httpRoutes']
-  >
-  persistentVolumes: ResourceCollection<
-    ClusterResourceTypeByCollectionKey['persistentVolumes']
-  >
-  persistentVolumeClaims: ResourceCollection<
-    ClusterResourceTypeByCollectionKey['persistentVolumeClaims']
-  >
-  namespaces: ResourceCollection<
-    ClusterResourceTypeByCollectionKey['namespaces']
-  >
+  httpRoutes: ResourceCollection<ClusterResourceTypeByCollectionKey['httpRoutes']>
+  persistentVolumes: ResourceCollection<ClusterResourceTypeByCollectionKey['persistentVolumes']>
+  persistentVolumeClaims: ResourceCollection<ClusterResourceTypeByCollectionKey['persistentVolumeClaims']>
+  serviceAccounts: ResourceCollection<ClusterResourceTypeByCollectionKey['serviceAccounts']>
+  roles: ResourceCollection<ClusterResourceTypeByCollectionKey['roles']>
+  roleBindings: ResourceCollection<ClusterResourceTypeByCollectionKey['roleBindings']>
+  clusterRoles: ResourceCollection<ClusterResourceTypeByCollectionKey['clusterRoles']>
+  clusterRoleBindings: ResourceCollection<ClusterResourceTypeByCollectionKey['clusterRoleBindings']>
+  namespaces: ResourceCollection<ClusterResourceTypeByCollectionKey['namespaces']>
   leases: ResourceCollection<ClusterResourceTypeByCollectionKey['leases']>
-  storageClasses: ResourceCollection<
-    ClusterResourceTypeByCollectionKey['storageClasses']
-  >
+  storageClasses: ResourceCollection<ClusterResourceTypeByCollectionKey['storageClasses']>
 }
 
 export type ResourceKind = keyof ClusterResourceTypeByKind
@@ -98,6 +73,11 @@ export const CLUSTER_DATA_KEYS = [
   'httpRoutes',
   'persistentVolumes',
   'persistentVolumeClaims',
+  'serviceAccounts',
+  'roles',
+  'roleBindings',
+  'clusterRoles',
+  'clusterRoleBindings',
   'namespaces',
   'leases',
   'storageClasses'

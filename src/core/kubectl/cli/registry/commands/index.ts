@@ -1,6 +1,20 @@
 import { command } from '../../builder'
 import type { KubectlCommandSpec } from '../../model'
 import { DESCRIBE_CONFIG } from '../../../describe/registry'
+import {
+  AUTH_SUBCOMMAND_SPECS,
+  CONFIG_SUBCOMMAND_SPECS
+} from '../../../commands/subcommandSpecs'
+import {
+  CREATE_RESOURCE_SPECS,
+  CREATE_SECRET_DOCKER_REGISTRY_FLAGS,
+  CREATE_SECRET_GENERIC_FLAGS,
+  CREATE_SECRET_SUBCOMMAND_SPECS,
+  CREATE_SECRET_TLS_FLAGS,
+  CREATE_SERVICE_COMMON_FLAGS,
+  CREATE_SERVICE_SUBCOMMAND_SPECS,
+  CREATE_TOKEN_SPEC
+} from '../../../commands/createImperativeSpecs'
 import { createLeafCommand } from './shared'
 
 /**
@@ -139,204 +153,32 @@ const applyCommand = createLeafCommand({
   ]
 })
 
-const createDeploymentCommand = createLeafCommand({
-  path: ['create', 'deployment'],
-  use: 'create deployment NAME --image=image [--replicas=COUNT] [--port=PORT]',
-  short: 'Create a deployment with the specified name',
-  handlerId: 'create',
-  flags: [
-    { kind: 'stringArray', name: 'image', description: 'Image name' },
-    { kind: 'string', name: 'replicas', description: 'Replica count' },
-    { kind: 'string', name: 'port', description: 'Port number' },
-    {
-      kind: 'string',
-      name: 'output',
-      short: 'o',
-      description: 'Output format'
-    },
-    {
-      kind: 'enum',
-      name: 'dry-run',
-      description: 'Must be none, server or client',
-      enumValues: ['none', 'server', 'client']
-    }
-  ]
+const createResourceCommands = CREATE_RESOURCE_SPECS.map((spec) => {
+  return createLeafCommand({
+    path: ['create', ...spec.pathTail],
+    aliases: spec.aliases,
+    use: spec.use,
+    short: spec.short,
+    handlerId: spec.action,
+    flags: spec.flags
+  })
 })
 
-const createIngressCommand = createLeafCommand({
-  path: ['create', 'ingress'],
-  use: 'create ingress NAME --rule=host/path=service:port [--class=ingressClassName]',
-  short: 'Create an ingress from imperative flags',
-  handlerId: 'create',
-  flags: [
-    {
-      kind: 'stringArray',
-      name: 'rule',
-      description: 'Host/path backend rule'
-    },
-    { kind: 'string', name: 'class', description: 'Ingress class name' },
-    {
-      kind: 'string',
-      name: 'output',
-      short: 'o',
-      description: 'Output format'
-    },
-    {
-      kind: 'enum',
-      name: 'dry-run',
-      description: 'Must be none, server or client',
-      enumValues: ['none', 'server', 'client']
-    }
-  ]
+const createTokenCommand = createLeafCommand({
+  path: ['create', ...CREATE_TOKEN_SPEC.pathTail],
+  use: CREATE_TOKEN_SPEC.use,
+  short: CREATE_TOKEN_SPEC.short,
+  handlerId: CREATE_TOKEN_SPEC.action
 })
 
-const createNamespaceCommand = createLeafCommand({
-  path: ['create', 'namespace'],
-  aliases: ['ns'],
-  use: 'create namespace NAME [--dry-run=none|server|client] [-o output]',
-  short: 'Create a namespace',
-  handlerId: 'create',
-  flags: [
-    {
-      kind: 'string',
-      name: 'output',
-      short: 'o',
-      description: 'Output format'
-    },
-    {
-      kind: 'enum',
-      name: 'dry-run',
-      description: 'Must be none, server or client',
-      enumValues: ['none', 'server', 'client']
-    }
-  ]
-})
-
-const createClusterroleCommand = createLeafCommand({
-  path: ['create', 'clusterrole'],
-  use: 'create clusterrole NAME [--verb=verbs] [--resource=resources] [--dry-run=none|server|client] [-o output]',
-  short: 'Create a ClusterRole',
-  handlerId: 'create',
-  flags: [
-    {
-      kind: 'stringArray',
-      name: 'verb',
-      description: 'Verbs allowed on the resources'
-    },
-    {
-      kind: 'stringArray',
-      name: 'resource',
-      description: 'Resources this rule applies to'
-    },
-    {
-      kind: 'string',
-      name: 'output',
-      short: 'o',
-      description: 'Output format'
-    },
-    {
-      kind: 'enum',
-      name: 'dry-run',
-      description: 'Must be none, server or client',
-      enumValues: ['none', 'server', 'client']
-    }
-  ]
-})
-
-const createServiceClusterIpCommand = createLeafCommand({
-  path: ['create', 'service', 'clusterip'],
-  use: 'create service clusterip NAME --tcp=port:targetPort [--dry-run=none|server|client] [-o output]',
-  short: 'Create a ClusterIP service',
-  handlerId: 'create',
-  flags: [
-    { kind: 'string', name: 'tcp', description: 'Port mapping list' },
-    { kind: 'string', name: 'node-port', description: 'NodePort value' },
-    { kind: 'string', name: 'external-name', description: 'External DNS name' },
-    {
-      kind: 'string',
-      name: 'output',
-      short: 'o',
-      description: 'Output format'
-    },
-    {
-      kind: 'enum',
-      name: 'dry-run',
-      description: 'Must be none, server or client',
-      enumValues: ['none', 'server', 'client']
-    }
-  ]
-})
-
-const createServiceNodePortCommand = createLeafCommand({
-  path: ['create', 'service', 'nodeport'],
-  use: 'create service nodeport NAME --tcp=port:targetPort [--node-port=port] [--dry-run=none|server|client] [-o output]',
-  short: 'Create a NodePort service',
-  handlerId: 'create',
-  flags: [
-    { kind: 'string', name: 'tcp', description: 'Port mapping list' },
-    { kind: 'string', name: 'node-port', description: 'NodePort value' },
-    { kind: 'string', name: 'external-name', description: 'External DNS name' },
-    {
-      kind: 'string',
-      name: 'output',
-      short: 'o',
-      description: 'Output format'
-    },
-    {
-      kind: 'enum',
-      name: 'dry-run',
-      description: 'Must be none, server or client',
-      enumValues: ['none', 'server', 'client']
-    }
-  ]
-})
-
-const createServiceLoadBalancerCommand = createLeafCommand({
-  path: ['create', 'service', 'loadbalancer'],
-  use: 'create service loadbalancer NAME --tcp=port:targetPort [--dry-run=none|server|client] [-o output]',
-  short: 'Create a LoadBalancer service',
-  handlerId: 'create',
-  flags: [
-    { kind: 'string', name: 'tcp', description: 'Port mapping list' },
-    { kind: 'string', name: 'node-port', description: 'NodePort value' },
-    { kind: 'string', name: 'external-name', description: 'External DNS name' },
-    {
-      kind: 'string',
-      name: 'output',
-      short: 'o',
-      description: 'Output format'
-    },
-    {
-      kind: 'enum',
-      name: 'dry-run',
-      description: 'Must be none, server or client',
-      enumValues: ['none', 'server', 'client']
-    }
-  ]
-})
-
-const createServiceExternalNameCommand = createLeafCommand({
-  path: ['create', 'service', 'externalname'],
-  use: 'create service externalname NAME --external-name=dns.name [--dry-run=none|server|client] [-o output]',
-  short: 'Create an ExternalName service',
-  handlerId: 'create',
-  flags: [
-    { kind: 'string', name: 'tcp', description: 'Port mapping list' },
-    { kind: 'string', name: 'node-port', description: 'NodePort value' },
-    { kind: 'string', name: 'external-name', description: 'External DNS name' },
-    {
-      kind: 'string',
-      name: 'output',
-      short: 'o',
-      description: 'Output format'
-    },
-    {
-      kind: 'enum',
-      name: 'dry-run',
-      description: 'Must be none, server or client',
-      enumValues: ['none', 'server', 'client']
-    }
-  ]
+const createServiceSubcommands = CREATE_SERVICE_SUBCOMMAND_SPECS.map((spec) => {
+  return createLeafCommand({
+    path: ['create', 'service', spec.token],
+    use: spec.use,
+    short: spec.short,
+    handlerId: 'create',
+    flags: CREATE_SERVICE_COMMON_FLAGS
+  })
 })
 
 const createServiceCommand = command({
@@ -346,135 +188,23 @@ const createServiceCommand = command({
     short: 'Create a service using an imperative subcommand'
   }
 })
-  .addCommand(
-    createServiceClusterIpCommand,
-    createServiceNodePortCommand,
-    createServiceLoadBalancerCommand,
-    createServiceExternalNameCommand
-  )
+  .addCommand(...createServiceSubcommands)
   .build()
 
-const createConfigMapCommand = createLeafCommand({
-  path: ['create', 'configmap'],
-  aliases: ['cm'],
-  use: 'create configmap NAME --from-literal=key=value [--dry-run=none|server|client] [-o output]',
-  short: 'Create a configmap from literal values',
-  handlerId: 'create',
-  flags: [
-    {
-      kind: 'stringArray',
-      name: 'from-literal',
-      description: 'Literal key=value entries'
-    },
-    {
-      kind: 'string',
-      name: 'output',
-      short: 'o',
-      description: 'Output format'
-    },
-    {
-      kind: 'enum',
-      name: 'dry-run',
-      description: 'Must be none, server or client',
-      enumValues: ['none', 'server', 'client']
-    }
-  ]
-})
-
-const createSecretGenericCommand = createLeafCommand({
-  path: ['create', 'secret', 'generic'],
-  use: 'create secret generic NAME [--from-literal=key=value] [--from-file=[key=]path] [--from-env-file=path]',
-  short: 'Create an opaque secret',
-  handlerId: 'create',
-  flags: [
-    {
-      kind: 'stringArray',
-      name: 'from-literal',
-      description: 'Literal key=value entries'
-    },
-    {
-      kind: 'stringArray',
-      name: 'from-file',
-      description: 'File source entries'
-    },
-    {
-      kind: 'stringArray',
-      name: 'from-env-file',
-      description: 'Env file entries'
-    },
-    {
-      kind: 'string',
-      name: 'output',
-      short: 'o',
-      description: 'Output format'
-    },
-    {
-      kind: 'enum',
-      name: 'dry-run',
-      description: 'Must be none, server or client',
-      enumValues: ['none', 'server', 'client']
-    }
-  ]
-})
-
-const createSecretTlsCommand = createLeafCommand({
-  path: ['create', 'secret', 'tls'],
-  use: 'create secret tls NAME --cert=path --key=path [--dry-run=none|server|client] [-o output]',
-  short: 'Create a TLS secret',
-  handlerId: 'create',
-  flags: [
-    { kind: 'string', name: 'cert', description: 'Certificate path' },
-    { kind: 'string', name: 'key', description: 'Private key path' },
-    {
-      kind: 'string',
-      name: 'output',
-      short: 'o',
-      description: 'Output format'
-    },
-    {
-      kind: 'enum',
-      name: 'dry-run',
-      description: 'Must be none, server or client',
-      enumValues: ['none', 'server', 'client']
-    }
-  ]
-})
-
-const createSecretDockerRegistryCommand = createLeafCommand({
-  path: ['create', 'secret', 'docker-registry'],
-  use: 'create secret docker-registry NAME --docker-server=server --docker-username=user --docker-password=pass [--docker-email=email]',
-  short: 'Create a docker-registry secret',
-  handlerId: 'create',
-  flags: [
-    {
-      kind: 'string',
-      name: 'docker-server',
-      description: 'Docker server'
-    },
-    {
-      kind: 'string',
-      name: 'docker-username',
-      description: 'Docker username'
-    },
-    {
-      kind: 'string',
-      name: 'docker-password',
-      description: 'Docker password'
-    },
-    { kind: 'string', name: 'docker-email', description: 'Docker email' },
-    {
-      kind: 'string',
-      name: 'output',
-      short: 'o',
-      description: 'Output format'
-    },
-    {
-      kind: 'enum',
-      name: 'dry-run',
-      description: 'Must be none, server or client',
-      enumValues: ['none', 'server', 'client']
-    }
-  ]
+const createSecretSubcommands = CREATE_SECRET_SUBCOMMAND_SPECS.map((spec) => {
+  const flags =
+    spec.token === 'generic'
+      ? CREATE_SECRET_GENERIC_FLAGS
+      : spec.token === 'tls'
+        ? CREATE_SECRET_TLS_FLAGS
+        : CREATE_SECRET_DOCKER_REGISTRY_FLAGS
+  return createLeafCommand({
+    path: ['create', 'secret', spec.token],
+    use: spec.use,
+    short: spec.short,
+    handlerId: 'create',
+    flags
+  })
 })
 
 const createSecretCommand = command({
@@ -484,11 +214,7 @@ const createSecretCommand = command({
     short: 'Create a secret using an imperative subcommand'
   }
 })
-  .addCommand(
-    createSecretGenericCommand,
-    createSecretTlsCommand,
-    createSecretDockerRegistryCommand
-  )
+  .addCommand(...createSecretSubcommands)
   .build()
 
 const createCommand = command({
@@ -517,6 +243,11 @@ const createCommand = command({
   .flags.string('docker-username', 'Docker username')
   .flags.string('docker-password', 'Docker password')
   .flags.string('docker-email', 'Docker email')
+  .flags.stringArray('verb', 'Verbs allowed on the resources')
+  .flags.stringArray('resource', 'Resources this rule applies to')
+  .flags.string('role', 'Role or ClusterRole to bind')
+  .flags.string('clusterrole', 'ClusterRole to bind')
+  .flags.string('serviceaccount', 'ServiceAccount subject in namespace:name form')
   .flags.string('output', 'Output format', { short: 'o' })
   .flags.enum('dry-run', 'Must be none, server or client', [
     'none',
@@ -524,12 +255,9 @@ const createCommand = command({
     'client'
   ])
   .addCommand(
-    createDeploymentCommand,
-    createIngressCommand,
-    createNamespaceCommand,
-    createClusterroleCommand,
+    ...createResourceCommands,
+    createTokenCommand,
     createServiceCommand,
-    createConfigMapCommand,
     createSecretCommand
   )
   .build()
@@ -995,40 +723,14 @@ const topCommand = command({
   .addCommand(topPodsCommand, topPodCommand, topNodesCommand, topNodeCommand)
   .build()
 
-const configGetContextsCommand = createLeafCommand({
-  path: ['config', 'get-contexts'],
-  use: 'config get-contexts',
-  short: 'Display one or many contexts from the kubeconfig file',
-  handlerId: 'config-get-contexts'
-})
-
-const configCurrentContextCommand = createLeafCommand({
-  path: ['config', 'current-context'],
-  use: 'config current-context',
-  short: 'Display the current-context',
-  handlerId: 'config-current-context'
-})
-
-const configViewCommand = createLeafCommand({
-  path: ['config', 'view'],
-  use: 'config view',
-  short: 'Display merged kubeconfig settings',
-  handlerId: 'config-view',
-  flags: [
-    { kind: 'bool', name: 'minify', description: 'Minify output' },
-    { kind: 'string', name: 'output', short: 'o', description: 'Output format' }
-  ]
-})
-
-const configSetContextCommand = createLeafCommand({
-  path: ['config', 'set-context'],
-  use: 'config set-context --current --namespace=NAME',
-  short: 'Set a context entry in kubeconfig',
-  handlerId: 'config-set-context',
-  flags: [
-    { kind: 'bool', name: 'current', description: 'Use current context' },
-    { kind: 'string', name: 'namespace', description: 'Namespace name' }
-  ]
+const configSubcommandCommands = CONFIG_SUBCOMMAND_SPECS.map((spec) => {
+  return createLeafCommand({
+    path: ['config', spec.token],
+    use: spec.use,
+    short: spec.short,
+    handlerId: spec.action,
+    flags: spec.flags
+  })
 })
 
 const configCommand = command({
@@ -1038,12 +740,27 @@ const configCommand = command({
     short: 'Modify kubeconfig files'
   }
 })
-  .addCommand(
-    configGetContextsCommand,
-    configCurrentContextCommand,
-    configViewCommand,
-    configSetContextCommand
-  )
+  .addCommand(...configSubcommandCommands)
+  .build()
+
+const authSubcommandCommands = AUTH_SUBCOMMAND_SPECS.map((spec) => {
+  return createLeafCommand({
+    path: ['auth', spec.token],
+    use: spec.use,
+    short: spec.short,
+    handlerId: spec.action,
+    flags: spec.flags
+  })
+})
+
+const authCommand = command({
+  path: ['auth'],
+  use: 'auth',
+  description: {
+    short: 'Inspect authorization and identity'
+  }
+})
+  .addCommand(...authSubcommandCommands)
   .build()
 
 export const KUBECTL_COMMAND_SPECS: readonly KubectlCommandSpec[] = [
@@ -1073,5 +790,6 @@ export const KUBECTL_COMMAND_SPECS: readonly KubectlCommandSpec[] = [
   setCommand,
   rolloutCommand,
   topCommand,
-  configCommand
+  configCommand,
+  authCommand
 ]

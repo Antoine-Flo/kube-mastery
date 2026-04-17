@@ -20,30 +20,40 @@ import { parseGatewayManifest } from '../../cluster/ressources/Gateway'
 import { parseHTTPRouteManifest } from '../../cluster/ressources/HTTPRoute'
 import { parsePersistentVolumeManifest } from '../../cluster/ressources/PersistentVolume'
 import { parsePersistentVolumeClaimManifest } from '../../cluster/ressources/PersistentVolumeClaim'
+import { parseServiceAccountManifest } from '../../cluster/ressources/ServiceAccount'
+import { parseRoleManifest } from '../../cluster/ressources/Role'
+import { parseRoleBindingManifest } from '../../cluster/ressources/RoleBinding'
+import { parseClusterRoleManifest } from '../../cluster/ressources/ClusterRole'
+import { parseClusterRoleBindingManifest } from '../../cluster/ressources/ClusterRoleBinding'
 import { parseLeaseManifest } from '../../cluster/ressources/Lease'
 import { parseStorageClassManifest } from '../../cluster/ressources/StorageClass'
 
 export type YamlSupportedKind =
-  | 'Pod'
-  | 'ConfigMap'
-  | 'Secret'
-  | 'Node'
-  | 'ReplicaSet'
-  | 'Deployment'
-  | 'DaemonSet'
-  | 'StatefulSet'
-  | 'Service'
-  | 'Event'
-  | 'Ingress'
-  | 'IngressClass'
-  | 'NetworkPolicy'
-  | 'GatewayClass'
-  | 'Gateway'
-  | 'HTTPRoute'
-  | 'PersistentVolume'
-  | 'PersistentVolumeClaim'
-  | 'Lease'
-  | 'StorageClass'
+  | "Pod"
+  | "ConfigMap"
+  | "Secret"
+  | "Node"
+  | "ReplicaSet"
+  | "Deployment"
+  | "DaemonSet"
+  | "StatefulSet"
+  | "Service"
+  | "Event"
+  | "Ingress"
+  | "IngressClass"
+  | "NetworkPolicy"
+  | "GatewayClass"
+  | "Gateway"
+  | "HTTPRoute"
+  | "PersistentVolume"
+  | "PersistentVolumeClaim"
+  | "ServiceAccount"
+  | "Role"
+  | "RoleBinding"
+  | "ClusterRole"
+  | "ClusterRoleBinding"
+  | "Lease"
+  | "StorageClass"
 
 export type ParsedYamlResource =
   | ClusterResourceTypeByKind['Pod']
@@ -64,30 +74,40 @@ export type ParsedYamlResource =
   | ClusterResourceTypeByKind['HTTPRoute']
   | ClusterResourceTypeByKind['PersistentVolume']
   | ClusterResourceTypeByKind['PersistentVolumeClaim']
+  | ClusterResourceTypeByKind['ServiceAccount']
+  | ClusterResourceTypeByKind['Role']
+  | ClusterResourceTypeByKind['RoleBinding']
+  | ClusterResourceTypeByKind['ClusterRole']
+  | ClusterResourceTypeByKind['ClusterRoleBinding']
   | ClusterResourceTypeByKind['Lease']
   | ClusterResourceTypeByKind['StorageClass']
 
 export const YAML_SUPPORTED_RESOURCE_KINDS: YamlSupportedKind[] = [
-  'Pod',
-  'ConfigMap',
-  'Secret',
-  'Node',
-  'ReplicaSet',
-  'Deployment',
-  'DaemonSet',
-  'StatefulSet',
-  'Service',
-  'Event',
-  'Ingress',
-  'IngressClass',
-  'NetworkPolicy',
-  'GatewayClass',
-  'Gateway',
-  'HTTPRoute',
-  'PersistentVolume',
-  'PersistentVolumeClaim',
-  'Lease',
-  'StorageClass'
+  "Pod",
+  "ConfigMap",
+  "Secret",
+  "Node",
+  "ReplicaSet",
+  "Deployment",
+  "DaemonSet",
+  "StatefulSet",
+  "Service",
+  "Event",
+  "Ingress",
+  "IngressClass",
+  "NetworkPolicy",
+  "GatewayClass",
+  "Gateway",
+  "HTTPRoute",
+  "PersistentVolume",
+  "PersistentVolumeClaim",
+  "ServiceAccount",
+  "Role",
+  "RoleBinding",
+  "ClusterRole",
+  "ClusterRoleBinding",
+  "Lease",
+  "StorageClass"
 ]
 
 export const MANIFEST_PARSERS: Record<
@@ -112,6 +132,11 @@ export const MANIFEST_PARSERS: Record<
   HTTPRoute: parseHTTPRouteManifest,
   PersistentVolume: parsePersistentVolumeManifest,
   PersistentVolumeClaim: parsePersistentVolumeClaimManifest,
+  ServiceAccount: parseServiceAccountManifest,
+  Role: parseRoleManifest,
+  RoleBinding: parseRoleBindingManifest,
+  ClusterRole: parseClusterRoleManifest,
+  ClusterRoleBinding: parseClusterRoleBindingManifest,
   Lease: parseLeaseManifest,
   StorageClass: parseStorageClassManifest
 }

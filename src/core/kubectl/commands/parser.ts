@@ -13,6 +13,10 @@ import {
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
 import { parseResourceTargetToken } from './resourceCatalog'
+import {
+  AUTH_SUBCOMMAND_ACTIONS,
+  CONFIG_SUBCOMMAND_ACTIONS
+} from './actionGroups'
 import { getTransformerForAction, type ParseContext } from './transformers'
 import type { Action, ParsedCommand, Resource } from './types'
 import { assertParsedCommandSupportedBySpec } from '../cli/runtime/parse'
@@ -137,10 +141,9 @@ const ACTIONS_WITHOUT_RESOURCE: Action[] = [
   'set',
   'top-pods',
   'top-nodes',
-  'config-get-contexts',
-  'config-current-context',
-  'config-view',
-  'config-set-context'
+  ...CONFIG_SUBCOMMAND_ACTIONS,
+  ...AUTH_SUBCOMMAND_ACTIONS,
+  'create-token'
 ]
 
 // ─── Main Parsing Pipeline ──────────────────────────────────────────────
@@ -260,6 +263,16 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
     configCurrent: getConfigCurrentFromFlags(normalizedFlags),
     configMinify: getConfigMinifyFromFlags(normalizedFlags),
     configNamespace: getConfigNamespaceFromFlags(normalizedFlags),
+    configContextName: ctx.configContextName,
+    configRenameContextTo: ctx.configRenameContextTo,
+    configPath: ctx.configPath,
+    configUserName: ctx.configUserName,
+    configClusterName: ctx.configClusterName,
+    configServer: getConfigServerFromFlags(normalizedFlags),
+    configToken: getConfigTokenFromFlags(normalizedFlags),
+    authVerb: ctx.authVerb,
+    authResource: ctx.authResource,
+    authSubject: getAuthSubjectFromFlags(normalizedFlags),
     explainPath: ctx.explainPath,
     labelChanges: ctx.labelChanges,
     annotationChanges: ctx.annotationChanges,
@@ -660,6 +673,36 @@ const getConfigNamespaceFromFlags = (
   return undefined
 }
 
+const getConfigServerFromFlags = (
+  flags: Record<string, string | boolean>
+): string | undefined => {
+  const server = flags.server
+  if (typeof server === 'string') {
+    return server
+  }
+  return undefined
+}
+
+const getConfigTokenFromFlags = (
+  flags: Record<string, string | boolean>
+): string | undefined => {
+  const token = flags.token
+  if (typeof token === 'string') {
+    return token
+  }
+  return undefined
+}
+
+const getAuthSubjectFromFlags = (
+  flags: Record<string, string | boolean>
+): string | undefined => {
+  const subject = flags.as
+  if (typeof subject === 'string') {
+    return subject
+  }
+  return undefined
+}
+
 const getPatchPayloadFromFlags = (
   flags: Record<string, string | boolean>
 ): string | undefined => {
@@ -713,6 +756,530 @@ const getDeleteForceFromFlags = (
   flags: Record<string, string | boolean>
 ): boolean => {
   return flags.force === true
+}
+
+type CreateSemanticContext = {
+  resource: Resource | undefined
+  name?: string
+  flags: Record<string, string | boolean>
+  createServiceType?: 'clusterip' | 'nodeport' | 'loadbalancer' | 'externalname'
+  createSecretType?: 'generic' | 'tls' | 'docker-registry'
+}
+
+type CreateSemanticValidator = (
+  context: CreateSemanticContext
+) => string | undefined
+
+const hasNonEmptyStringFlag = (
+  flags: Record<string, string | boolean>,
+  flagName: string
+): boolean => {
+  const value = flags[flagName]
+  if (typeof value !== 'string') {
+    return false
+  }
+  return value.trim().length > 0
+}
+
+const validateCreateServiceSemantics: CreateSemanticValidator = (context) => {
+  const { createServiceType, name, flags } = context
+  if (createServiceType == null) {
+    return 'create service requires one of: clusterip, nodeport, loadbalancer, externalname'
+  }
+  if (name == null || name.length === 0) {
+    return 'create service requires a service name'
+  }
+  const hasTcp = hasNonEmptyStringFlag(flags, 'tcp')
+  const hasExternalName = hasNonEmptyStringFlag(flags, 'external-name')
+  if (createServiceType === 'externalname') {
+    if (!hasExternalName) {
+      return 'create service externalname requires flag --external-name'
+    }
+    if (hasTcp) {
+      return 'create service externalname does not support flag --tcp'
+    }
+    return undefined
+  }
+  if (!hasTcp) {
+    return 'create service requires flag --tcp'
+  }
+  if (hasExternalName) {
+    return `create service ${createServiceType} does not support flag --external-name`
+  }
+  return undefined
+}
+
+const validateCreateConfigMapSemantics: CreateSemanticValidator = (context) => {
+  const { name, flags } = context
+  if (name == null || name.length === 0) {
+    return 'create configmap requires a name'
+  }
+  if (!hasNonEmptyStringFlag(flags, 'from-literal')) {
+    return 'create configmap requires at least one --from-literal=key=value'
+  }
+  return undefined
+}
+
+const validateCreateRoleSemantics: CreateSemanticValidator = (context) => {
+  const { resource, name, flags } = context
+  const kind = resource === 'roles' ? 'role' : 'clusterrole'
+  if (name == null || name.length === 0) {
+    return `create ${kind} requires a name`
+  }
+  if (!hasNonEmptyStringFlag(flags, 'verb')) {
+    return `create ${kind} requires flag --verb`
+  }
+  if (!hasNonEmptyStringFlag(flags, 'resource')) {
+    return `create ${kind} requires flag --resource`
+  }
+  return undefined
+}
+
+const validateServiceAccountSubject = (
+  subjectValue: string,
+  baseCommandName: string
+): string | undefined => {
+  if (!subjectValue.includes(':')) {
+    return `${baseCommandName} --serviceaccount must be namespace:name`
+  }
+  return undefined
+}
+
+const validateCreateRoleBindingSemantics: CreateSemanticValidator = (context) => {
+  const { name, flags } = context
+  if (name == null || name.length === 0) {
+    return 'create rolebinding requires a name'
+  }
+  if (!hasNonEmptyStringFlag(flags, 'role')) {
+    return 'create rolebinding requires flag --role'
+  }
+  const serviceAccount = flags.serviceaccount
+  if (typeof serviceAccount !== 'string' || serviceAccount.trim().length === 0) {
+    return 'create rolebinding requires flag --serviceaccount'
+  }
+  return validateServiceAccountSubject(serviceAccount, 'create rolebinding')
+}
+
+const validateCreateClusterRoleBindingSemantics: CreateSemanticValidator = (
+  context
+) => {
+  const { name, flags } = context
+  if (name == null || name.length === 0) {
+    return 'create clusterrolebinding requires a name'
+  }
+  if (!hasNonEmptyStringFlag(flags, 'clusterrole')) {
+    return 'create clusterrolebinding requires flag --clusterrole'
+  }
+  const serviceAccount = flags.serviceaccount
+  if (typeof serviceAccount !== 'string' || serviceAccount.trim().length === 0) {
+    return 'create clusterrolebinding requires flag --serviceaccount'
+  }
+  return validateServiceAccountSubject(
+    serviceAccount,
+    'create clusterrolebinding'
+  )
+}
+
+const validateCreateIngressSemantics: CreateSemanticValidator = (context) => {
+  const { name, flags } = context
+  if (name == null || name.length === 0) {
+    return 'create ingress requires an ingress name'
+  }
+  if (!hasNonEmptyStringFlag(flags, 'rule')) {
+    return 'create ingress requires at least one --rule'
+  }
+  return undefined
+}
+
+const validateCreateSecretSemantics: CreateSemanticValidator = (context) => {
+  const { createSecretType, name, flags } = context
+  if (createSecretType == null) {
+    return 'create secret requires one of: generic, tls, docker-registry'
+  }
+  if (name == null || name.length === 0) {
+    return 'create secret requires a name'
+  }
+  if (createSecretType === 'generic') {
+    const hasGenericSource =
+      flags['from-literal'] !== undefined ||
+      flags['from-file'] !== undefined ||
+      flags['from-env-file'] !== undefined
+    if (!hasGenericSource) {
+      return 'create secret generic requires at least one of: --from-literal, --from-file, --from-env-file'
+    }
+    return undefined
+  }
+  if (createSecretType === 'tls') {
+    if (!hasNonEmptyStringFlag(flags, 'cert')) {
+      return 'create secret tls requires flag --cert'
+    }
+    if (!hasNonEmptyStringFlag(flags, 'key')) {
+      return 'create secret tls requires flag --key'
+    }
+    return undefined
+  }
+  if (!hasNonEmptyStringFlag(flags, 'docker-server')) {
+    return 'create secret docker-registry requires flag --docker-server'
+  }
+  if (!hasNonEmptyStringFlag(flags, 'docker-username')) {
+    return 'create secret docker-registry requires flag --docker-username'
+  }
+  if (!hasNonEmptyStringFlag(flags, 'docker-password')) {
+    return 'create secret docker-registry requires flag --docker-password'
+  }
+  return undefined
+}
+
+const CREATE_SEMANTIC_VALIDATORS: Partial<
+  Record<Resource, CreateSemanticValidator>
+> = {
+  services: validateCreateServiceSemantics,
+  configmaps: validateCreateConfigMapSemantics,
+  roles: validateCreateRoleSemantics,
+  clusterroles: validateCreateRoleSemantics,
+  rolebindings: validateCreateRoleBindingSemantics,
+  clusterrolebindings: validateCreateClusterRoleBindingSemantics,
+  ingresses: validateCreateIngressSemantics,
+  secrets: validateCreateSecretSemantics
+}
+
+const validateCreateSemantics = (
+  context: CreateSemanticContext
+): string | undefined => {
+  const { resource } = context
+  if (resource == null) {
+    return undefined
+  }
+  const validator = CREATE_SEMANTIC_VALIDATORS[resource]
+  if (validator == null) {
+    return undefined
+  }
+  return validator(context)
+}
+
+type SemanticValidationContext = {
+  action: Action
+  resource: Resource | undefined
+  name?: string
+  flags: Record<string, string | boolean>
+  tokens: string[]
+  hasFilename: boolean
+  createServiceType?:
+    | 'clusterip'
+    | 'nodeport'
+    | 'loadbalancer'
+    | 'externalname'
+  createSecretType?: 'generic' | 'tls' | 'docker-registry'
+}
+
+type ActionSemanticValidator = (
+  context: SemanticValidationContext
+) => string | undefined
+
+const validateDryRunValue = (
+  value: string | boolean | undefined
+): string | undefined => {
+  if (
+    value !== undefined &&
+    value !== 'client' &&
+    value !== 'server' &&
+    value !== 'none'
+  ) {
+    return `error: Invalid dry-run value (${String(value)}). Must be "none", "server", or "client".`
+  }
+  return undefined
+}
+
+const validateRunSemantics: ActionSemanticValidator = (context) => {
+  const { name, flags } = context
+  const runImage = flags['image']
+  if (typeof runImage !== 'string' || runImage.length === 0) {
+    return 'error: required flag(s) "image" not set'
+  }
+  if (name == null || name.length === 0) {
+    return 'run requires a resource name'
+  }
+  const dryRunError = validateDryRunValue(flags['dry-run'])
+  if (dryRunError !== undefined) {
+    return dryRunError
+  }
+  const restartFlag = flags['restart']
+  if (
+    restartFlag !== undefined &&
+    restartFlag !== 'Always' &&
+    restartFlag !== 'OnFailure' &&
+    restartFlag !== 'Never'
+  ) {
+    return `error: invalid restart policy: ${String(restartFlag)}`
+  }
+  return undefined
+}
+
+const validateCreateActionSemantics: ActionSemanticValidator = (context) => {
+  const dryRunError = validateDryRunValue(context.flags['dry-run'])
+  if (dryRunError !== undefined) {
+    return dryRunError
+  }
+  return validateCreateSemantics({
+    resource: context.resource,
+    name: context.name,
+    flags: context.flags,
+    createServiceType: context.createServiceType,
+    createSecretType: context.createSecretType
+  })
+}
+
+const validateExposeSemantics: ActionSemanticValidator = (context) => {
+  return validateDryRunValue(context.flags['dry-run'])
+}
+
+const validateDiffSemantics: ActionSemanticValidator = (context) => {
+  if (!context.hasFilename) {
+    return 'diff requires one of -f or --filename'
+  }
+  return undefined
+}
+
+const validateReplaceSemantics: ActionSemanticValidator = (context) => {
+  if (!context.hasFilename) {
+    return 'replace requires one of -f or --filename'
+  }
+  return undefined
+}
+
+const validateDeleteSemantics: ActionSemanticValidator = (context) => {
+  const gracePeriodFlag = context.flags['grace-period']
+  if (gracePeriodFlag === undefined) {
+    return undefined
+  }
+  if (typeof gracePeriodFlag !== 'string') {
+    return 'error: flag --grace-period requires a numeric value'
+  }
+  const parsedGracePeriod = Number.parseInt(gracePeriodFlag, 10)
+  if (Number.isNaN(parsedGracePeriod) || parsedGracePeriod < 0) {
+    return `error: invalid --grace-period value: ${gracePeriodFlag}`
+  }
+  return undefined
+}
+
+const validateSetSemantics: ActionSemanticValidator = (context) => {
+  const { resource, name, tokens } = context
+  if (tokens[2] !== 'image') {
+    return 'set currently supports only the image subcommand'
+  }
+  if (!resource) {
+    return 'set image requires a resource type'
+  }
+  if (!name) {
+    return 'set image requires a resource name'
+  }
+  if (
+    resource !== 'pods' &&
+    resource !== 'deployments' &&
+    resource !== 'replicasets' &&
+    resource !== 'daemonsets'
+  ) {
+    return `set image does not support resource type "${resource}"`
+  }
+  const positionalTokens = getPositionalTokensAfterIndex(tokens, 3)
+  const hasContainerAssignment = positionalTokens.some((token) => {
+    return isContainerImageAssignmentToken(token)
+  })
+  if (!hasContainerAssignment) {
+    return 'set image requires at least one container=image assignment'
+  }
+  return undefined
+}
+
+const validatePatchSemantics: ActionSemanticValidator = (context) => {
+  const patchPayload = context.flags['patch']
+  if (typeof patchPayload !== 'string' || patchPayload.length === 0) {
+    return 'error: required flag(s) "patch" not set'
+  }
+  const patchType = context.flags['type']
+  if (patchType !== undefined && patchType !== 'merge') {
+    return 'error: --type must be "merge"'
+  }
+  return undefined
+}
+
+const validateConfigSetContextSemantics: ActionSemanticValidator = (context) => {
+  const isCurrent = context.flags['current'] === true
+  const namespace = context.flags['namespace']
+  if (!isCurrent) {
+    return 'config set-context currently supports only --current'
+  }
+  if (typeof namespace !== 'string' || namespace.length === 0) {
+    return 'config set-context requires flag --namespace'
+  }
+  return undefined
+}
+
+const validateConfigUseContextSemantics: ActionSemanticValidator = (context) => {
+  if (context.name == null || context.name.length === 0) {
+    return 'config use-context requires a context name'
+  }
+  return undefined
+}
+
+const validateConfigSetCredentialsSemantics: ActionSemanticValidator = (
+  context
+) => {
+  if (context.name == null || context.name.length === 0) {
+    return 'config set-credentials requires a user name'
+  }
+  if (typeof context.flags.token !== 'string' || context.flags.token.length === 0) {
+    return 'config set-credentials requires flag --token'
+  }
+  return undefined
+}
+
+const validateConfigSetClusterSemantics: ActionSemanticValidator = (context) => {
+  if (context.name == null || context.name.length === 0) {
+    return 'config set-cluster requires a cluster name'
+  }
+  if (
+    typeof context.flags.server !== 'string' ||
+    context.flags.server.length === 0
+  ) {
+    return 'config set-cluster requires flag --server'
+  }
+  return undefined
+}
+
+const validateConfigUnsetSemantics: ActionSemanticValidator = (context) => {
+  if (context.name == null || context.name.length === 0) {
+    return 'config unset requires a property path'
+  }
+  return undefined
+}
+
+const validateConfigRenameContextSemantics: ActionSemanticValidator = (
+  context
+) => {
+  const positionalTokens = getPositionalTokensAfterIndex(context.tokens, 3)
+  if (positionalTokens.length < 2) {
+    return 'config rename-context requires <old-name> <new-name>'
+  }
+  return undefined
+}
+
+const validateAuthCanISemantics: ActionSemanticValidator = (context) => {
+  const positionalTokens = getPositionalTokensAfterIndex(context.tokens, 3)
+  if (positionalTokens.length < 2) {
+    return 'auth can-i requires <verb> <resource>'
+  }
+  return undefined
+}
+
+const validateAuthReconcileSemantics: ActionSemanticValidator = (context) => {
+  if (!context.hasFilename) {
+    return 'auth reconcile requires one of -f or --filename'
+  }
+  return undefined
+}
+
+const validateCreateTokenSemantics: ActionSemanticValidator = (context) => {
+  if (context.name == null || context.name.length === 0) {
+    return 'create token requires a serviceaccount name'
+  }
+  return undefined
+}
+
+const validateRolloutSemantics: ActionSemanticValidator = (context) => {
+  const { resource, name, flags, tokens } = context
+  const rolloutSubcommand = tokens[2]
+  const isValidRolloutSubcommand =
+    rolloutSubcommand === 'status' ||
+    rolloutSubcommand === 'history' ||
+    rolloutSubcommand === 'restart' ||
+    rolloutSubcommand === 'undo'
+  if (!isValidRolloutSubcommand) {
+    return `error: invalid subcommand for rollout: ${rolloutSubcommand ?? '<none>'}`
+  }
+  if (
+    resource !== 'deployments' &&
+    resource !== 'daemonsets' &&
+    resource !== 'statefulsets'
+  ) {
+    return 'error: rollout supports only deployments, daemonsets, and statefulsets'
+  }
+  if (name == null || name.length === 0) {
+    return 'rollout requires a resource name'
+  }
+  const revisionValue = flags.revision
+  const toRevisionValue = flags['to-revision']
+  if (
+    revisionValue !== undefined &&
+    toRevisionValue !== undefined &&
+    String(revisionValue) !== String(toRevisionValue)
+  ) {
+    return 'error: --revision and --to-revision must target the same value'
+  }
+  const effectiveRevisionValue = revisionValue ?? toRevisionValue
+  if (effectiveRevisionValue !== undefined) {
+    const parsedRevision = Number.parseInt(String(effectiveRevisionValue), 10)
+    if (Number.isNaN(parsedRevision) || parsedRevision <= 0) {
+      return `error: invalid value "${String(effectiveRevisionValue)}" for --revision: must be a positive integer`
+    }
+    if (rolloutSubcommand !== 'history' && rolloutSubcommand !== 'undo') {
+      return 'error: --revision is only supported by rollout history and rollout undo'
+    }
+  }
+  const timeoutValue = flags.timeout
+  if (timeoutValue !== undefined && rolloutSubcommand !== 'status') {
+    return 'error: --timeout is only supported by rollout status'
+  }
+  if (timeoutValue !== undefined) {
+    const normalizedTimeout = String(timeoutValue).trim()
+    const isDurationLike = /^[0-9]+(s|m|h)?$/.test(normalizedTimeout)
+    if (!isDurationLike) {
+      return `error: invalid value "${String(timeoutValue)}" for --timeout`
+    }
+  }
+  const watchValue = flags.watch
+  if (watchValue !== undefined && rolloutSubcommand !== 'status') {
+    return 'error: --watch is only supported by rollout status'
+  }
+  if (watchValue !== undefined) {
+    const normalizedWatch = String(watchValue)
+    if (normalizedWatch !== 'true' && normalizedWatch !== 'false') {
+      return 'error: --watch must be either true or false'
+    }
+  }
+  return undefined
+}
+
+const validateTopSemantics: ActionSemanticValidator = (context) => {
+  if (context.flags['output'] !== undefined) {
+    return 'error: --output is not supported by top'
+  }
+  return undefined
+}
+
+const ACTION_SEMANTIC_VALIDATORS: Partial<
+  Record<Action, ActionSemanticValidator>
+> = {
+  run: validateRunSemantics,
+  create: validateCreateActionSemantics,
+  expose: validateExposeSemantics,
+  diff: validateDiffSemantics,
+  replace: validateReplaceSemantics,
+  delete: validateDeleteSemantics,
+  set: validateSetSemantics,
+  patch: validatePatchSemantics,
+  'config-set-context': validateConfigSetContextSemantics,
+  'config-use-context': validateConfigUseContextSemantics,
+  'config-set-credentials': validateConfigSetCredentialsSemantics,
+  'config-set-cluster': validateConfigSetClusterSemantics,
+  'config-unset': validateConfigUnsetSemantics,
+  'config-rename-context': validateConfigRenameContextSemantics,
+  'auth-can-i': validateAuthCanISemantics,
+  'auth-reconcile': validateAuthReconcileSemantics,
+  'create-token': validateCreateTokenSemantics,
+  rollout: validateRolloutSemantics,
+  'top-pods': validateTopSemantics,
+  'top-nodes': validateTopSemantics
 }
 
 // ─── Validation ──────────────────────────────────────────────────────────
@@ -777,306 +1344,20 @@ const validateCommandSemantics = (
   ) {
     return 'describe requires a resource name'
   }
-  if (action === 'run') {
-    const runImage = flags['image']
-    if (typeof runImage !== 'string' || runImage.length === 0) {
-      return 'error: required flag(s) "image" not set'
-    }
-
-    if (name == null || name.length === 0) {
-      return 'run requires a resource name'
-    }
-
-    const dryRunFlag = flags['dry-run']
-    if (
-      dryRunFlag !== undefined &&
-      dryRunFlag !== 'client' &&
-      dryRunFlag !== 'server' &&
-      dryRunFlag !== 'none'
-    ) {
-      return `error: Invalid dry-run value (${String(dryRunFlag)}). Must be "none", "server", or "client".`
-    }
-
-    const restartFlag = flags['restart']
-    if (
-      restartFlag !== undefined &&
-      restartFlag !== 'Always' &&
-      restartFlag !== 'OnFailure' &&
-      restartFlag !== 'Never'
-    ) {
-      return `error: invalid restart policy: ${String(restartFlag)}`
-    }
-  }
-  if (action === 'create') {
-    const dryRunFlag = flags['dry-run']
-    if (
-      dryRunFlag !== undefined &&
-      dryRunFlag !== 'client' &&
-      dryRunFlag !== 'server' &&
-      dryRunFlag !== 'none'
-    ) {
-      return `error: Invalid dry-run value (${String(dryRunFlag)}). Must be "none", "server", or "client".`
-    }
-    if (resource === 'services') {
-      if (createServiceType == null) {
-        return 'create service requires one of: clusterip, nodeport, loadbalancer, externalname'
-      }
-      if (name == null || name.length === 0) {
-        return 'create service requires a service name'
-      }
-      const tcpFlag = flags['tcp']
-      const externalNameFlag = flags['external-name']
-      if (createServiceType === 'externalname') {
-        if (
-          typeof externalNameFlag !== 'string' ||
-          externalNameFlag.trim().length === 0
-        ) {
-          return 'create service externalname requires flag --external-name'
-        }
-        if (tcpFlag !== undefined) {
-          return 'create service externalname does not support flag --tcp'
-        }
-      } else {
-        if (typeof tcpFlag !== 'string' || tcpFlag.trim().length === 0) {
-          return 'create service requires flag --tcp'
-        }
-        if (externalNameFlag !== undefined) {
-          return `create service ${createServiceType} does not support flag --external-name`
-        }
-      }
-    }
-    if (resource === 'configmaps') {
-      if (name == null || name.length === 0) {
-        return 'create configmap requires a name'
-      }
-      const fromLiteralFlag = flags['from-literal']
-      if (
-        typeof fromLiteralFlag !== 'string' ||
-        fromLiteralFlag.trim().length === 0
-      ) {
-        return 'create configmap requires at least one --from-literal=key=value'
-      }
-    }
-    if (resource === 'ingresses') {
-      if (name == null || name.length === 0) {
-        return 'create ingress requires an ingress name'
-      }
-      const createRuleFlag = flags.rule
-      if (typeof createRuleFlag !== 'string' || createRuleFlag.length === 0) {
-        return 'create ingress requires at least one --rule'
-      }
-    }
-    if (resource === 'secrets') {
-      if (createSecretType == null) {
-        return 'create secret requires one of: generic, tls, docker-registry'
-      }
-      if (name == null || name.length === 0) {
-        return 'create secret requires a name'
-      }
-      if (createSecretType === 'generic') {
-        const fromLiteralFlag = flags['from-literal']
-        const fromFileFlag = flags['from-file']
-        const fromEnvFileFlag = flags['from-env-file']
-        if (
-          fromLiteralFlag === undefined &&
-          fromFileFlag === undefined &&
-          fromEnvFileFlag === undefined
-        ) {
-          return 'create secret generic requires at least one of: --from-literal, --from-file, --from-env-file'
-        }
-      }
-      if (createSecretType === 'tls') {
-        const certFlag = flags.cert
-        const keyFlag = flags.key
-        if (typeof certFlag !== 'string' || certFlag.trim().length === 0) {
-          return 'create secret tls requires flag --cert'
-        }
-        if (typeof keyFlag !== 'string' || keyFlag.trim().length === 0) {
-          return 'create secret tls requires flag --key'
-        }
-      }
-      if (createSecretType === 'docker-registry') {
-        const dockerServerFlag = flags['docker-server']
-        const dockerUsernameFlag = flags['docker-username']
-        const dockerPasswordFlag = flags['docker-password']
-        if (
-          typeof dockerServerFlag !== 'string' ||
-          dockerServerFlag.trim().length === 0
-        ) {
-          return 'create secret docker-registry requires flag --docker-server'
-        }
-        if (
-          typeof dockerUsernameFlag !== 'string' ||
-          dockerUsernameFlag.trim().length === 0
-        ) {
-          return 'create secret docker-registry requires flag --docker-username'
-        }
-        if (
-          typeof dockerPasswordFlag !== 'string' ||
-          dockerPasswordFlag.trim().length === 0
-        ) {
-          return 'create secret docker-registry requires flag --docker-password'
-        }
-      }
-    }
-  }
-  if (action === 'expose') {
-    const dryRunFlag = flags['dry-run']
-    if (
-      dryRunFlag !== undefined &&
-      dryRunFlag !== 'client' &&
-      dryRunFlag !== 'server' &&
-      dryRunFlag !== 'none'
-    ) {
-      return `error: Invalid dry-run value (${String(dryRunFlag)}). Must be "none", "server", or "client".`
-    }
-  }
-  if (action === 'diff') {
-    const hasFilename =
-      typeof flags['filename'] === 'string' || typeof flags['f'] === 'string'
-    if (!hasFilename) {
-      return 'diff requires one of -f or --filename'
-    }
-  }
-  if (action === 'replace') {
-    if (!hasFilename) {
-      return 'replace requires one of -f or --filename'
-    }
-  }
-  if (action === 'delete') {
-    const gracePeriodFlag = flags['grace-period']
-    if (gracePeriodFlag !== undefined) {
-      if (typeof gracePeriodFlag !== 'string') {
-        return 'error: flag --grace-period requires a numeric value'
-      }
-      const parsedGracePeriod = Number.parseInt(gracePeriodFlag, 10)
-      if (Number.isNaN(parsedGracePeriod) || parsedGracePeriod < 0) {
-        return `error: invalid --grace-period value: ${gracePeriodFlag}`
-      }
-    }
-  }
-  if (action === 'set') {
-    if (tokens[2] !== 'image') {
-      return 'set currently supports only the image subcommand'
-    }
-    if (!resource) {
-      return 'set image requires a resource type'
-    }
-    if (!name) {
-      return 'set image requires a resource name'
-    }
-    if (
-      resource !== 'pods' &&
-      resource !== 'deployments' &&
-      resource !== 'replicasets' &&
-      resource !== 'daemonsets'
-    ) {
-      return `set image does not support resource type "${resource}"`
-    }
-
-    const positionalTokens = getPositionalTokensAfterIndex(tokens, 3)
-    const hasContainerAssignment = positionalTokens.some((token) =>
-      isContainerImageAssignmentToken(token)
-    )
-    if (!hasContainerAssignment) {
-      return 'set image requires at least one container=image assignment'
-    }
-  }
-
-  if (action === 'patch') {
-    const patchPayload = flags['patch']
-    if (typeof patchPayload !== 'string' || patchPayload.length === 0) {
-      return 'error: required flag(s) "patch" not set'
-    }
-
-    const patchType = flags['type']
-    if (patchType !== undefined && patchType !== 'merge') {
-      return 'error: --type must be "merge"'
-    }
-  }
-
-  if (action === 'config-set-context') {
-    const isCurrent = flags['current'] === true
-    const namespace = flags['namespace']
-    if (!isCurrent) {
-      return 'config set-context currently supports only --current'
-    }
-    if (typeof namespace !== 'string' || namespace.length === 0) {
-      return 'config set-context requires flag --namespace'
-    }
-  }
-
-  if (action === 'rollout') {
-    const rolloutSubcommand = tokens[2]
-    const isValidRolloutSubcommand =
-      rolloutSubcommand === 'status' ||
-      rolloutSubcommand === 'history' ||
-      rolloutSubcommand === 'restart' ||
-      rolloutSubcommand === 'undo'
-    if (!isValidRolloutSubcommand) {
-      return `error: invalid subcommand for rollout: ${rolloutSubcommand ?? '<none>'}`
-    }
-
-    if (
-      resource !== 'deployments' &&
-      resource !== 'daemonsets' &&
-      resource !== 'statefulsets'
-    ) {
-      return 'error: rollout supports only deployments, daemonsets, and statefulsets'
-    }
-
-    if (name == null || name.length === 0) {
-      return 'rollout requires a resource name'
-    }
-
-    const revisionValue = flags.revision
-    const toRevisionValue = flags['to-revision']
-    if (
-      revisionValue !== undefined &&
-      toRevisionValue !== undefined &&
-      String(revisionValue) !== String(toRevisionValue)
-    ) {
-      return 'error: --revision and --to-revision must target the same value'
-    }
-    const effectiveRevisionValue = revisionValue ?? toRevisionValue
-    if (effectiveRevisionValue !== undefined) {
-      const parsedRevision = Number.parseInt(String(effectiveRevisionValue), 10)
-      if (Number.isNaN(parsedRevision) || parsedRevision <= 0) {
-        return `error: invalid value "${String(effectiveRevisionValue)}" for --revision: must be a positive integer`
-      }
-      if (rolloutSubcommand !== 'history' && rolloutSubcommand !== 'undo') {
-        return 'error: --revision is only supported by rollout history and rollout undo'
-      }
-    }
-
-    const timeoutValue = flags.timeout
-    if (timeoutValue !== undefined && rolloutSubcommand !== 'status') {
-      return 'error: --timeout is only supported by rollout status'
-    }
-    if (timeoutValue !== undefined) {
-      const normalizedTimeout = String(timeoutValue).trim()
-      const isDurationLike = /^[0-9]+(s|m|h)?$/.test(normalizedTimeout)
-      if (!isDurationLike) {
-        return `error: invalid value "${String(timeoutValue)}" for --timeout`
-      }
-    }
-
-    const watchValue = flags.watch
-    if (watchValue !== undefined && rolloutSubcommand !== 'status') {
-      return 'error: --watch is only supported by rollout status'
-    }
-    if (watchValue !== undefined) {
-      const normalizedWatch = String(watchValue)
-      if (normalizedWatch !== 'true' && normalizedWatch !== 'false') {
-        return 'error: --watch must be either true or false'
-      }
-    }
-  }
-
-  if (action === 'top-pods' || action === 'top-nodes') {
-    const outputValue = flags['output']
-    if (outputValue !== undefined) {
-      return 'error: --output is not supported by top'
+  const actionValidator = ACTION_SEMANTIC_VALIDATORS[action]
+  if (actionValidator != null) {
+    const actionValidationError = actionValidator({
+      action,
+      resource,
+      name,
+      flags,
+      tokens,
+      hasFilename,
+      createServiceType,
+      createSecretType
+    })
+    if (actionValidationError !== undefined) {
+      return actionValidationError
     }
   }
 

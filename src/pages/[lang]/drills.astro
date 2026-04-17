@@ -68,7 +68,8 @@ const DRILL_TAG_UI_KEY: Record<
                     drill.isFree || auth.hasPaidSubscription ? 'true' : 'false'
                   }
                 >
-                  {(drill.tag || drill.isFree) && (
+                  {(drill.tag ||
+                    (drill.isFree && !auth.hasPaidSubscription)) && (
                     <div class="drill-card__top">
                       <div class="drill-card__top-left">
                         {drill.tag && (
@@ -78,7 +79,7 @@ const DRILL_TAG_UI_KEY: Record<
                         )}
                       </div>
                       <div class="drill-card__top-right">
-                        {drill.isFree && (
+                        {drill.isFree && !auth.hasPaidSubscription && (
                           <span class="drill-card__free-badge">
                             {t('drills_badge_free')}
                           </span>

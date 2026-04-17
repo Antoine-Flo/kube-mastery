@@ -3,6 +3,15 @@ import { error, success } from '../../shared/result'
 import { parseSelector, stripMatchingQuotes } from '../../shared/parsing'
 import { RESOURCE_ALIAS_MAP } from './resourceCatalog'
 import { parseResourceTargetToken } from './resourceCatalog'
+import {
+  AUTH_SUBCOMMAND_SPECS,
+  CONFIG_SUBCOMMAND_SPECS
+} from './subcommandSpecs'
+import {
+  CREATE_IMPERATIVE_PLURAL_TOKENS,
+  CREATE_SECRET_SUBCOMMAND_SPECS,
+  CREATE_SERVICE_SUBCOMMAND_SPECS
+} from './createImperativeSpecs'
 import type { Action, Resource } from './types'
 import { kubectlUnexpectedArgsUsageError } from './usageError'
 
@@ -37,6 +46,9 @@ export type ParseContext = {
   createFromLiterals?: string[]
   createFromFiles?: string[]
   createFromEnvFiles?: string[]
+  authVerb?: string
+  authResource?: string
+  authSubject?: string
   runImage?: string
   runCommand?: string[]
   runArgs?: string[]
@@ -51,7 +63,18 @@ export type ParseContext = {
   runRemove?: boolean
   setSubcommand?: 'image'
   setImageAssignments?: Record<string, string>
-  configSubcommand?: 'get-contexts' | 'current-context' | 'view' | 'set-context'
+  configSubcommand?:
+    | 'get-contexts'
+    | 'current-context'
+    | 'view'
+    | 'set-context'
+    | 'use-context'
+    | 'get-clusters'
+    | 'get-users'
+    | 'set-credentials'
+    | 'set-cluster'
+    | 'unset'
+    | 'rename-context'
   rolloutSubcommand?: 'status' | 'history' | 'restart' | 'undo'
   topSubcommand?: 'pods' | 'nodes'
   rolloutRevision?: number
@@ -60,6 +83,13 @@ export type ParseContext = {
   configCurrent?: boolean
   configMinify?: boolean
   configNamespace?: string
+  configContextName?: string
+  configRenameContextTo?: string
+  configPath?: string
+  configUserName?: string
+  configClusterName?: string
+  configServer?: string
+  configToken?: string
   explainPath?: string[]
   labelChanges?: Record<string, string | null>
   annotationChanges?: Record<string, string | null>
@@ -107,24 +137,29 @@ const FLAGS_REQUIRING_VALUES = new Set([
   'revision',
   'p',
   'patch',
-  'grace-period'
+  'grace-period',
+  'role',
+  'clusterrole',
+  'serviceaccount',
+  'as',
+  'token',
+  'server'
 ])
 
-const CREATE_SERVICE_TYPES = new Set([
-  'clusterip',
-  'nodeport',
-  'loadbalancer',
-  'externalname'
-])
+const CREATE_SERVICE_TYPES: Set<string> = new Set(
+  CREATE_SERVICE_SUBCOMMAND_SPECS.map((spec) => {
+    return spec.token
+  })
+)
 
-const CREATE_SECRET_TYPES = new Set(['generic', 'tls', 'docker-registry'])
-const CREATE_IMPERATIVE_PLURAL_TOKENS = new Set([
-  'deployments',
-  'namespaces',
-  'services',
-  'configmaps',
-  'secrets'
-])
+const CREATE_SECRET_TYPES: Set<string> = new Set(
+  CREATE_SECRET_SUBCOMMAND_SPECS.map((spec) => {
+    return spec.token
+  })
+)
+const CREATE_IMPERATIVE_PLURAL_TOKEN_SET = new Set(
+  CREATE_IMPERATIVE_PLURAL_TOKENS
+)
 
 // ─── Helper Functions ────────────────────────────────────────────────────
 
@@ -408,13 +443,23 @@ const createTransformer: ActionTransformer = (ctx) => {
   const firstPositional = positionalTokens[0]
   if (
     firstPositional != null &&
-    CREATE_IMPERATIVE_PLURAL_TOKENS.has(firstPositional)
+    CREATE_IMPERATIVE_PLURAL_TOKEN_SET.has(firstPositional)
   ) {
     return error(
       kubectlUnexpectedArgsUsageError('kubectl create', positionalTokens)
     )
   }
   const resourceToken = beforeSeparator[2]
+  if (resourceToken === 'token') {
+    const serviceAccountName = findNameSkippingFlags(beforeSeparator, 3)
+    return success({
+      ...ctx,
+      action: 'create-token',
+      resource: undefined,
+      name: serviceAccountName,
+      tokens: beforeSeparator
+    })
+  }
 
   if (!resourceToken || resourceToken.startsWith('-')) {
     return success({
@@ -1032,43 +1077,79 @@ const configTransformer: ActionTransformer = (ctx) => {
   }
 
   const subcommandToken = ctx.tokens[2]
-  if (subcommandToken === 'get-contexts') {
-    return success({
-      ...ctx,
-      action: 'config-get-contexts',
-      resource: undefined,
-      configSubcommand: 'get-contexts'
-    })
+  const transformSpec = CONFIG_SUBCOMMAND_SPECS.find((spec) => {
+    return spec.token === subcommandToken
+  })
+  if (transformSpec == null) {
+    return error(`unknown config subcommand: ${subcommandToken}`)
   }
 
-  if (subcommandToken === 'current-context') {
-    return success({
-      ...ctx,
-      action: 'config-current-context',
-      resource: undefined,
-      configSubcommand: 'current-context'
-    })
+  let enrichedFields: Partial<ParseContext> = {}
+  if (transformSpec.transformKind === 'contextName') {
+    enrichedFields = {
+      configContextName: findNameSkippingFlags(ctx.tokens, 3)
+    }
+  }
+  if (transformSpec.transformKind === 'userName') {
+    enrichedFields = {
+      configUserName: findNameSkippingFlags(ctx.tokens, 3)
+    }
+  }
+  if (transformSpec.transformKind === 'clusterName') {
+    enrichedFields = {
+      configClusterName: findNameSkippingFlags(ctx.tokens, 3)
+    }
+  }
+  if (transformSpec.transformKind === 'path') {
+    enrichedFields = {
+      configPath: findNameSkippingFlags(ctx.tokens, 3)
+    }
+  }
+  if (transformSpec.transformKind === 'renameContext') {
+    const positionalTokens = extractPositionalTokensFromIndex(ctx.tokens, 3)
+    enrichedFields = {
+      configContextName: findNameSkippingFlags(ctx.tokens, 3),
+      configRenameContextTo: positionalTokens[1]
+    }
   }
 
-  if (subcommandToken === 'view') {
-    return success({
-      ...ctx,
-      action: 'config-view',
-      resource: undefined,
-      configSubcommand: 'view'
-    })
+  return success({
+    ...ctx,
+    action: transformSpec.action,
+    resource: undefined,
+    configSubcommand: transformSpec.subcommand,
+    ...enrichedFields
+  })
+}
+
+const authTransformer: ActionTransformer = (ctx) => {
+  if (!ctx.tokens || ctx.tokens.length < 3) {
+    return error('auth requires a subcommand')
   }
 
-  if (subcommandToken === 'set-context') {
-    return success({
-      ...ctx,
-      action: 'config-set-context',
-      resource: undefined,
-      configSubcommand: 'set-context'
-    })
+  const subcommandToken = ctx.tokens[2]
+  const transformSpec = AUTH_SUBCOMMAND_SPECS.find((spec) => {
+    return spec.token === subcommandToken
+  })
+  if (transformSpec == null) {
+    return error(`unknown auth subcommand: ${subcommandToken}`)
   }
 
-  return error(`unknown config subcommand: ${subcommandToken}`)
+  let enrichedFields: Partial<ParseContext> = {}
+  if (transformSpec.transformKind === 'verbResource') {
+    const positionalTokens = extractPositionalTokensFromIndex(ctx.tokens, 3)
+    enrichedFields = {
+      authVerb: positionalTokens[0],
+      authResource: positionalTokens[1]
+    }
+  }
+
+  return success({
+    ...ctx,
+    action: transformSpec.action,
+    resource: undefined,
+    ...enrichedFields
+  })
 }
 
 const parseWaitTimeoutSeconds = (value: string): number => {
@@ -1377,7 +1458,8 @@ const ACTIONS_WITH_CUSTOM_PARSING: Record<string, ActionTransformer> = {
   wait: waitTransformer,
   rollout: rolloutTransformer,
   top: topTransformer,
-  config: configTransformer
+  config: configTransformer,
+  auth: authTransformer
 }
 
 /**

@@ -541,6 +541,132 @@ export interface PersistentVolumeClaimUpdatedEvent extends BaseEvent {
   }
 }
 
+export interface ServiceAccountCreatedEvent extends BaseEvent {
+  type: 'ServiceAccountCreated'
+  payload: {
+    serviceAccount: ClusterResourceTypeByKind['ServiceAccount']
+  }
+}
+
+export interface ServiceAccountDeletedEvent extends BaseEvent {
+  type: 'ServiceAccountDeleted'
+  payload: {
+    name: string
+    namespace: string
+    deletedServiceAccount: ClusterResourceTypeByKind['ServiceAccount']
+  }
+}
+
+export interface ServiceAccountUpdatedEvent extends BaseEvent {
+  type: 'ServiceAccountUpdated'
+  payload: {
+    name: string
+    namespace: string
+    serviceAccount: ClusterResourceTypeByKind['ServiceAccount']
+    previousServiceAccount: ClusterResourceTypeByKind['ServiceAccount']
+  }
+}
+
+export interface RoleCreatedEvent extends BaseEvent {
+  type: 'RoleCreated'
+  payload: {
+    role: ClusterResourceTypeByKind['Role']
+  }
+}
+
+export interface RoleDeletedEvent extends BaseEvent {
+  type: 'RoleDeleted'
+  payload: {
+    name: string
+    namespace: string
+    deletedRole: ClusterResourceTypeByKind['Role']
+  }
+}
+
+export interface RoleUpdatedEvent extends BaseEvent {
+  type: 'RoleUpdated'
+  payload: {
+    name: string
+    namespace: string
+    role: ClusterResourceTypeByKind['Role']
+    previousRole: ClusterResourceTypeByKind['Role']
+  }
+}
+
+export interface RoleBindingCreatedEvent extends BaseEvent {
+  type: 'RoleBindingCreated'
+  payload: {
+    roleBinding: ClusterResourceTypeByKind['RoleBinding']
+  }
+}
+
+export interface RoleBindingDeletedEvent extends BaseEvent {
+  type: 'RoleBindingDeleted'
+  payload: {
+    name: string
+    namespace: string
+    deletedRoleBinding: ClusterResourceTypeByKind['RoleBinding']
+  }
+}
+
+export interface RoleBindingUpdatedEvent extends BaseEvent {
+  type: 'RoleBindingUpdated'
+  payload: {
+    name: string
+    namespace: string
+    roleBinding: ClusterResourceTypeByKind['RoleBinding']
+    previousRoleBinding: ClusterResourceTypeByKind['RoleBinding']
+  }
+}
+
+export interface ClusterRoleCreatedEvent extends BaseEvent {
+  type: 'ClusterRoleCreated'
+  payload: {
+    clusterRole: ClusterResourceTypeByKind['ClusterRole']
+  }
+}
+
+export interface ClusterRoleDeletedEvent extends BaseEvent {
+  type: 'ClusterRoleDeleted'
+  payload: {
+    name: string
+    deletedClusterRole: ClusterResourceTypeByKind['ClusterRole']
+  }
+}
+
+export interface ClusterRoleUpdatedEvent extends BaseEvent {
+  type: 'ClusterRoleUpdated'
+  payload: {
+    name: string
+    clusterRole: ClusterResourceTypeByKind['ClusterRole']
+    previousClusterRole: ClusterResourceTypeByKind['ClusterRole']
+  }
+}
+
+export interface ClusterRoleBindingCreatedEvent extends BaseEvent {
+  type: 'ClusterRoleBindingCreated'
+  payload: {
+    clusterRoleBinding: ClusterResourceTypeByKind['ClusterRoleBinding']
+  }
+}
+
+export interface ClusterRoleBindingDeletedEvent extends BaseEvent {
+  type: 'ClusterRoleBindingDeleted'
+  payload: {
+    name: string
+    deletedClusterRoleBinding: ClusterResourceTypeByKind['ClusterRoleBinding']
+  }
+}
+
+export interface ClusterRoleBindingUpdatedEvent extends BaseEvent {
+  type: 'ClusterRoleBindingUpdated'
+  payload: {
+    name: string
+    clusterRoleBinding: ClusterResourceTypeByKind['ClusterRoleBinding']
+    previousClusterRoleBinding: ClusterResourceTypeByKind['ClusterRoleBinding']
+  }
+}
+
 export interface NamespaceCreatedEvent extends BaseEvent {
   type: 'NamespaceCreated'
   payload: {
@@ -679,6 +805,21 @@ export type GeneratedClusterCrudEvent =
   | PersistentVolumeClaimCreatedEvent
   | PersistentVolumeClaimDeletedEvent
   | PersistentVolumeClaimUpdatedEvent
+  | ServiceAccountCreatedEvent
+  | ServiceAccountDeletedEvent
+  | ServiceAccountUpdatedEvent
+  | RoleCreatedEvent
+  | RoleDeletedEvent
+  | RoleUpdatedEvent
+  | RoleBindingCreatedEvent
+  | RoleBindingDeletedEvent
+  | RoleBindingUpdatedEvent
+  | ClusterRoleCreatedEvent
+  | ClusterRoleDeletedEvent
+  | ClusterRoleUpdatedEvent
+  | ClusterRoleBindingCreatedEvent
+  | ClusterRoleBindingDeletedEvent
+  | ClusterRoleBindingUpdatedEvent
   | NamespaceCreatedEvent
   | NamespaceDeletedEvent
   | NamespaceUpdatedEvent
@@ -696,8 +837,7 @@ export const createClusterEventMetadata = (
   correlationId: crypto.randomUUID()
 })
 
-export const createClusterEventTimestamp = (): string =>
-  new Date().toISOString()
+export const createClusterEventTimestamp = (): string => new Date().toISOString()
 
 export const createPodCreatedEvent = (
   pod: ClusterResourceTypeByKind['Pod'],
@@ -1423,12 +1563,178 @@ export const createPersistentVolumeClaimUpdatedEvent = (
   type: 'PersistentVolumeClaimUpdated',
   timestamp: createClusterEventTimestamp(),
   metadata: createClusterEventMetadata(source),
-  payload: {
-    name,
-    namespace,
-    persistentVolumeClaim,
-    previousPersistentVolumeClaim
-  }
+  payload: { name, namespace, persistentVolumeClaim, previousPersistentVolumeClaim }
+})
+
+export const createServiceAccountCreatedEvent = (
+  serviceAccount: ClusterResourceTypeByKind['ServiceAccount'],
+  source?: string
+): ServiceAccountCreatedEvent => ({
+  type: 'ServiceAccountCreated',
+  timestamp: createClusterEventTimestamp(),
+  metadata: createClusterEventMetadata(source),
+  payload: { serviceAccount }
+})
+
+export const createServiceAccountDeletedEvent = (
+  name: string,
+  namespace: string,
+  deletedServiceAccount: ClusterResourceTypeByKind['ServiceAccount'],
+  source?: string
+): ServiceAccountDeletedEvent => ({
+  type: 'ServiceAccountDeleted',
+  timestamp: createClusterEventTimestamp(),
+  metadata: createClusterEventMetadata(source),
+  payload: { name, namespace, deletedServiceAccount }
+})
+
+export const createServiceAccountUpdatedEvent = (
+  name: string,
+  namespace: string,
+  serviceAccount: ClusterResourceTypeByKind['ServiceAccount'],
+  previousServiceAccount: ClusterResourceTypeByKind['ServiceAccount'],
+  source?: string
+): ServiceAccountUpdatedEvent => ({
+  type: 'ServiceAccountUpdated',
+  timestamp: createClusterEventTimestamp(),
+  metadata: createClusterEventMetadata(source),
+  payload: { name, namespace, serviceAccount, previousServiceAccount }
+})
+
+export const createRoleCreatedEvent = (
+  role: ClusterResourceTypeByKind['Role'],
+  source?: string
+): RoleCreatedEvent => ({
+  type: 'RoleCreated',
+  timestamp: createClusterEventTimestamp(),
+  metadata: createClusterEventMetadata(source),
+  payload: { role }
+})
+
+export const createRoleDeletedEvent = (
+  name: string,
+  namespace: string,
+  deletedRole: ClusterResourceTypeByKind['Role'],
+  source?: string
+): RoleDeletedEvent => ({
+  type: 'RoleDeleted',
+  timestamp: createClusterEventTimestamp(),
+  metadata: createClusterEventMetadata(source),
+  payload: { name, namespace, deletedRole }
+})
+
+export const createRoleUpdatedEvent = (
+  name: string,
+  namespace: string,
+  role: ClusterResourceTypeByKind['Role'],
+  previousRole: ClusterResourceTypeByKind['Role'],
+  source?: string
+): RoleUpdatedEvent => ({
+  type: 'RoleUpdated',
+  timestamp: createClusterEventTimestamp(),
+  metadata: createClusterEventMetadata(source),
+  payload: { name, namespace, role, previousRole }
+})
+
+export const createRoleBindingCreatedEvent = (
+  roleBinding: ClusterResourceTypeByKind['RoleBinding'],
+  source?: string
+): RoleBindingCreatedEvent => ({
+  type: 'RoleBindingCreated',
+  timestamp: createClusterEventTimestamp(),
+  metadata: createClusterEventMetadata(source),
+  payload: { roleBinding }
+})
+
+export const createRoleBindingDeletedEvent = (
+  name: string,
+  namespace: string,
+  deletedRoleBinding: ClusterResourceTypeByKind['RoleBinding'],
+  source?: string
+): RoleBindingDeletedEvent => ({
+  type: 'RoleBindingDeleted',
+  timestamp: createClusterEventTimestamp(),
+  metadata: createClusterEventMetadata(source),
+  payload: { name, namespace, deletedRoleBinding }
+})
+
+export const createRoleBindingUpdatedEvent = (
+  name: string,
+  namespace: string,
+  roleBinding: ClusterResourceTypeByKind['RoleBinding'],
+  previousRoleBinding: ClusterResourceTypeByKind['RoleBinding'],
+  source?: string
+): RoleBindingUpdatedEvent => ({
+  type: 'RoleBindingUpdated',
+  timestamp: createClusterEventTimestamp(),
+  metadata: createClusterEventMetadata(source),
+  payload: { name, namespace, roleBinding, previousRoleBinding }
+})
+
+export const createClusterRoleCreatedEvent = (
+  clusterRole: ClusterResourceTypeByKind['ClusterRole'],
+  source?: string
+): ClusterRoleCreatedEvent => ({
+  type: 'ClusterRoleCreated',
+  timestamp: createClusterEventTimestamp(),
+  metadata: createClusterEventMetadata(source),
+  payload: { clusterRole }
+})
+
+export const createClusterRoleDeletedEvent = (
+  name: string,
+  deletedClusterRole: ClusterResourceTypeByKind['ClusterRole'],
+  source?: string
+): ClusterRoleDeletedEvent => ({
+  type: 'ClusterRoleDeleted',
+  timestamp: createClusterEventTimestamp(),
+  metadata: createClusterEventMetadata(source),
+  payload: { name, deletedClusterRole }
+})
+
+export const createClusterRoleUpdatedEvent = (
+  name: string,
+  clusterRole: ClusterResourceTypeByKind['ClusterRole'],
+  previousClusterRole: ClusterResourceTypeByKind['ClusterRole'],
+  source?: string
+): ClusterRoleUpdatedEvent => ({
+  type: 'ClusterRoleUpdated',
+  timestamp: createClusterEventTimestamp(),
+  metadata: createClusterEventMetadata(source),
+  payload: { name, clusterRole, previousClusterRole }
+})
+
+export const createClusterRoleBindingCreatedEvent = (
+  clusterRoleBinding: ClusterResourceTypeByKind['ClusterRoleBinding'],
+  source?: string
+): ClusterRoleBindingCreatedEvent => ({
+  type: 'ClusterRoleBindingCreated',
+  timestamp: createClusterEventTimestamp(),
+  metadata: createClusterEventMetadata(source),
+  payload: { clusterRoleBinding }
+})
+
+export const createClusterRoleBindingDeletedEvent = (
+  name: string,
+  deletedClusterRoleBinding: ClusterResourceTypeByKind['ClusterRoleBinding'],
+  source?: string
+): ClusterRoleBindingDeletedEvent => ({
+  type: 'ClusterRoleBindingDeleted',
+  timestamp: createClusterEventTimestamp(),
+  metadata: createClusterEventMetadata(source),
+  payload: { name, deletedClusterRoleBinding }
+})
+
+export const createClusterRoleBindingUpdatedEvent = (
+  name: string,
+  clusterRoleBinding: ClusterResourceTypeByKind['ClusterRoleBinding'],
+  previousClusterRoleBinding: ClusterResourceTypeByKind['ClusterRoleBinding'],
+  source?: string
+): ClusterRoleBindingUpdatedEvent => ({
+  type: 'ClusterRoleBindingUpdated',
+  timestamp: createClusterEventTimestamp(),
+  metadata: createClusterEventMetadata(source),
+  payload: { name, clusterRoleBinding, previousClusterRoleBinding }
 })
 
 export const createNamespaceCreatedEvent = (

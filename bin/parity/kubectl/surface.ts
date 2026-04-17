@@ -69,6 +69,7 @@ const normalizeDynamicTokensForParity = (value: string): string => {
       /\bresourceVersion:\s*["']?[^"'\n]+["']?/g,
       'resourceVersion: <resource-version>'
     )
+    .replace(/X509SHA256=[0-9a-f]{64}/gi, 'X509SHA256=<hash>')
     .replace(/^  resourceVersion:\s*.+$/gm, '')
     .replace(/^  uid:\s*.+$/gm, '')
     .replace(
@@ -79,10 +80,17 @@ const normalizeDynamicTokensForParity = (value: string): string => {
 }
 
 export const normalizeKubectlCommandStdoutForParity = (
-  _command: string,
+  command: string,
   stdout: string
 ): string => {
-  return normalizeDynamicTokensForParity(stdout)
+  const normalized = normalizeDynamicTokensForParity(stdout)
+  if (command.startsWith('kubectl create token ')) {
+    return normalized.replace(
+      /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/gm,
+      '<token>'
+    )
+  }
+  return normalized
 }
 
 export const normalizeKubectlCommandStderrForParity = (

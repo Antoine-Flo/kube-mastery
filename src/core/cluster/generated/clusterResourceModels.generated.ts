@@ -22,6 +22,11 @@ export type ClusterResourceTypeByKind = {
   HTTPRoute: import('../ressources/HTTPRoute').HTTPRoute
   PersistentVolume: import('../ressources/PersistentVolume').PersistentVolume
   PersistentVolumeClaim: import('../ressources/PersistentVolumeClaim').PersistentVolumeClaim
+  ServiceAccount: import('../ressources/ServiceAccount').ServiceAccount
+  Role: import('../ressources/Role').Role
+  RoleBinding: import('../ressources/RoleBinding').RoleBinding
+  ClusterRole: import('../ressources/ClusterRole').ClusterRole
+  ClusterRoleBinding: import('../ressources/ClusterRoleBinding').ClusterRoleBinding
   Namespace: import('../ressources/Namespace').Namespace
   Lease: import('../ressources/Lease').Lease
   StorageClass: import('../ressources/StorageClass').StorageClass
@@ -49,6 +54,11 @@ export type ClusterResourceTypeByCollectionKey = {
   httpRoutes: ClusterResourceTypeByKind['HTTPRoute']
   persistentVolumes: ClusterResourceTypeByKind['PersistentVolume']
   persistentVolumeClaims: ClusterResourceTypeByKind['PersistentVolumeClaim']
+  serviceAccounts: ClusterResourceTypeByKind['ServiceAccount']
+  roles: ClusterResourceTypeByKind['Role']
+  roleBindings: ClusterResourceTypeByKind['RoleBinding']
+  clusterRoles: ClusterResourceTypeByKind['ClusterRole']
+  clusterRoleBindings: ClusterResourceTypeByKind['ClusterRoleBinding']
   namespaces: ClusterResourceTypeByKind['Namespace']
   leases: ClusterResourceTypeByKind['Lease']
   storageClasses: ClusterResourceTypeByKind['StorageClass']

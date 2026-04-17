@@ -26,6 +26,14 @@ import {
   getServiceExternalIP
 } from './resourceFormatters'
 
+const formatCreatedAtTimestamp = (timestamp: string): string => {
+  const date = new Date(timestamp)
+  if (Number.isNaN(date.getTime())) {
+    return timestamp
+  }
+  return date.toISOString().replace('.000Z', 'Z')
+}
+
 const formatNetworkPolicyPodSelector = (
   podSelector: Record<string, unknown> | undefined
 ): string => {
@@ -140,6 +148,15 @@ export const RESOURCE_HANDLERS: GeneratedResourceHandlerRegistry = {
       getSecretType(secret.type),
       Object.keys(secret.data || {}).length.toString(),
       formatAge(secret.metadata.creationTimestamp)
+    ],
+    supportsFiltering: true
+  },
+  serviceaccounts: {
+    getItems: (state) => state.serviceAccounts.items,
+    headers: ['name', 'age'],
+    formatRow: (serviceAccount) => [
+      serviceAccount.metadata.name,
+      formatAge(serviceAccount.metadata.creationTimestamp)
     ],
     supportsFiltering: true
   },
@@ -349,6 +366,46 @@ export const RESOURCE_HANDLERS: GeneratedResourceHandlerRegistry = {
       formatAge(networkPolicy.metadata.creationTimestamp)
     ],
     supportsFiltering: true
+  },
+  roles: {
+    getItems: (state) => state.roles.items,
+    headers: ['name', 'created at'],
+    formatRow: (role) => [
+      role.metadata.name,
+      formatCreatedAtTimestamp(role.metadata.creationTimestamp)
+    ],
+    supportsFiltering: true
+  },
+  rolebindings: {
+    getItems: (state) => state.roleBindings.items,
+    headers: ['name', 'role', 'age'],
+    formatRow: (roleBinding) => [
+      roleBinding.metadata.name,
+      `${roleBinding.roleRef.kind}/${roleBinding.roleRef.name}`,
+      formatAge(roleBinding.metadata.creationTimestamp)
+    ],
+    supportsFiltering: true
+  },
+  clusterroles: {
+    getItems: (state) => state.clusterRoles.items,
+    headers: ['name', 'created at'],
+    formatRow: (clusterRole) => [
+      clusterRole.metadata.name,
+      formatCreatedAtTimestamp(clusterRole.metadata.creationTimestamp)
+    ],
+    supportsFiltering: true,
+    isClusterScoped: true
+  },
+  clusterrolebindings: {
+    getItems: (state) => state.clusterRoleBindings.items,
+    headers: ['name', 'role', 'age'],
+    formatRow: (clusterRoleBinding) => [
+      clusterRoleBinding.metadata.name,
+      `${clusterRoleBinding.roleRef.kind}/${clusterRoleBinding.roleRef.name}`,
+      formatAge(clusterRoleBinding.metadata.creationTimestamp)
+    ],
+    supportsFiltering: true,
+    isClusterScoped: true
   },
   ingressclasses: {
     getItems: (state) => state.ingressClasses.items,

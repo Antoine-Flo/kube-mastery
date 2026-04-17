@@ -14,7 +14,9 @@ import { handleAnnotate } from './handlers/annotate'
 import { handleAPIVersions } from './handlers/apiVersions'
 import { handleAPIResources } from './handlers/apiResources'
 import { handleApply } from './handlers/apply'
+import { handleAuth } from './handlers/auth'
 import { handleCreate } from './handlers/create'
+import { handleCreateToken } from './handlers/createToken'
 import { handleClusterInfo } from './handlers/clusterInfo'
 import {
   getCurrentNamespaceFromKubeconfig,
@@ -42,11 +44,20 @@ import { handleWait } from './handlers/wait'
 import { handleOptions } from './handlers/options'
 import { resolveKubectlHelp } from './help'
 import { parseCommand } from './parser'
-import type { ParsedCommand } from './types'
+import {
+  ACTIONS_WITHOUT_IMPLICIT_NAMESPACE,
+  AUTH_SUBCOMMAND_ACTIONS,
+  CONFIG_SUBCOMMAND_ACTIONS
+} from './actionGroups'
+import type { Action, ParsedCommand } from './types'
 import { runKubectlCommandHooks } from '../cli/runtime/execute'
 
 // Action handler signature (dependencies captured in closure)
 type ActionHandler = (parsed: ParsedCommand) => ExecutionResult
+type ActionHandlerEntry = readonly [Action, ActionHandler]
+const ACTIONS_WITHOUT_IMPLICIT_NAMESPACE_SET = new Set<Action>(
+  ACTIONS_WITHOUT_IMPLICIT_NAMESPACE
+)
 
 export type KubectlExecutorOptions = {
   metricsProvider?: MetricsProvider
@@ -74,13 +85,7 @@ const applyImplicitNamespaceFromKubeconfig = (
     return parsed
   }
 
-  if (
-    parsed.action === 'config' ||
-    parsed.action === 'config-get-contexts' ||
-    parsed.action === 'config-current-context' ||
-    parsed.action === 'config-view' ||
-    parsed.action === 'config-set-context'
-  ) {
+  if (ACTIONS_WITHOUT_IMPLICIT_NAMESPACE_SET.has(parsed.action)) {
     return parsed
   }
 
@@ -115,72 +120,72 @@ const createHandlers = (
   const metricsProvider =
     options.metricsProvider ?? createMetricsProvider(apiServer)
 
-  // Direct handler mapping - logging is handled centrally by event system
-  handlers.set('get', (parsed) =>
-    toGetExecutionResult(handleGet(apiServer, parsed, { getResourceVersion }))
-  )
-  handlers.set('diff', (parsed) => handleDiff(fileSystem, apiServer, parsed))
-  handlers.set('explain', (parsed) => handleExplain(parsed))
-  handlers.set('describe', (parsed) =>
-    handleDescribe(apiServer, parsed, {
-      listPodEvents
-    })
-  )
-  handlers.set('edit', (parsed) =>
-    handleEdit(apiServer, parsed, {
-      editorModal: options.editorModal,
-      onAsyncOutput: options.onAsyncOutput,
-      preserveFailedEditCopy: options.preserveFailedEditCopy
-    })
-  )
-  handlers.set('set', (parsed) => handleSetImage(apiServer, parsed))
-  handlers.set('delete', (parsed) =>
-    handleDelete(apiServer, parsed, fileSystem)
-  )
-  handlers.set('apply', (parsed) => handleApply(fileSystem, apiServer, parsed))
-  handlers.set('replace', (parsed) =>
-    handleReplace(fileSystem, apiServer, parsed)
-  )
-  handlers.set('create', (parsed) =>
-    handleCreate(fileSystem, apiServer, parsed)
-  )
-  handlers.set('logs', (parsed) => handleLogs(apiServer, parsed))
-  handlers.set('exec', (parsed) =>
-    toGetExecutionResult(handleExec(apiServer, parsed, networkRuntime))
-  )
-  handlers.set('label', (parsed) => handleLabel(apiServer, parsed))
-  handlers.set('annotate', (parsed) => handleAnnotate(apiServer, parsed))
-  handlers.set('version', (parsed) => handleVersion(parsed))
-  handlers.set('cluster-info', (parsed) => handleClusterInfo(apiServer, parsed))
-  handlers.set('api-versions', (parsed) => success(handleAPIVersions(parsed)))
-  handlers.set('api-resources', (parsed) => handleAPIResources(parsed))
-  handlers.set('scale', (parsed) => handleScale(apiServer, parsed))
-  handlers.set('patch', (parsed) => handlePatch(apiServer, parsed))
-  handlers.set('run', (parsed) => handleRun(apiServer, parsed, networkRuntime))
-  handlers.set('expose', (parsed) => handleExpose(apiServer, parsed))
-  handlers.set('wait', (parsed) =>
-    handleWait(apiServer, parsed, reconcileForWait)
-  )
-  handlers.set('top-pods', (parsed) =>
-    handleTop(apiServer, metricsProvider, parsed)
-  )
-  handlers.set('top-nodes', (parsed) =>
-    handleTop(apiServer, metricsProvider, parsed)
-  )
-  handlers.set('rollout', (parsed) =>
-    handleRollout(apiServer, parsed, reconcileForWait)
-  )
-  handlers.set('options', (parsed) => success(handleOptions(parsed)))
-  handlers.set('config-get-contexts', (parsed) =>
-    handleConfig(fileSystem, parsed)
-  )
-  handlers.set('config-current-context', (parsed) =>
-    handleConfig(fileSystem, parsed)
-  )
-  handlers.set('config-view', (parsed) => handleConfig(fileSystem, parsed))
-  handlers.set('config-set-context', (parsed) =>
-    handleConfig(fileSystem, parsed)
-  )
+  const sharedConfigHandler: ActionHandler = (parsed) => {
+    return handleConfig(fileSystem, parsed)
+  }
+  const sharedAuthHandler: ActionHandler = (parsed) => {
+    return handleAuth(fileSystem, apiServer, parsed)
+  }
+  const directBindings: ActionHandlerEntry[] = [
+    [
+      'get',
+      (parsed) =>
+        toGetExecutionResult(handleGet(apiServer, parsed, { getResourceVersion }))
+    ],
+    ['diff', (parsed) => handleDiff(fileSystem, apiServer, parsed)],
+    ['explain', (parsed) => handleExplain(parsed)],
+    [
+      'describe',
+      (parsed) =>
+        handleDescribe(apiServer, parsed, {
+          listPodEvents
+        })
+    ],
+    [
+      'edit',
+      (parsed) =>
+        handleEdit(apiServer, parsed, {
+          editorModal: options.editorModal,
+          onAsyncOutput: options.onAsyncOutput,
+          preserveFailedEditCopy: options.preserveFailedEditCopy
+        })
+    ],
+    ['set', (parsed) => handleSetImage(apiServer, parsed)],
+    ['delete', (parsed) => handleDelete(apiServer, parsed, fileSystem)],
+    ['apply', (parsed) => handleApply(fileSystem, apiServer, parsed)],
+    ['replace', (parsed) => handleReplace(fileSystem, apiServer, parsed)],
+    ['create', (parsed) => handleCreate(fileSystem, apiServer, parsed)],
+    ['create-token', (parsed) => handleCreateToken(apiServer, parsed)],
+    ['logs', (parsed) => handleLogs(apiServer, parsed)],
+    [
+      'exec',
+      (parsed) => toGetExecutionResult(handleExec(apiServer, parsed, networkRuntime))
+    ],
+    ['label', (parsed) => handleLabel(apiServer, parsed)],
+    ['annotate', (parsed) => handleAnnotate(apiServer, parsed)],
+    ['version', (parsed) => handleVersion(parsed)],
+    ['cluster-info', (parsed) => handleClusterInfo(apiServer, parsed)],
+    ['api-versions', (parsed) => success(handleAPIVersions(parsed))],
+    ['api-resources', (parsed) => handleAPIResources(parsed)],
+    ['scale', (parsed) => handleScale(apiServer, parsed)],
+    ['patch', (parsed) => handlePatch(apiServer, parsed)],
+    ['run', (parsed) => handleRun(apiServer, parsed, networkRuntime)],
+    ['expose', (parsed) => handleExpose(apiServer, parsed)],
+    ['wait', (parsed) => handleWait(apiServer, parsed, reconcileForWait)],
+    ['top-pods', (parsed) => handleTop(apiServer, metricsProvider, parsed)],
+    ['top-nodes', (parsed) => handleTop(apiServer, metricsProvider, parsed)],
+    ['rollout', (parsed) => handleRollout(apiServer, parsed, reconcileForWait)],
+    ['options', (parsed) => success(handleOptions(parsed))]
+  ]
+  for (const [action, handler] of directBindings) {
+    handlers.set(action, handler)
+  }
+  for (const action of CONFIG_SUBCOMMAND_ACTIONS) {
+    handlers.set(action, sharedConfigHandler)
+  }
+  for (const action of AUTH_SUBCOMMAND_ACTIONS) {
+    handlers.set(action, sharedAuthHandler)
+  }
 
   return handlers
 }
