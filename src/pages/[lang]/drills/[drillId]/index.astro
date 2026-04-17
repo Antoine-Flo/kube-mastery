@@ -220,18 +220,6 @@ const tasks = drillDetail.tasks
             return
           }
           sendProgressCompleteBeacon({ type: 'drill', targetId })
-          const elapsedMs =
-            (window as { __drillElapsedMs?: number }).__drillElapsedMs ?? 0
-          const elapsedSec = Math.max(0, Math.round(elapsedMs / 1000))
-          const bestKey = `drillBestSeconds:${targetId}`
-          const previousRaw = localStorage.getItem(bestKey)
-          const previous =
-            previousRaw != null && Number.isFinite(Number(previousRaw))
-              ? Number(previousRaw)
-              : null
-          if (previous == null || elapsedSec < previous) {
-            localStorage.setItem(bestKey, String(elapsedSec))
-          }
           doneBtn.hidden = true
           postActions.hidden = false
           doneBtn.disabled = false

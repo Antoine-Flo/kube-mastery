@@ -142,13 +142,6 @@ const ckaTargetMinutes = drillDetail.ckaTargetMinutes
       el.setAttribute('hidden', '')
       return
     }
-    const sec = Math.round(ms / 1000)
-    const bestKey = `drillBestSeconds:${drillId}`
-    const prevBestRaw = localStorage.getItem(bestKey)
-    const prevBest = prevBestRaw ? Number(prevBestRaw) : null
-    if (prevBest === null || !Number.isFinite(prevBest) || sec < prevBest) {
-      localStorage.setItem(bestKey, String(sec))
-    }
     let text = `${timeLabel}: ${formatDuration(ms)}`
     if (
       typeof ckaTargetMinutes === 'number' &&

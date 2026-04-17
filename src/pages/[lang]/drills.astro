@@ -156,11 +156,6 @@ const DRILL_TAG_UI_KEY: Record<
                         ? t('drills_step')
                         : t('drills_steps')}
                     </span>
-                    <span
-                      class="drill-card__best"
-                      data-drill-best-for={drill.id}
-                      hidden
-                    ></span>
                   </div>
                 </button>
               </li>
@@ -220,39 +215,6 @@ const DRILL_TAG_UI_KEY: Record<
 
   initDrillCardTriggers()
   document.addEventListener('astro:page-load', initDrillCardTriggers)
-</script>
-
-<script is:inline define:vars={{ bestLabel: t('drills_list_bestTime') }}>
-  function formatSec(sec) {
-    const m = Math.floor(sec / 60)
-    const s = sec % 60
-    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-  }
-
-  function showBestTimes() {
-    document.querySelectorAll('[data-drill-best-for]').forEach((el) => {
-      if (!(el instanceof HTMLElement)) {
-        return
-      }
-      const id = el.dataset.drillBestFor
-      if (!id) {
-        return
-      }
-      const raw = localStorage.getItem(`drillBestSeconds:${id}`)
-      if (!raw) {
-        return
-      }
-      const sec = Number(raw)
-      if (!Number.isFinite(sec) || sec < 0) {
-        return
-      }
-      el.textContent = `${bestLabel}: ${formatSec(sec)}`
-      el.removeAttribute('hidden')
-    })
-  }
-
-  showBestTimes()
-  document.addEventListener('astro:page-load', showBestTimes)
 </script>
 
 <style>
@@ -428,14 +390,6 @@ const DRILL_TAG_UI_KEY: Record<
 
   .drill-card__category-icon--cluster_architecture_installation :global(svg) {
     color: var(--color-amber-10);
-  }
-
-  .drill-card__best {
-    flex-shrink: 0;
-    font-size: var(--text-xs);
-    color: var(--color-gray-9);
-    font-variant-numeric: tabular-nums;
-    text-align: right;
   }
 
   .drill-card__body {
