@@ -143,6 +143,8 @@ export interface DrillFile {
   environment?: string
   ckaTargetMinutes?: number
   isDraft?: boolean
+  /** Listed on /drills but not playable until removed. */
+  comingSoon?: boolean
   isFree?: boolean
   tag?: DrillTagId
   tasks: DrillTask[]
@@ -154,6 +156,7 @@ export interface DrillListItem {
   description: string | null
   totalTasks: number
   isFree: boolean
+  comingSoon: boolean
   tag: DrillTagId | null
 }
 

@@ -93,6 +93,7 @@ describe('buildDrillList', () => {
       description: 'Learn to inspect nodes.',
       totalTasks: 2,
       isFree: false,
+      comingSoon: false,
       tag: null
     })
   })
@@ -117,6 +118,21 @@ describe('buildDrillList', () => {
     const list = buildDrillList(port, 'en')
     expect(list).toHaveLength(1)
     expect(list[0].id).toBe('published')
+  })
+
+  it('includes draft drills when marked coming soon', () => {
+    const port = createMockPort({
+      drillIds: ['teaser'],
+      getDrillFile: () => ({
+        ...SAMPLE_FILE,
+        title: 'Soon',
+        isDraft: true,
+        comingSoon: true
+      })
+    })
+    const list = buildDrillList(port, 'en')
+    expect(list).toHaveLength(1)
+    expect(list[0].comingSoon).toBe(true)
   })
 })
 
@@ -169,6 +185,13 @@ describe('buildDrillDetail', () => {
   it('returns null for draft drills', () => {
     const port = createMockPort({
       getDrillFile: () => ({ ...SAMPLE_FILE, isDraft: true })
+    })
+    expect(buildDrillDetail(port, 'inspect-nodes', 'en')).toBeNull()
+  })
+
+  it('returns null for coming soon drills', () => {
+    const port = createMockPort({
+      getDrillFile: () => ({ ...SAMPLE_FILE, comingSoon: true })
     })
     expect(buildDrillDetail(port, 'inspect-nodes', 'en')).toBeNull()
   })

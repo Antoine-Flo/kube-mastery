@@ -3,7 +3,11 @@ import Layout from '../../layouts/Layout.astro'
 import Dialog from '../../components/ui/Dialog.astro'
 import { useLocalePath, useTranslations } from '../../i18n/utils'
 import '../../styles/components/page-halo.css'
-import { getDrills, type DrillTagId } from '../../content/drills/facade'
+import {
+  getDrills,
+  type DrillListItem,
+  type DrillTagId
+} from '../../content/drills/facade'
 import { getLayoutAuthContext } from '../../lib/auth/server'
 import { Bug, HardDrive, Layers, Network, Timer } from '@lucide/astro'
 
@@ -18,13 +22,30 @@ const lang = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
 
-const drills = getDrills(lang)
+function compareDrillListOrder(a: DrillListItem, b: DrillListItem): number {
+  const rank = (d: DrillListItem) => {
+    if (d.comingSoon) {
+      return 2
+    }
+    if (d.isFree) {
+      return 0
+    }
+    return 1
+  }
+  const diff = rank(a) - rank(b)
+  if (diff !== 0) {
+    return diff
+  }
+  return a.id.localeCompare(b.id)
+}
+
+const drills = [...getDrills(lang)].sort(compareDrillListOrder)
 const auth = await getLayoutAuthContext(
   Astro.locals,
   Astro.request,
   Astro.cookies
 )
-const firstFreeDrill = drills.find((d) => d.isFree)
+const firstFreeDrill = drills.find((d) => d.isFree && !d.comingSoon)
 const tryFreeDrillHref = firstFreeDrill
   ? `${localePath(`/drills/${firstFreeDrill.id}`)}?mode=guided`
   : localePath('/drills')
@@ -55,27 +76,46 @@ const DRILL_TAG_UI_KEY: Record<
       <ul class="drill-grid">
         {
           drills.map((drill) => {
-            const CategoryIcon = drill.tag ? DRILL_TAG_ICON[drill.tag] : null
+            const CategoryIcon = drill.tag
+              ? DRILL_TAG_ICON[drill.tag]
+              : null
+            const showTopRow =
+              drill.comingSoon ||
+              drill.tag ||
+              (drill.isFree && !auth.hasPaidSubscription)
             return (
               <li>
                 <button
                   type="button"
-                  class="drill-card"
+                  class:list={{
+                    'drill-card': true,
+                    'drill-card--coming-soon': drill.comingSoon
+                  }}
+                  disabled={drill.comingSoon}
                   data-drill-id={drill.id}
                   data-drill-title={drill.title}
                   data-drill-base-href={localePath(`/drills/${drill.id}`)}
                   data-drill-can-access={
-                    drill.isFree || auth.hasPaidSubscription ? 'true' : 'false'
+                    drill.comingSoon
+                      ? 'false'
+                      : drill.isFree || auth.hasPaidSubscription
+                        ? 'true'
+                        : 'false'
                   }
                 >
-                  {(drill.tag ||
-                    (drill.isFree && !auth.hasPaidSubscription)) && (
+                  {showTopRow && (
                     <div class="drill-card__top">
                       <div class="drill-card__top-left">
-                        {drill.tag && (
+                        {drill.comingSoon ? (
                           <span class="drill-card__tag">
-                            {t(DRILL_TAG_UI_KEY[drill.tag])}
+                            {t('drills_badge_comingSoon')}
                           </span>
+                        ) : (
+                          drill.tag && (
+                            <span class="drill-card__tag">
+                              {t(DRILL_TAG_UI_KEY[drill.tag])}
+                            </span>
+                          )
                         )}
                       </div>
                       <div class="drill-card__top-right">
@@ -84,7 +124,7 @@ const DRILL_TAG_UI_KEY: Record<
                             {t('drills_badge_free')}
                           </span>
                         )}
-                        {drill.tag && CategoryIcon && (
+                        {CategoryIcon && drill.tag && (
                           <span
                             class={`drill-card__category-icon drill-card__category-icon--${drill.tag}`}
                           >
@@ -164,6 +204,9 @@ const DRILL_TAG_UI_KEY: Record<
       .querySelectorAll<HTMLButtonElement>('[data-drill-id]')
       .forEach((btn) => {
         btn.addEventListener('click', () => {
+          if (btn.disabled) {
+            return
+          }
           const baseHref = btn.dataset.drillBaseHref ?? ''
           const canAccess = btn.dataset.drillCanAccess === 'true'
           if (!canAccess) {
@@ -280,25 +323,40 @@ const DRILL_TAG_UI_KEY: Record<
     box-sizing: border-box;
   }
 
-  .drill-card:hover {
+  .drill-card:not(:disabled):hover {
     border-color: var(--color-cyan-7);
     background: var(--color-cyan-2);
   }
 
-  .drill-card:active {
+  .drill-card:not(:disabled):active {
     background: var(--color-gray-2);
   }
 
-  :global([data-theme='dark']) .drill-card:active {
+  :global([data-theme='dark']) .drill-card:not(:disabled):active {
     background: var(--color-gray-3);
   }
 
-  .drill-card:hover:active {
+  .drill-card:not(:disabled):hover:active {
     background: var(--color-cyan-1);
   }
 
-  :global([data-theme='dark']) .drill-card:hover:active {
+  :global([data-theme='dark']) .drill-card:not(:disabled):hover:active {
     background: var(--color-cyan-4);
+  }
+
+  .drill-card--coming-soon,
+  .drill-card--coming-soon:hover,
+  .drill-card--coming-soon:hover:active {
+    opacity: 0.72;
+    cursor: not-allowed;
+    border-color: var(--color-gray-6);
+    background: var(--color-gray-2);
+  }
+
+  :global([data-theme='dark']) .drill-card--coming-soon,
+  :global([data-theme='dark']) .drill-card--coming-soon:hover,
+  :global([data-theme='dark']) .drill-card--coming-soon:hover:active {
+    background: var(--color-gray-3);
   }
 
   .drill-card__top {

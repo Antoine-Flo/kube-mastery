@@ -1,6 +1,6 @@
 ---
 title: Roll Back a Broken Deployment
-isDraft: true
+comingSoon: true
 description: Use rollout history and rollback commands to recover a failing deployment.
 tag: troubleshooting
 environment: minimal

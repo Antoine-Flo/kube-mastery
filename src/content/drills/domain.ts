@@ -440,6 +440,7 @@ function parseDrillMarkdownFile(rawMarkdown: string): DrillFile | null {
     ckaTargetMinutes: readOptionalNumber(obj, 'ckaTargetMinutes'),
     tasks,
     ...(obj.isDraft === true ? { isDraft: true } : {}),
+    ...(obj.comingSoon === true ? { comingSoon: true } : {}),
     ...(obj.isFree === true ? { isFree: true } : {}),
     ...(tag ? { tag } : {})
   }
@@ -459,7 +460,11 @@ export function buildDrillList(
 
   for (const id of drillIds) {
     const file = port.getDrillFile(id, lang)
-    if (!file || file.tasks.length === 0 || file.isDraft === true) {
+    if (!file || file.tasks.length === 0) {
+      continue
+    }
+    const isHiddenDraft = file.isDraft === true && file.comingSoon !== true
+    if (isHiddenDraft) {
       continue
     }
 
@@ -469,6 +474,7 @@ export function buildDrillList(
       description: file.description ?? null,
       totalTasks: file.tasks.length,
       isFree: file.isFree === true,
+      comingSoon: file.comingSoon === true,
       tag: file.tag ?? null
     })
   }
@@ -482,7 +488,7 @@ export function buildDrillDetail(
   lang: UiLang
 ): DrillDetail | null {
   const file = port.getDrillFile(drillId, lang)
-  if (!file || file.isDraft === true) {
+  if (!file || file.isDraft === true || file.comingSoon === true) {
     return null
   }
 
