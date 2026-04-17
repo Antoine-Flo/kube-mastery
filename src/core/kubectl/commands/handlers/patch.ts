@@ -12,6 +12,11 @@ import {
   toPluralKindReference
 } from '../resourceCatalog'
 import { validateImmutableFieldsForEdit } from '../immutableFieldValidation'
+import {
+  buildNotFoundErrorMessage,
+  buildRequiredFlagNotSetMessage,
+  buildRequiresResourceNameMessage
+} from '../shared/errorMessages'
 
 const PATCHABLE_RESOURCES: Resource[] = [
   'deployments',
@@ -79,7 +84,7 @@ const toPatchPayload = (parsed: ParsedCommand): string | ExecutionResult => {
   if (typeof fromFlags === 'string' && fromFlags.length > 0) {
     return stripWrappingQuotes(fromFlags)
   }
-  return error('error: required flag(s) "patch" not set')
+  return error(buildRequiredFlagNotSetMessage('patch'))
 }
 
 const stripWrappingQuotes = (value: string): string => {
@@ -129,7 +134,7 @@ export const handlePatch = (
   }
 
   if (parsed.name == null || parsed.name.length === 0) {
-    return error('patch requires a resource name')
+    return error(buildRequiresResourceNameMessage('patch', false))
   }
 
   const kindResult = toPatchKind(parsed.resource)
@@ -155,7 +160,10 @@ export const handlePatch = (
   )
   if (!existingResult.ok) {
     return error(
-      `Error from server (NotFound): ${toPluralKindReference(kindResult.kind)} "${parsed.name}" not found`
+      buildNotFoundErrorMessage(
+        toPluralKindReference(kindResult.kind),
+        parsed.name
+      )
     )
   }
 

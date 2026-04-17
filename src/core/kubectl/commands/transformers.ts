@@ -14,6 +14,7 @@ import {
 } from './createImperativeSpecs'
 import type { Action, Resource } from './types'
 import { kubectlUnexpectedArgsUsageError } from './usageError'
+import { find } from 'remeda'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // KUBECTL COMMAND TRANSFORMERS
@@ -202,6 +203,22 @@ const splitTokensBySeparator = (
   return { beforeSeparator, afterSeparator }
 }
 
+const hasFilenameFlagInTokens = (
+  tokens: string[],
+  startIndex: number
+): boolean => {
+  for (let index = startIndex; index < tokens.length; index++) {
+    const token = tokens[index]
+    if (token === '-f' || token.startsWith('-f=')) {
+      return true
+    }
+    if (token === '--filename' || token.startsWith('--filename=')) {
+      return true
+    }
+  }
+  return false
+}
+
 const extractFlagValues = (tokens: string[], flagName: string): string[] => {
   const values: string[] = []
 
@@ -233,27 +250,7 @@ const extractFlagValues = (tokens: string[], flagName: string): string[] => {
 }
 
 const extractPositionalTokensAfterAction = (tokens: string[]): string[] => {
-  const positionalTokens: string[] = []
-
-  for (let index = 2; index < tokens.length; index++) {
-    const token = tokens[index]
-    if (token === '--') {
-      break
-    }
-
-    if (token.startsWith('-')) {
-      const flagName = token.replace(/^-+/, '').split('=')[0]
-      const hasInlineValue = token.includes('=')
-      if (FLAGS_REQUIRING_VALUES.has(flagName) && !hasInlineValue) {
-        index += 1
-      }
-      continue
-    }
-
-    positionalTokens.push(token)
-  }
-
-  return positionalTokens
+  return extractPositionalTokensFromIndex(tokens, 2)
 }
 
 const extractPositionalTokensFromIndex = (
@@ -279,6 +276,41 @@ const extractPositionalTokensFromIndex = (
   }
 
   return positionalTokens
+}
+
+const resolveResourceFromToken = (
+  resourceToken: string
+): Result<Resource> => {
+  const resource = RESOURCE_ALIAS_MAP[resourceToken] as Resource | undefined
+  if (!resource) {
+    return error('Invalid or missing resource type')
+  }
+  return success(resource)
+}
+
+const resolveResourceAndNameFromTargetToken = (
+  targetToken: string,
+  fallbackName?: string
+): Result<{ resource: Resource; name: string | undefined }> => {
+  if (targetToken.includes('/')) {
+    const [resourceToken, nameToken] = targetToken.split('/', 2)
+    const resourceResult = resolveResourceFromToken(resourceToken)
+    if (!resourceResult.ok) {
+      return resourceResult
+    }
+    return success({
+      resource: resourceResult.value,
+      name: nameToken
+    })
+  }
+  const resourceResult = resolveResourceFromToken(targetToken)
+  if (!resourceResult.ok) {
+    return resourceResult
+  }
+  return success({
+    resource: resourceResult.value,
+    name: fallbackName
+  })
 }
 
 const splitExplainPath = (
@@ -753,24 +785,19 @@ const scaleTransformer: ActionTransformer = (ctx) => {
   if (!resourceToken) {
     return error('Invalid or missing resource type')
   }
-
-  // Check for type/name syntax (e.g., deployment/nginx)
-  if (resourceToken.includes('/')) {
-    const [resourcePart, namePart] = resourceToken.split('/')
-    const resource = RESOURCE_ALIAS_MAP[resourcePart] as Resource | undefined
-    if (!resource) {
-      return error('Invalid or missing resource type')
-    }
-    return success({ ...ctx, resource, name: namePart })
+  const resolvedTarget = resolveResourceAndNameFromTargetToken(
+    resourceToken,
+    nameToken
+  )
+  if (!resolvedTarget.ok) {
+    return resolvedTarget
   }
 
-  // Standard syntax: resource name
-  const resource = RESOURCE_ALIAS_MAP[resourceToken] as Resource | undefined
-  if (!resource) {
-    return error('Invalid or missing resource type')
-  }
-
-  return success({ ...ctx, resource, name: nameToken })
+  return success({
+    ...ctx,
+    resource: resolvedTarget.value.resource,
+    name: resolvedTarget.value.name
+  })
 }
 
 /**
@@ -844,20 +871,7 @@ const deleteTransformer: ActionTransformer = (ctx) => {
     return success(ctx)
   }
 
-  let hasFilenameFlag = false
-  for (let index = 2; index < ctx.tokens.length; index++) {
-    const token = ctx.tokens[index]
-    if (token === '-f' || token.startsWith('-f=')) {
-      hasFilenameFlag = true
-      break
-    }
-    if (token === '--filename' || token.startsWith('--filename=')) {
-      hasFilenameFlag = true
-      break
-    }
-  }
-
-  if (!hasFilenameFlag) {
+  if (!hasFilenameFlagInTokens(ctx.tokens, 2)) {
     return success(ctx)
   }
 
@@ -877,20 +891,7 @@ const replaceTransformer: ActionTransformer = (ctx) => {
     return success(ctx)
   }
 
-  let hasFilenameFlag = false
-  for (let index = 2; index < ctx.tokens.length; index++) {
-    const token = ctx.tokens[index]
-    if (token === '-f' || token.startsWith('-f=')) {
-      hasFilenameFlag = true
-      break
-    }
-    if (token === '--filename' || token.startsWith('--filename=')) {
-      hasFilenameFlag = true
-      break
-    }
-  }
-
-  if (!hasFilenameFlag) {
+  if (!hasFilenameFlagInTokens(ctx.tokens, 2)) {
     return success(ctx)
   }
 
@@ -974,28 +975,18 @@ const editTransformer: ActionTransformer = (ctx) => {
     return success(ctx)
   }
 
-  if (targetToken.includes('/')) {
-    const [resourceToken, nameToken] = targetToken.split('/', 2)
-    const resource = RESOURCE_ALIAS_MAP[resourceToken] as Resource | undefined
-    if (!resource) {
-      return error('Invalid or missing resource type')
-    }
-    return success({
-      ...ctx,
-      resource,
-      name: nameToken
-    })
-  }
-
-  const resource = RESOURCE_ALIAS_MAP[targetToken] as Resource | undefined
-  if (!resource) {
-    return error('Invalid or missing resource type')
+  const resolvedTarget = resolveResourceAndNameFromTargetToken(
+    targetToken,
+    positionalTokens[1]
+  )
+  if (!resolvedTarget.ok) {
+    return resolvedTarget
   }
 
   return success({
     ...ctx,
-    resource,
-    name: positionalTokens[1]
+    resource: resolvedTarget.value.resource,
+    name: resolvedTarget.value.name
   })
 }
 
@@ -1009,29 +1000,17 @@ const exposeTransformer: ActionTransformer = (ctx) => {
     return error('Invalid or missing resource type')
   }
 
-  if (resourceToken.includes('/')) {
-    const [resourcePart, namePart] = resourceToken.split('/')
-    const resource = RESOURCE_ALIAS_MAP[resourcePart] as Resource | undefined
-    if (!resource) {
-      return error('Invalid or missing resource type')
-    }
-    return success({
-      ...ctx,
-      resource,
-      name: namePart
-    })
+  const resolvedTarget = resolveResourceAndNameFromTargetToken(
+    resourceToken,
+    findNameSkippingFlags(ctx.tokens, 3)
+  )
+  if (!resolvedTarget.ok) {
+    return resolvedTarget
   }
-
-  const resource = RESOURCE_ALIAS_MAP[resourceToken] as Resource | undefined
-  if (!resource) {
-    return error('Invalid or missing resource type')
-  }
-
-  const name = findNameSkippingFlags(ctx.tokens, 3)
   return success({
     ...ctx,
-    resource,
-    name
+    resource: resolvedTarget.value.resource,
+    name: resolvedTarget.value.name
   })
 }
 
@@ -1046,28 +1025,18 @@ const patchTransformer: ActionTransformer = (ctx) => {
     return success(ctx)
   }
 
-  if (targetToken.includes('/')) {
-    const [resourceToken, nameToken] = targetToken.split('/', 2)
-    const resource = RESOURCE_ALIAS_MAP[resourceToken] as Resource | undefined
-    if (!resource) {
-      return error('Invalid or missing resource type')
-    }
-    return success({
-      ...ctx,
-      resource,
-      name: nameToken
-    })
-  }
-
-  const resource = RESOURCE_ALIAS_MAP[targetToken] as Resource | undefined
-  if (!resource) {
-    return error('Invalid or missing resource type')
+  const resolvedTarget = resolveResourceAndNameFromTargetToken(
+    targetToken,
+    positionalTokens[1]
+  )
+  if (!resolvedTarget.ok) {
+    return resolvedTarget
   }
 
   return success({
     ...ctx,
-    resource,
-    name: positionalTokens[1]
+    resource: resolvedTarget.value.resource,
+    name: resolvedTarget.value.name
   })
 }
 
@@ -1077,41 +1046,43 @@ const configTransformer: ActionTransformer = (ctx) => {
   }
 
   const subcommandToken = ctx.tokens[2]
-  const transformSpec = CONFIG_SUBCOMMAND_SPECS.find((spec) => {
+  const transformSpec = find(CONFIG_SUBCOMMAND_SPECS, (spec) => {
     return spec.token === subcommandToken
   })
   if (transformSpec == null) {
     return error(`unknown config subcommand: ${subcommandToken}`)
   }
 
-  let enrichedFields: Partial<ParseContext> = {}
-  if (transformSpec.transformKind === 'contextName') {
-    enrichedFields = {
-      configContextName: findNameSkippingFlags(ctx.tokens, 3)
+  const enrichedFields: Partial<ParseContext> = (() => {
+    if (transformSpec.transformKind === 'contextName') {
+      return {
+        configContextName: findNameSkippingFlags(ctx.tokens, 3)
+      }
     }
-  }
-  if (transformSpec.transformKind === 'userName') {
-    enrichedFields = {
-      configUserName: findNameSkippingFlags(ctx.tokens, 3)
+    if (transformSpec.transformKind === 'userName') {
+      return {
+        configUserName: findNameSkippingFlags(ctx.tokens, 3)
+      }
     }
-  }
-  if (transformSpec.transformKind === 'clusterName') {
-    enrichedFields = {
-      configClusterName: findNameSkippingFlags(ctx.tokens, 3)
+    if (transformSpec.transformKind === 'clusterName') {
+      return {
+        configClusterName: findNameSkippingFlags(ctx.tokens, 3)
+      }
     }
-  }
-  if (transformSpec.transformKind === 'path') {
-    enrichedFields = {
-      configPath: findNameSkippingFlags(ctx.tokens, 3)
+    if (transformSpec.transformKind === 'path') {
+      return {
+        configPath: findNameSkippingFlags(ctx.tokens, 3)
+      }
     }
-  }
-  if (transformSpec.transformKind === 'renameContext') {
-    const positionalTokens = extractPositionalTokensFromIndex(ctx.tokens, 3)
-    enrichedFields = {
-      configContextName: findNameSkippingFlags(ctx.tokens, 3),
-      configRenameContextTo: positionalTokens[1]
+    if (transformSpec.transformKind === 'renameContext') {
+      const positionalTokens = extractPositionalTokensFromIndex(ctx.tokens, 3)
+      return {
+        configContextName: findNameSkippingFlags(ctx.tokens, 3),
+        configRenameContextTo: positionalTokens[1]
+      }
     }
-  }
+    return {}
+  })()
 
   return success({
     ...ctx,
@@ -1128,21 +1099,23 @@ const authTransformer: ActionTransformer = (ctx) => {
   }
 
   const subcommandToken = ctx.tokens[2]
-  const transformSpec = AUTH_SUBCOMMAND_SPECS.find((spec) => {
+  const transformSpec = find(AUTH_SUBCOMMAND_SPECS, (spec) => {
     return spec.token === subcommandToken
   })
   if (transformSpec == null) {
     return error(`unknown auth subcommand: ${subcommandToken}`)
   }
 
-  let enrichedFields: Partial<ParseContext> = {}
-  if (transformSpec.transformKind === 'verbResource') {
-    const positionalTokens = extractPositionalTokensFromIndex(ctx.tokens, 3)
-    enrichedFields = {
-      authVerb: positionalTokens[0],
-      authResource: positionalTokens[1]
-    }
-  }
+  const enrichedFields: Partial<ParseContext> =
+    transformSpec.transformKind === 'verbResource'
+      ? (() => {
+          const positionalTokens = extractPositionalTokensFromIndex(ctx.tokens, 3)
+          return {
+            authVerb: positionalTokens[0],
+            authResource: positionalTokens[1]
+          }
+        })()
+      : {}
 
   return success({
     ...ctx,
@@ -1153,6 +1126,10 @@ const authTransformer: ActionTransformer = (ctx) => {
 }
 
 const parseWaitTimeoutSeconds = (value: string): number => {
+  return parseDurationSeconds(value)
+}
+
+const parseDurationSeconds = (value: string): number => {
   const trimmed = value.trim()
   if (trimmed.endsWith('s')) {
     return parseInt(trimmed.slice(0, -1), 10) || 60
@@ -1239,20 +1216,6 @@ const waitTransformer: ActionTransformer = (ctx) => {
     waitForCondition: waitForCondition ?? 'condition=Ready',
     waitTimeoutSeconds
   })
-}
-
-const parseDurationSeconds = (value: string): number => {
-  const trimmed = value.trim()
-  if (trimmed.endsWith('s')) {
-    return parseInt(trimmed.slice(0, -1), 10) || 60
-  }
-  if (trimmed.endsWith('m')) {
-    return (parseInt(trimmed.slice(0, -1), 10) || 1) * 60
-  }
-  if (trimmed.endsWith('h')) {
-    return (parseInt(trimmed.slice(0, -1), 10) || 1) * 3600
-  }
-  return parseInt(trimmed, 10) || 60
 }
 
 const parseBooleanFlagValue = (

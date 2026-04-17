@@ -1,10 +1,14 @@
 import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import type { FileSystem } from '../../../filesystem/FileSystem'
 import type { ExecutionResult } from '../../../shared/result'
-import { error, success } from '../../../shared/result'
+import { error, executionResultFromNeverthrow, success } from '../../../shared/result'
 import { handleApply } from './apply'
 import { readKubeconfigFromFileSystem } from './configKubeconfig'
 import type { ParsedCommand } from '../types'
+import { err as ntErr, ok as ntOk, type Result as NtResult } from 'neverthrow'
+import { flatMap, map, pipe } from 'remeda'
+import { dispatchByAction } from '../shared/actionDispatch'
+import { buildRequiresFilenameFlagMessage } from '../shared/errorMessages'
 
 type SubjectIdentity =
   | {
@@ -36,17 +40,28 @@ const DEFAULT_KUBERNETES_ADMIN_GROUPS = [
 ]
 
 const parseDistinctOrganizations = (subject: string): string[] => {
-  const organizations: string[] = []
-  const matcher = /O=([^,\n/]+)/g
-  let match = matcher.exec(subject)
-  while (match != null) {
-    const value = match[1]?.trim()
-    if (value != null && value.length > 0 && !organizations.includes(value)) {
-      organizations.push(value)
-    }
-    match = matcher.exec(subject)
-  }
-  return organizations
+  const allMatches = Array.from(subject.matchAll(/O=([^,\n/]+)/g))
+  const organizationCandidates = pipe(
+    allMatches,
+    map((match) => {
+      const value = match[1]
+      if (value == null) {
+        return undefined
+      }
+      const trimmedValue = value.trim()
+      if (trimmedValue.length === 0) {
+        return undefined
+      }
+      return trimmedValue
+    })
+  )
+  return Array.from(
+    new Set(
+      organizationCandidates.filter((value): value is string => {
+        return value !== undefined
+      })
+    )
+  )
 }
 
 const parseCommonName = (subject: string): string | undefined => {
@@ -224,75 +239,79 @@ const collectRoleRules = (
   identity: SubjectIdentity,
   namespace: string
 ): RbacRule[] => {
-  const roleRules: RbacRule[] = []
   const roleBindings = apiServer.listResources('RoleBinding', namespace)
-  for (const roleBinding of roleBindings) {
-    const hasMatchingSubject = (roleBinding.subjects ?? []).some((subject) => {
-      if (identity.kind === 'ServiceAccount') {
-        return (
-          subject.kind === 'ServiceAccount' &&
-          subject.name === identity.name &&
-          (subject.namespace ?? namespace) === identity.namespace
+  return pipe(
+    roleBindings,
+    flatMap((roleBinding) => {
+      const hasMatchingSubject = (roleBinding.subjects ?? []).some((subject) => {
+        if (identity.kind === 'ServiceAccount') {
+          return (
+            subject.kind === 'ServiceAccount' &&
+            subject.name === identity.name &&
+            (subject.namespace ?? namespace) === identity.namespace
+          )
+        }
+        return subject.kind === 'User' && subject.name === identity.name
+      })
+      if (!hasMatchingSubject) {
+        return []
+      }
+      if (roleBinding.roleRef.kind === 'Role') {
+        const roleResult = apiServer.findResource(
+          'Role',
+          roleBinding.roleRef.name,
+          namespace
         )
+        if (!roleResult.ok) {
+          return []
+        }
+        return roleResult.value.rules ?? []
       }
-      return subject.kind === 'User' && subject.name === identity.name
-    })
-    if (!hasMatchingSubject) {
-      continue
-    }
-    if (roleBinding.roleRef.kind === 'Role') {
-      const roleResult = apiServer.findResource(
-        'Role',
-        roleBinding.roleRef.name,
-        namespace
+      const clusterRoleResult = apiServer.findResource(
+        'ClusterRole',
+        roleBinding.roleRef.name
       )
-      if (roleResult.ok) {
-        roleRules.push(...(roleResult.value.rules ?? []))
+      if (!clusterRoleResult.ok) {
+        return []
       }
-      continue
-    }
-    const clusterRoleResult = apiServer.findResource(
-      'ClusterRole',
-      roleBinding.roleRef.name
-    )
-    if (clusterRoleResult.ok) {
-      roleRules.push(...(clusterRoleResult.value.rules ?? []))
-    }
-  }
-  return roleRules
+      return clusterRoleResult.value.rules ?? []
+    })
+  )
 }
 
 const collectClusterRoleRules = (
   apiServer: ApiServerFacade,
   identity: SubjectIdentity
 ): RbacRule[] => {
-  const rules: RbacRule[] = []
   const clusterRoleBindings = apiServer.listResources('ClusterRoleBinding')
-  for (const clusterRoleBinding of clusterRoleBindings) {
-    const hasMatchingSubject = (clusterRoleBinding.subjects ?? []).some(
-      (subject) => {
-        if (identity.kind === 'ServiceAccount') {
-          return (
-            subject.kind === 'ServiceAccount' &&
-            subject.name === identity.name &&
-            subject.namespace === identity.namespace
-          )
+  return pipe(
+    clusterRoleBindings,
+    flatMap((clusterRoleBinding) => {
+      const hasMatchingSubject = (clusterRoleBinding.subjects ?? []).some(
+        (subject) => {
+          if (identity.kind === 'ServiceAccount') {
+            return (
+              subject.kind === 'ServiceAccount' &&
+              subject.name === identity.name &&
+              subject.namespace === identity.namespace
+            )
+          }
+          return subject.kind === 'User' && subject.name === identity.name
         }
-        return subject.kind === 'User' && subject.name === identity.name
+      )
+      if (!hasMatchingSubject) {
+        return []
       }
-    )
-    if (!hasMatchingSubject) {
-      continue
-    }
-    const clusterRoleResult = apiServer.findResource(
-      'ClusterRole',
-      clusterRoleBinding.roleRef.name
-    )
-    if (clusterRoleResult.ok) {
-      rules.push(...(clusterRoleResult.value.rules ?? []))
-    }
-  }
-  return rules
+      const clusterRoleResult = apiServer.findResource(
+        'ClusterRole',
+        clusterRoleBinding.roleRef.name
+      )
+      if (!clusterRoleResult.ok) {
+        return []
+      }
+      return clusterRoleResult.value.rules ?? []
+    })
+  )
 }
 
 const canIdentity = (
@@ -315,13 +334,13 @@ const canIdentity = (
   })
 }
 
-const handleAuthCanI = (
+const resolveAuthCanIResult = (
   apiServer: ApiServerFacade,
   fileSystem: FileSystem,
   parsed: ParsedCommand
-): ExecutionResult => {
+): NtResult<string, string> => {
   if (parsed.authVerb == null || parsed.authResource == null) {
-    return error('auth can-i requires <verb> <resource>')
+    return ntErr('auth can-i requires <verb> <resource>')
   }
   const namespace = parsed.namespace ?? 'default'
   const identity = normalizeSubject(parsed, fileSystem)
@@ -332,7 +351,17 @@ const handleAuthCanI = (
     parsed.authVerb,
     parsed.authResource
   )
-  return success(allowed ? 'yes' : 'no')
+  return ntOk(allowed ? 'yes' : 'no')
+}
+
+const handleAuthCanI = (
+  apiServer: ApiServerFacade,
+  fileSystem: FileSystem,
+  parsed: ParsedCommand
+): ExecutionResult => {
+  return executionResultFromNeverthrow(
+    resolveAuthCanIResult(apiServer, fileSystem, parsed)
+  )
 }
 
 const handleAuthWhoAmI = (
@@ -377,8 +406,12 @@ const handleAuthReconcile = (
   parsed: ParsedCommand
 ): ExecutionResult => {
   const filename = parsed.flags.filename ?? parsed.flags.f
-  if (typeof filename !== 'string' || filename.length === 0) {
-    return error('auth reconcile requires one of -f or --filename')
+  const reconcileResult: NtResult<string, string> =
+    typeof filename === 'string' && filename.length > 0
+      ? ntOk(filename)
+      : ntErr(buildRequiresFilenameFlagMessage('auth reconcile'))
+  if (reconcileResult.isErr()) {
+    return error(reconcileResult.error)
   }
   return handleApply(fileSystem, apiServer, {
     ...parsed,
@@ -392,14 +425,18 @@ export const handleAuth = (
   apiServer: ApiServerFacade,
   parsed: ParsedCommand
 ): ExecutionResult => {
-  if (parsed.action === 'auth-can-i') {
-    return handleAuthCanI(apiServer, fileSystem, parsed)
+  const handlers: Partial<Record<ParsedCommand['action'], () => ExecutionResult>> = {
+    'auth-can-i': () => {
+      return handleAuthCanI(apiServer, fileSystem, parsed)
+    },
+    'auth-whoami': () => {
+      return handleAuthWhoAmI(fileSystem, parsed)
+    },
+    'auth-reconcile': () => {
+      return handleAuthReconcile(fileSystem, apiServer, parsed)
+    }
   }
-  if (parsed.action === 'auth-whoami') {
-    return handleAuthWhoAmI(fileSystem, parsed)
-  }
-  if (parsed.action === 'auth-reconcile') {
-    return handleAuthReconcile(fileSystem, apiServer, parsed)
-  }
-  return error(`Unknown auth action: ${parsed.action}`)
+  return dispatchByAction(parsed.action, handlers, (action) => {
+    return error(`Unknown auth action: ${action}`)
+  })
 }

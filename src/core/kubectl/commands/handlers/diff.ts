@@ -19,6 +19,8 @@ import {
   isSupportedResourceKind,
   type KubernetesResource
 } from '../resourceCatalog'
+import { buildMustSpecifyFilenameFlagMessage } from '../shared/errorMessages'
+import { getFilenameFromFlags } from '../shared/filenameFlags'
 
 type GenericObject = Record<string, unknown>
 
@@ -38,14 +40,6 @@ const DIFF_TOP_LEVEL_KEY_ORDER = [
   'spec',
   'status'
 ]
-
-const getFilenameFromFlags = (parsed: ParsedCommand): string | undefined => {
-  const filename = parsed.flags.f || parsed.flags.filename
-  if (typeof filename !== 'string') {
-    return undefined
-  }
-  return filename
-}
 
 const cloneObject = <T>(value: T): T => {
   if (typeof structuredClone === 'function') {
@@ -440,7 +434,7 @@ export const handleDiff = (
 ): ExecutionResult => {
   const filename = getFilenameFromFlags(parsed)
   if (filename == null) {
-    return error('error: must specify one of -f or --filename')
+    return error(buildMustSpecifyFilenameFlagMessage())
   }
 
   const fileResult = fileSystem.readFileDetailed(filename)

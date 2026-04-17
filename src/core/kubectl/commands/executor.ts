@@ -51,6 +51,7 @@ import {
 } from './actionGroups'
 import type { Action, ParsedCommand } from './types'
 import { runKubectlCommandHooks } from '../cli/runtime/execute'
+import { forEach } from 'remeda'
 
 // Action handler signature (dependencies captured in closure)
 type ActionHandler = (parsed: ParsedCommand) => ExecutionResult
@@ -177,15 +178,15 @@ const createHandlers = (
     ['rollout', (parsed) => handleRollout(apiServer, parsed, reconcileForWait)],
     ['options', (parsed) => success(handleOptions(parsed))]
   ]
-  for (const [action, handler] of directBindings) {
+  forEach(directBindings, ([action, handler]) => {
     handlers.set(action, handler)
-  }
-  for (const action of CONFIG_SUBCOMMAND_ACTIONS) {
+  })
+  forEach(CONFIG_SUBCOMMAND_ACTIONS, (action) => {
     handlers.set(action, sharedConfigHandler)
-  }
-  for (const action of AUTH_SUBCOMMAND_ACTIONS) {
+  })
+  forEach(AUTH_SUBCOMMAND_ACTIONS, (action) => {
     handlers.set(action, sharedAuthHandler)
-  }
+  })
 
   return handlers
 }

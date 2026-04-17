@@ -16,6 +16,11 @@ import {
   toPluralKindReference
 } from '../resourceCatalog'
 import { validateImmutableFieldsForEdit } from '../immutableFieldValidation'
+import {
+  buildNotFoundErrorMessage,
+  buildRequiresResourceNameMessage,
+  buildRequiresResourceTypeMessage
+} from '../shared/errorMessages'
 
 type GenericResource = Record<string, unknown>
 
@@ -83,7 +88,7 @@ const resolveEditTarget = (
   parsed: ParsedCommand
 ): { kind: ResourceKind; name: string } | ExecutionResult => {
   if (parsed.resource == null) {
-    return error('error: edit requires a resource type')
+    return error(buildRequiresResourceTypeMessage('edit'))
   }
   const kind = RESOURCE_KIND_BY_RESOURCE[parsed.resource]
   if (kind == null) {
@@ -92,7 +97,7 @@ const resolveEditTarget = (
     )
   }
   if (parsed.name == null || parsed.name.length === 0) {
-    return error('error: edit requires a resource name')
+    return error(buildRequiresResourceNameMessage('edit'))
   }
   return {
     kind,
@@ -285,7 +290,7 @@ export const handleEdit = (
     : apiServer.findResource(target.kind, target.name)
   if (!existing.ok) {
     return error(
-      `Error from server (NotFound): ${toPluralKindReference(target.kind)} "${target.name}" not found`
+      buildNotFoundErrorMessage(toPluralKindReference(target.kind), target.name)
     )
   }
 

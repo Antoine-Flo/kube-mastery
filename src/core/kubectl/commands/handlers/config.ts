@@ -1,18 +1,25 @@
 import type { FileSystem } from '../../../filesystem/FileSystem'
 import { formatTable } from '../../../shared/formatter'
 import type { ExecutionResult } from '../../../shared/result'
-import { error, success } from '../../../shared/result'
+import {
+  error,
+  success,
+  toNeverthrowResult
+} from '../../../shared/result'
 import type { ParsedCommand } from '../types'
 import {
   renderStructuredPayload,
   resolveOutputDirective,
   validateOutputDirective
 } from '../output/outputHelpers'
+import { dispatchByAction } from '../shared/actionDispatch'
 import {
   readKubeconfigFromFileSystem,
   type SimKubeconfig,
   writeKubeconfigToFileSystem
 } from './configKubeconfig'
+import { map, pipe, sortBy } from 'remeda'
+import { err as ntErr, ok as ntOk, type Result as NtResult } from 'neverthrow'
 
 const OMITTED_CERTIFICATE_DATA = 'DATA+OMITTED'
 
@@ -67,15 +74,46 @@ const getCurrentContextEntry = (
   })
 }
 
+const resolveCurrentNamespaceFromKubeconfig = (
+  kubeconfig: SimKubeconfig
+): string | undefined => {
+  const currentContext = kubeconfig['current-context']
+  if (currentContext.length === 0) {
+    return undefined
+  }
+  const currentContextEntry = getCurrentContextEntry(kubeconfig)
+  if (currentContextEntry == null) {
+    return undefined
+  }
+  const namespace = currentContextEntry.context.namespace
+  if (typeof namespace !== 'string' || namespace.length === 0) {
+    return undefined
+  }
+  return namespace
+}
+
+const writeKubeconfigAndReturnMessage = (
+  fileSystem: FileSystem,
+  kubeconfig: SimKubeconfig,
+  successMessage: string
+): ExecutionResult => {
+  const writeResult = writeKubeconfigToFileSystem(fileSystem, kubeconfig)
+  if (!writeResult.ok) {
+    return error(writeResult.error)
+  }
+  return success(successMessage)
+}
+
 const handleConfigGetContexts = (
   kubeconfig: SimKubeconfig
 ): ExecutionResult => {
   const headers = ['current', 'name', 'cluster', 'authinfo', 'namespace']
-  const rows = [...kubeconfig.contexts]
-    .sort((left, right) => {
-      return left.name.localeCompare(right.name)
-    })
-    .map((contextEntry) => {
+  const rows = pipe(
+    kubeconfig.contexts,
+    sortBy((contextEntry) => {
+      return contextEntry.name
+    }),
+    map((contextEntry) => {
       const isCurrent = kubeconfig['current-context'] === contextEntry.name
       return [
         isCurrent ? '*' : ' ',
@@ -85,6 +123,7 @@ const handleConfigGetContexts = (
         contextEntry.context.namespace || ''
       ]
     })
+  )
   return success(formatTable(headers, rows, { spacing: 3 }))
 }
 
@@ -106,75 +145,77 @@ const handleConfigView = (
     typeof parsed.flags.output === 'string' ||
     typeof parsed.flags['o'] === 'string'
   const fallbackOutput = hasExplicitOutput ? parsed.output : 'yaml'
-  const outputDirectiveResult = validateOutputDirective(
-    resolveOutputDirective(parsed.flags, fallbackOutput),
-    ['yaml', 'json', 'jsonpath'],
-    '--output must be one of: json|yaml|jsonpath'
+  const outputDirectiveResult = toNeverthrowResult(
+    validateOutputDirective(
+      resolveOutputDirective(parsed.flags, fallbackOutput),
+      ['yaml', 'json', 'jsonpath'],
+      '--output must be one of: json|yaml|jsonpath'
+    )
   )
-  if (!outputDirectiveResult.ok) {
-    return error(outputDirectiveResult.error)
-  }
-  const outputDirective = outputDirectiveResult.value
 
-  let payload: unknown
-  if (parsed.configMinify !== true) {
-    payload = maskKubeconfigCertificateData(kubeconfig)
-  }
-  const currentContext = kubeconfig['current-context']
-  if (parsed.configMinify === true) {
-    if (currentContext.length === 0) {
-      return error('current-context is not set')
-    }
-
-    const currentContextEntry = getCurrentContextEntry(kubeconfig)
-    if (!currentContextEntry) {
-      return error(`context "${currentContext}" not found`)
-    }
-
-    const clusterName = currentContextEntry.context.cluster
-    const userName = currentContextEntry.context.user
-    const minifiedClusters = kubeconfig.clusters
-      .filter((clusterEntry) => {
-        return clusterEntry.name === clusterName
-      })
-      .map((clusterEntry) => {
-        return {
-          cluster: { ...clusterEntry.cluster },
-          name: clusterEntry.name
-        }
-      })
-    const minifiedContexts = [
-      {
-        context: { ...currentContextEntry.context },
-        name: currentContextEntry.name
+  const payloadResult: NtResult<string, string> = outputDirectiveResult.andThen(
+    (outputDirective) => {
+      const currentContext = kubeconfig['current-context']
+      let payload: unknown = maskKubeconfigCertificateData(kubeconfig)
+      if (parsed.configMinify !== true) {
+        return ntOk({ outputDirective, payload })
       }
-    ]
-    const minifiedUsers = kubeconfig.users
-      .filter((userEntry) => {
-        return userEntry.name === userName
-      })
-      .map((userEntry) => {
-        return {
-          name: userEntry.name,
-          user: { ...userEntry.user }
-        }
-      })
-
-    payload = {
-      apiVersion: kubeconfig.apiVersion,
-      clusters: maskClusterCertificateData(minifiedClusters),
-      contexts: minifiedContexts,
-      'current-context': currentContext,
-      kind: kubeconfig.kind,
-      users: maskUserCertificateData(minifiedUsers)
+      if (currentContext.length === 0) {
+        return ntErr('current-context is not set')
+      }
+      const currentContextEntry = getCurrentContextEntry(kubeconfig)
+      if (!currentContextEntry) {
+        return ntErr(`context "${currentContext}" not found`)
+      }
+      const clusterName = currentContextEntry.context.cluster
+      const userName = currentContextEntry.context.user
+      const minifiedClusters = kubeconfig.clusters
+        .filter((clusterEntry) => {
+          return clusterEntry.name === clusterName
+        })
+        .map((clusterEntry) => {
+          return {
+            cluster: { ...clusterEntry.cluster },
+            name: clusterEntry.name
+          }
+        })
+      const minifiedUsers = kubeconfig.users
+        .filter((userEntry) => {
+          return userEntry.name === userName
+        })
+        .map((userEntry) => {
+          return {
+            name: userEntry.name,
+            user: { ...userEntry.user }
+          }
+        })
+      payload = {
+        apiVersion: kubeconfig.apiVersion,
+        clusters: maskClusterCertificateData(minifiedClusters),
+        contexts: [
+          {
+            context: { ...currentContextEntry.context },
+            name: currentContextEntry.name
+          }
+        ],
+        'current-context': currentContext,
+        kind: kubeconfig.kind,
+        users: maskUserCertificateData(minifiedUsers)
+      }
+      return ntOk({ outputDirective, payload })
     }
-  }
+  ).andThen(({ outputDirective, payload }) => {
+    return toNeverthrowResult(renderStructuredPayload(payload, outputDirective))
+  })
 
-  const renderResult = renderStructuredPayload(payload, outputDirective)
-  if (!renderResult.ok) {
-    return error(renderResult.error)
-  }
-  return success(renderResult.value)
+  return payloadResult.match(
+    (renderedPayload) => {
+      return success(renderedPayload)
+    },
+    (errorMessage) => {
+      return error(errorMessage)
+    }
+  )
 }
 
 const handleConfigSetContext = (
@@ -218,11 +259,11 @@ const handleConfigSetContext = (
       }
     })
   }
-  const writeResult = writeKubeconfigToFileSystem(fileSystem, updatedKubeconfig)
-  if (!writeResult.ok) {
-    return error(writeResult.error)
-  }
-  return success(`Context "${currentContext}" modified.`)
+  return writeKubeconfigAndReturnMessage(
+    fileSystem,
+    updatedKubeconfig,
+    `Context "${currentContext}" modified.`
+  )
 }
 
 const handleConfigUseContext = (
@@ -244,30 +285,38 @@ const handleConfigUseContext = (
     ...kubeconfig,
     'current-context': contextName
   }
-  const writeResult = writeKubeconfigToFileSystem(fileSystem, updatedKubeconfig)
-  if (!writeResult.ok) {
-    return error(writeResult.error)
-  }
-  return success(`Switched to context "${contextName}".`)
+  return writeKubeconfigAndReturnMessage(
+    fileSystem,
+    updatedKubeconfig,
+    `Switched to context "${contextName}".`
+  )
 }
 
 const handleConfigGetClusters = (kubeconfig: SimKubeconfig): ExecutionResult => {
-  const lines = ['NAME']
-  for (const cluster of [...kubeconfig.clusters].sort((left, right) => {
-    return left.name.localeCompare(right.name)
-  })) {
-    lines.push(cluster.name)
-  }
+  const lines = pipe(
+    kubeconfig.clusters,
+    sortBy((cluster) => {
+      return cluster.name
+    }),
+    map((cluster) => {
+      return cluster.name
+    })
+  )
+  lines.unshift('NAME')
   return success(lines.join('\n'))
 }
 
 const handleConfigGetUsers = (kubeconfig: SimKubeconfig): ExecutionResult => {
-  const lines = ['NAME']
-  for (const user of [...kubeconfig.users].sort((left, right) => {
-    return left.name.localeCompare(right.name)
-  })) {
-    lines.push(user.name)
-  }
+  const lines = pipe(
+    kubeconfig.users,
+    sortBy((user) => {
+      return user.name
+    }),
+    map((user) => {
+      return user.name
+    })
+  )
+  lines.unshift('NAME')
   return success(lines.join('\n'))
 }
 
@@ -300,14 +349,14 @@ const handleConfigSetCredentials = (
   } else {
     nextUsers.push(nextUser)
   }
-  const writeResult = writeKubeconfigToFileSystem(fileSystem, {
-    ...kubeconfig,
-    users: nextUsers
-  })
-  if (!writeResult.ok) {
-    return error(writeResult.error)
-  }
-  return success(`User "${userName}" set.`)
+  return writeKubeconfigAndReturnMessage(
+    fileSystem,
+    {
+      ...kubeconfig,
+      users: nextUsers
+    },
+    `User "${userName}" set.`
+  )
 }
 
 const handleConfigSetCluster = (
@@ -339,14 +388,14 @@ const handleConfigSetCluster = (
   } else {
     nextClusters.push(nextCluster)
   }
-  const writeResult = writeKubeconfigToFileSystem(fileSystem, {
-    ...kubeconfig,
-    clusters: nextClusters
-  })
-  if (!writeResult.ok) {
-    return error(writeResult.error)
-  }
-  return success(`Cluster "${clusterName}" set.`)
+  return writeKubeconfigAndReturnMessage(
+    fileSystem,
+    {
+      ...kubeconfig,
+      clusters: nextClusters
+    },
+    `Cluster "${clusterName}" set.`
+  )
 }
 
 const unsetNestedValue = (target: Record<string, unknown>, pathParts: string[]): boolean => {
@@ -368,6 +417,28 @@ const unsetNestedValue = (target: Record<string, unknown>, pathParts: string[]):
   return unsetNestedValue(child as Record<string, unknown>, tail)
 }
 
+const unsetInEntryField = (
+  entry: Record<string, unknown>,
+  fieldName: 'context' | 'user' | 'cluster',
+  targetPathParts: string[]
+): boolean => {
+  if (targetPathParts.length === 0) {
+    return false
+  }
+  const fieldTarget = entry[fieldName]
+  if (fieldTarget == null || typeof fieldTarget !== 'object') {
+    return false
+  }
+  const normalizedPathParts =
+    targetPathParts[0] === fieldName
+      ? targetPathParts.slice(1)
+      : targetPathParts
+  return unsetNestedValue(
+    fieldTarget as Record<string, unknown>,
+    normalizedPathParts
+  )
+}
+
 const handleConfigUnset = (
   fileSystem: FileSystem,
   kubeconfig: SimKubeconfig,
@@ -386,53 +457,15 @@ const handleConfigUnset = (
   const draft = structuredClone(kubeconfig) as SimKubeconfig
   let changed = false
   const rootKey = pathParts[0]
-  const unsetInContextEntry = (
-    entry: { context: Record<string, unknown> } & Record<string, unknown>,
-    targetPathParts: string[]
-  ): boolean => {
-    if (targetPathParts.length === 0) {
-      return false
-    }
-    if (targetPathParts[0] === 'context') {
-      return unsetNestedValue(entry.context, targetPathParts.slice(1))
-    }
-    return unsetNestedValue(entry.context, targetPathParts)
-  }
-  const unsetInUserEntry = (
-    entry: { user: Record<string, unknown> } & Record<string, unknown>,
-    targetPathParts: string[]
-  ): boolean => {
-    if (targetPathParts.length === 0) {
-      return false
-    }
-    if (targetPathParts[0] === 'user') {
-      return unsetNestedValue(entry.user, targetPathParts.slice(1))
-    }
-    return unsetNestedValue(entry.user, targetPathParts)
-  }
-  const unsetInClusterEntry = (
-    entry: { cluster: Record<string, unknown> } & Record<string, unknown>,
-    targetPathParts: string[]
-  ): boolean => {
-    if (targetPathParts.length === 0) {
-      return false
-    }
-    if (targetPathParts[0] === 'cluster') {
-      return unsetNestedValue(entry.cluster, targetPathParts.slice(1))
-    }
-    return unsetNestedValue(entry.cluster, targetPathParts)
-  }
   if (rootKey === 'contexts' && pathParts.length >= 3) {
     const contextName = pathParts[1]
     const contextEntry = draft.contexts.find((entry) => {
       return entry.name === contextName
     })
     if (contextEntry != null) {
-      changed = unsetInContextEntry(
-        contextEntry as unknown as { context: Record<string, unknown> } & Record<
-          string,
-          unknown
-        >,
+      changed = unsetInEntryField(
+        contextEntry as unknown as Record<string, unknown>,
+        'context',
         pathParts.slice(2)
       )
     }
@@ -442,11 +475,9 @@ const handleConfigUnset = (
       return entry.name === userName
     })
     if (userEntry != null) {
-      changed = unsetInUserEntry(
-        userEntry as unknown as { user: Record<string, unknown> } & Record<
-          string,
-          unknown
-        >,
+      changed = unsetInEntryField(
+        userEntry as unknown as Record<string, unknown>,
+        'user',
         pathParts.slice(2)
       )
     }
@@ -456,11 +487,9 @@ const handleConfigUnset = (
       return entry.name === clusterName
     })
     if (clusterEntry != null) {
-      changed = unsetInClusterEntry(
-        clusterEntry as unknown as { cluster: Record<string, unknown> } & Record<
-          string,
-          unknown
-        >,
+      changed = unsetInEntryField(
+        clusterEntry as unknown as Record<string, unknown>,
+        'cluster',
         pathParts.slice(2)
       )
     }
@@ -470,11 +499,11 @@ const handleConfigUnset = (
   if (!changed) {
     return error(`error: property "${path}" does not exist`)
   }
-  const writeResult = writeKubeconfigToFileSystem(fileSystem, draft)
-  if (!writeResult.ok) {
-    return error(writeResult.error)
-  }
-  return success(`Property "${path}" unset.`)
+  return writeKubeconfigAndReturnMessage(
+    fileSystem,
+    draft,
+    `Property "${path}" unset.`
+  )
 }
 
 const handleConfigRenameContext = (
@@ -513,15 +542,15 @@ const handleConfigRenameContext = (
     kubeconfig['current-context'] === oldName
       ? newName
       : kubeconfig['current-context']
-  const writeResult = writeKubeconfigToFileSystem(fileSystem, {
-    ...kubeconfig,
-    contexts: nextContexts,
-    'current-context': nextCurrentContext
-  })
-  if (!writeResult.ok) {
-    return error(writeResult.error)
-  }
-  return success(`Context "${oldName}" renamed to "${newName}".`)
+  return writeKubeconfigAndReturnMessage(
+    fileSystem,
+    {
+      ...kubeconfig,
+      contexts: nextContexts,
+      'current-context': nextCurrentContext
+    },
+    `Context "${oldName}" renamed to "${newName}".`
+  )
 }
 
 export const getCurrentNamespaceFromKubeconfig = (
@@ -531,26 +560,7 @@ export const getCurrentNamespaceFromKubeconfig = (
   if (!kubeconfigResult.ok) {
     return undefined
   }
-
-  const currentContext = kubeconfigResult.value['current-context']
-  if (currentContext.length === 0) {
-    return undefined
-  }
-
-  const currentContextEntry = kubeconfigResult.value.contexts.find(
-    (contextEntry) => {
-      return contextEntry.name === currentContext
-    }
-  )
-  if (!currentContextEntry) {
-    return undefined
-  }
-
-  const namespace = currentContextEntry.context.namespace
-  if (typeof namespace !== 'string' || namespace.length === 0) {
-    return undefined
-  }
-  return namespace
+  return resolveCurrentNamespaceFromKubeconfig(kubeconfigResult.value)
 }
 
 export const handleConfig = (
@@ -561,50 +571,45 @@ export const handleConfig = (
   if (!kubeconfigResult.ok) {
     return error(kubeconfigResult.error)
   }
-
-  if (parsed.action === 'config-get-contexts') {
-    return handleConfigGetContexts(kubeconfigResult.value)
+  const kubeconfig = kubeconfigResult.value
+  const actionHandlers: Partial<
+    Record<ParsedCommand['action'], () => ExecutionResult>
+  > = {
+    'config-get-contexts': () => {
+      return handleConfigGetContexts(kubeconfig)
+    },
+    'config-current-context': () => {
+      return handleConfigCurrentContext(kubeconfig)
+    },
+    'config-view': () => {
+      return handleConfigView(kubeconfig, parsed)
+    },
+    'config-set-context': () => {
+      return handleConfigSetContext(fileSystem, kubeconfig, parsed)
+    },
+    'config-use-context': () => {
+      return handleConfigUseContext(fileSystem, kubeconfig, parsed)
+    },
+    'config-get-clusters': () => {
+      return handleConfigGetClusters(kubeconfig)
+    },
+    'config-get-users': () => {
+      return handleConfigGetUsers(kubeconfig)
+    },
+    'config-set-credentials': () => {
+      return handleConfigSetCredentials(fileSystem, kubeconfig, parsed)
+    },
+    'config-set-cluster': () => {
+      return handleConfigSetCluster(fileSystem, kubeconfig, parsed)
+    },
+    'config-unset': () => {
+      return handleConfigUnset(fileSystem, kubeconfig, parsed)
+    },
+    'config-rename-context': () => {
+      return handleConfigRenameContext(fileSystem, kubeconfig, parsed)
+    }
   }
-
-  if (parsed.action === 'config-current-context') {
-    return handleConfigCurrentContext(kubeconfigResult.value)
-  }
-
-  if (parsed.action === 'config-view') {
-    return handleConfigView(kubeconfigResult.value, parsed)
-  }
-
-  if (parsed.action === 'config-set-context') {
-    return handleConfigSetContext(fileSystem, kubeconfigResult.value, parsed)
-  }
-
-  if (parsed.action === 'config-use-context') {
-    return handleConfigUseContext(fileSystem, kubeconfigResult.value, parsed)
-  }
-
-  if (parsed.action === 'config-get-clusters') {
-    return handleConfigGetClusters(kubeconfigResult.value)
-  }
-
-  if (parsed.action === 'config-get-users') {
-    return handleConfigGetUsers(kubeconfigResult.value)
-  }
-
-  if (parsed.action === 'config-set-credentials') {
-    return handleConfigSetCredentials(fileSystem, kubeconfigResult.value, parsed)
-  }
-
-  if (parsed.action === 'config-set-cluster') {
-    return handleConfigSetCluster(fileSystem, kubeconfigResult.value, parsed)
-  }
-
-  if (parsed.action === 'config-unset') {
-    return handleConfigUnset(fileSystem, kubeconfigResult.value, parsed)
-  }
-
-  if (parsed.action === 'config-rename-context') {
-    return handleConfigRenameContext(fileSystem, kubeconfigResult.value, parsed)
-  }
-
-  return error(`Unknown config action: ${parsed.action}`)
+  return dispatchByAction(parsed.action, actionHandlers, (action) => {
+    return error(`Unknown config action: ${action}`)
+  })
 }

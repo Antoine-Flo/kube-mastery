@@ -11,7 +11,13 @@ import {
   type LabelSelector
 } from '../../shared/labelSelector'
 import type { Result } from '../../shared/result'
-import { error, success } from '../../shared/result'
+import {
+  error,
+  fromNeverthrowResult,
+  success,
+  toNeverthrowResult
+} from '../../shared/result'
+import { err as ntErr, ok as ntOk, type Result as NtResult } from 'neverthrow'
 import { parseResourceTargetToken } from './resourceCatalog'
 import {
   AUTH_SUBCOMMAND_ACTIONS,
@@ -25,6 +31,10 @@ import { validateUnknownFlagsBySpec } from '../cli/runtime/flagErrors'
 import { validateUnknownCommandBySpec } from '../cli/runtime/commandErrors'
 import { KUBECTL_ROOT_COMMAND_SPEC } from '../cli/registry/root'
 import type { KubectlCommandSpec } from '../cli/model'
+import {
+  buildRequiredFlagNotSetMessage,
+  buildRequiresFilenameFlagMessage
+} from './shared/errorMessages'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // KUBECTL COMMAND PARSER
@@ -155,37 +165,12 @@ const ACTIONS_WITHOUT_RESOURCE: Action[] = [
  *           apply action-specific transform → parse flags → extract resource/name → validate
  */
 export const parseCommand = (input: string): Result<ParsedCommand> => {
-  const unknownCommandResult = validateUnknownCommandBySpec(input)
-  if (!unknownCommandResult.ok) {
-    return error(unknownCommandResult.error)
-  }
-
-  const unknownFlagsResult = validateUnknownFlagsBySpec(input)
-  if (!unknownFlagsResult.ok) {
-    return error(unknownFlagsResult.error)
-  }
-
-  // Generic parsing pipeline (works for all commands)
   const genericPipeline = pipeResult<ParseContext>(
     trim,
     tokenize,
     checkKubectl,
     extract(1, VALID_ACTIONS, 'action', 'Invalid or missing action')
   )
-
-  const genericResult = genericPipeline({ input })
-  if (!genericResult.ok) {
-    return genericResult
-  }
-
-  // Apply action-specific transformation
-  const transformer = getTransformerForAction(genericResult.value.action)
-  const transformedResult = transformer(genericResult.value)
-  if (!transformedResult.ok) {
-    return transformedResult
-  }
-
-  // Continue with common parsing
   const commandPipeline = pipeResult<ParseContext>(
     parseFlags(1, FLAG_ALIASES, FLAGS_REQUIRING_VALUES),
     checkFlags(FLAGS_REQUIRING_VALUES),
@@ -195,104 +180,35 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
     build
   )
 
-  const result = commandPipeline(transformedResult.value)
+  const parseResult = toNeverthrowResult(validateUnknownCommandBySpec(input))
+    .andThen(() => {
+      return toNeverthrowResult(validateUnknownFlagsBySpec(input))
+    })
+    .andThen(() => {
+      return toNeverthrowResult(genericPipeline({ input }))
+    })
+    .andThen((genericContext) => {
+      const transformer = getTransformerForAction(genericContext.action)
+      return toNeverthrowResult(transformer(genericContext))
+    })
+    .andThen((transformedContext) => {
+      return toNeverthrowResult(commandPipeline(transformedContext))
+    })
+    .andThen((ctx) => {
+      const parsedCommandResult = buildParsedCommandFromContext(ctx)
+      if (parsedCommandResult.isErr()) {
+        return parsedCommandResult
+      }
+      const parsedCommand = parsedCommandResult.value
+      const supportResult = assertParsedCommandSupportedBySpec(input, parsedCommand)
+      if (!supportResult.ok) {
+        return ntErr(supportResult.error)
+      }
 
-  // Transform ParseContext result to ParsedCommand result
-  if (!result.ok) {
-    return result
-  }
+      return ntOk(parsedCommand)
+    })
 
-  // Extract the command from the final context
-  const ctx = result.value
-  if (!ctx.action || !ctx.flags) {
-    return error('Internal parsing error: incomplete context')
-  }
-
-  const normalizedFlags = ctx.normalizedFlags || ctx.flags
-  const parsedNames = getNamesFromTokens(
-    ctx.action,
-    ctx.tokens || [],
-    normalizedFlags,
-    ctx.resourceTokenIndex
-  )
-  const parsedSelector = getSelectorFromFlags(normalizedFlags)
-  if (!parsedSelector.ok) {
-    return error(parsedSelector.error)
-  }
-
-  const parsedCommand: ParsedCommand = {
-    action: ctx.action,
-    configSubcommand: ctx.configSubcommand,
-    resource: ctx.resource, // May be undefined for commands like 'version'
-    resourceList: ctx.resourceList,
-    rawPath: getRawPathFromFlags(normalizedFlags),
-    name: ctx.name,
-    names: parsedNames,
-    namespace: getNamespaceFromFlags(normalizedFlags),
-    output: getOutputFromFlags(normalizedFlags),
-    selector: parsedSelector.value,
-    flags: ctx.flags,
-    execCommand: ctx.execCommand,
-    createImages: ctx.createImages,
-    createCommand: ctx.createCommand,
-    createServiceType: ctx.createServiceType,
-    createIngressClassName: ctx.createIngressClassName,
-    createIngressRules: ctx.createIngressRules,
-    createSecretType: ctx.createSecretType,
-    createFromLiterals: ctx.createFromLiterals,
-    createFromFiles: ctx.createFromFiles,
-    createFromEnvFiles: ctx.createFromEnvFiles,
-    runImage: ctx.runImage,
-    runCommand: ctx.runCommand,
-    runArgs: ctx.runArgs,
-    runUseCommand: ctx.runUseCommand,
-    runHasSeparator: ctx.runHasSeparator,
-    runEnv: ctx.runEnv,
-    runLabels: ctx.runLabels,
-    runDryRunClient: ctx.runDryRunClient,
-    runRestart: ctx.runRestart,
-    runStdin: ctx.runStdin,
-    runTty: ctx.runTty,
-    runRemove: ctx.runRemove,
-    setSubcommand: ctx.setSubcommand,
-    setImageAssignments: ctx.setImageAssignments,
-    rolloutSubcommand: ctx.rolloutSubcommand,
-    rolloutRevision: ctx.rolloutRevision,
-    rolloutTimeoutSeconds: ctx.rolloutTimeoutSeconds,
-    rolloutWatch: ctx.rolloutWatch,
-    configCurrent: getConfigCurrentFromFlags(normalizedFlags),
-    configMinify: getConfigMinifyFromFlags(normalizedFlags),
-    configNamespace: getConfigNamespaceFromFlags(normalizedFlags),
-    configContextName: ctx.configContextName,
-    configRenameContextTo: ctx.configRenameContextTo,
-    configPath: ctx.configPath,
-    configUserName: ctx.configUserName,
-    configClusterName: ctx.configClusterName,
-    configServer: getConfigServerFromFlags(normalizedFlags),
-    configToken: getConfigTokenFromFlags(normalizedFlags),
-    authVerb: ctx.authVerb,
-    authResource: ctx.authResource,
-    authSubject: getAuthSubjectFromFlags(normalizedFlags),
-    explainPath: ctx.explainPath,
-    labelChanges: ctx.labelChanges,
-    annotationChanges: ctx.annotationChanges,
-    replicas: getReplicasFromFlags(normalizedFlags),
-    port: getPortFromFlags(normalizedFlags),
-    waitForCondition: ctx.waitForCondition,
-    waitTimeoutSeconds: ctx.waitTimeoutSeconds,
-    patchPayload: getPatchPayloadFromFlags(normalizedFlags),
-    patchType: getPatchTypeFromFlags(normalizedFlags),
-    deleteGracePeriodSeconds:
-      getDeleteGracePeriodSecondsFromFlags(normalizedFlags),
-    deleteForce: getDeleteForceFromFlags(normalizedFlags)
-  }
-
-  const supportResult = assertParsedCommandSupportedBySpec(input, parsedCommand)
-  if (!supportResult.ok) {
-    return error(supportResult.error)
-  }
-
-  return success(parsedCommand)
+  return fromNeverthrowResult(parseResult)
 }
 
 // ─── Pipeline Steps ──────────────────────────────────────────────────────
@@ -450,58 +366,125 @@ const checkSemantics = (ctx: ParseContext): Result<ParseContext> => {
     return error('Missing action')
   }
 
-  // Commands like 'version', 'cluster-info', 'api-versions', 'api-resources' and 'diff' don't require a resource
-  if (ACTIONS_WITHOUT_RESOURCE.includes(ctx.action)) {
+  const normalizedFlags = ctx.normalizedFlags || ctx.flags || {}
+  const tokens = ctx.tokens || []
+  const validateSemantics = (): Result<ParseContext> => {
     const validationError = validateCommandSemantics(
-      ctx.action,
+      ctx.action as Action,
       ctx.resource,
       ctx.name,
-      ctx.normalizedFlags || ctx.flags || {},
-      ctx.tokens || [],
+      normalizedFlags,
+      tokens,
       ctx.createServiceType,
       ctx.createSecretType
     )
-    if (validationError) {
+    if (validationError != null) {
       return error(validationError)
     }
     return success(ctx)
   }
 
-  const rawPath = getRawPathFromFlags(ctx.normalizedFlags || ctx.flags || {})
+  // Commands like 'version', 'cluster-info', 'api-versions', 'api-resources' and 'diff' don't require a resource
+  if (ACTIONS_WITHOUT_RESOURCE.includes(ctx.action)) {
+    return validateSemantics()
+  }
+
+  const rawPath = getRawPathFromFlags(normalizedFlags)
   if (ctx.action === 'get' && typeof rawPath === 'string') {
-    const validationError = validateCommandSemantics(
-      ctx.action,
-      ctx.resource,
-      ctx.name,
-      ctx.normalizedFlags || ctx.flags || {},
-      ctx.tokens || [],
-      ctx.createServiceType,
-      ctx.createSecretType
-    )
-    if (validationError) {
-      return error(validationError)
-    }
-    return success(ctx)
+    return validateSemantics()
   }
 
   if (!ctx.resource) {
     return error('Missing resource')
   }
 
-  const validationError = validateCommandSemantics(
-    ctx.action,
-    ctx.resource,
-    ctx.name,
-    ctx.normalizedFlags || ctx.flags || {},
-    ctx.tokens || [],
-    ctx.createServiceType,
-    ctx.createSecretType
-  )
-  if (validationError) {
-    return error(validationError)
+  return validateSemantics()
+}
+
+const buildParsedCommandFromContext = (
+  ctx: ParseContext
+): NtResult<ParsedCommand, string> => {
+  if (!ctx.action || !ctx.flags) {
+    return ntErr('Internal parsing error: incomplete context')
   }
 
-  return success(ctx)
+  const normalizedFlags = ctx.normalizedFlags || ctx.flags
+  const parsedNames = getNamesFromTokens(
+    ctx.action,
+    ctx.tokens || [],
+    normalizedFlags,
+    ctx.resourceTokenIndex
+  )
+  const parsedSelector = getSelectorFromFlags(normalizedFlags)
+  if (!parsedSelector.ok) {
+    return ntErr(parsedSelector.error)
+  }
+
+  return ntOk({
+    action: ctx.action,
+    configSubcommand: ctx.configSubcommand,
+    resource: ctx.resource,
+    resourceList: ctx.resourceList,
+    rawPath: getRawPathFromFlags(normalizedFlags),
+    name: ctx.name,
+    names: parsedNames,
+    namespace: getNamespaceFromFlags(normalizedFlags),
+    output: getOutputFromFlags(normalizedFlags),
+    selector: parsedSelector.value,
+    flags: ctx.flags,
+    execCommand: ctx.execCommand,
+    createImages: ctx.createImages,
+    createCommand: ctx.createCommand,
+    createServiceType: ctx.createServiceType,
+    createIngressClassName: ctx.createIngressClassName,
+    createIngressRules: ctx.createIngressRules,
+    createSecretType: ctx.createSecretType,
+    createFromLiterals: ctx.createFromLiterals,
+    createFromFiles: ctx.createFromFiles,
+    createFromEnvFiles: ctx.createFromEnvFiles,
+    runImage: ctx.runImage,
+    runCommand: ctx.runCommand,
+    runArgs: ctx.runArgs,
+    runUseCommand: ctx.runUseCommand,
+    runHasSeparator: ctx.runHasSeparator,
+    runEnv: ctx.runEnv,
+    runLabels: ctx.runLabels,
+    runDryRunClient: ctx.runDryRunClient,
+    runRestart: ctx.runRestart,
+    runStdin: ctx.runStdin,
+    runTty: ctx.runTty,
+    runRemove: ctx.runRemove,
+    setSubcommand: ctx.setSubcommand,
+    setImageAssignments: ctx.setImageAssignments,
+    rolloutSubcommand: ctx.rolloutSubcommand,
+    rolloutRevision: ctx.rolloutRevision,
+    rolloutTimeoutSeconds: ctx.rolloutTimeoutSeconds,
+    rolloutWatch: ctx.rolloutWatch,
+    configCurrent: getConfigCurrentFromFlags(normalizedFlags),
+    configMinify: getConfigMinifyFromFlags(normalizedFlags),
+    configNamespace: getConfigNamespaceFromFlags(normalizedFlags),
+    configContextName: ctx.configContextName,
+    configRenameContextTo: ctx.configRenameContextTo,
+    configPath: ctx.configPath,
+    configUserName: ctx.configUserName,
+    configClusterName: ctx.configClusterName,
+    configServer: getConfigServerFromFlags(normalizedFlags),
+    configToken: getConfigTokenFromFlags(normalizedFlags),
+    authVerb: ctx.authVerb,
+    authResource: ctx.authResource,
+    authSubject: getAuthSubjectFromFlags(normalizedFlags),
+    explainPath: ctx.explainPath,
+    labelChanges: ctx.labelChanges,
+    annotationChanges: ctx.annotationChanges,
+    replicas: getReplicasFromFlags(normalizedFlags),
+    port: getPortFromFlags(normalizedFlags),
+    waitForCondition: ctx.waitForCondition,
+    waitTimeoutSeconds: ctx.waitTimeoutSeconds,
+    patchPayload: getPatchPayloadFromFlags(normalizedFlags),
+    patchType: getPatchTypeFromFlags(normalizedFlags),
+    deleteGracePeriodSeconds: getDeleteGracePeriodSecondsFromFlags(normalizedFlags),
+    deleteForce: getDeleteForceFromFlags(normalizedFlags)
+  })
 }
 
 const build = (ctx: ParseContext): Result<ParseContext> => {
@@ -994,7 +977,7 @@ const validateRunSemantics: ActionSemanticValidator = (context) => {
   const { name, flags } = context
   const runImage = flags['image']
   if (typeof runImage !== 'string' || runImage.length === 0) {
-    return 'error: required flag(s) "image" not set'
+    return buildRequiredFlagNotSetMessage('image')
   }
   if (name == null || name.length === 0) {
     return 'run requires a resource name'
@@ -1035,14 +1018,14 @@ const validateExposeSemantics: ActionSemanticValidator = (context) => {
 
 const validateDiffSemantics: ActionSemanticValidator = (context) => {
   if (!context.hasFilename) {
-    return 'diff requires one of -f or --filename'
+    return buildRequiresFilenameFlagMessage('diff')
   }
   return undefined
 }
 
 const validateReplaceSemantics: ActionSemanticValidator = (context) => {
   if (!context.hasFilename) {
-    return 'replace requires one of -f or --filename'
+    return buildRequiresFilenameFlagMessage('replace')
   }
   return undefined
 }
@@ -1094,7 +1077,7 @@ const validateSetSemantics: ActionSemanticValidator = (context) => {
 const validatePatchSemantics: ActionSemanticValidator = (context) => {
   const patchPayload = context.flags['patch']
   if (typeof patchPayload !== 'string' || patchPayload.length === 0) {
-    return 'error: required flag(s) "patch" not set'
+    return buildRequiredFlagNotSetMessage('patch')
   }
   const patchType = context.flags['type']
   if (patchType !== undefined && patchType !== 'merge') {
@@ -1174,7 +1157,7 @@ const validateAuthCanISemantics: ActionSemanticValidator = (context) => {
 
 const validateAuthReconcileSemantics: ActionSemanticValidator = (context) => {
   if (!context.hasFilename) {
-    return 'auth reconcile requires one of -f or --filename'
+    return buildRequiresFilenameFlagMessage('auth reconcile')
   }
   return undefined
 }

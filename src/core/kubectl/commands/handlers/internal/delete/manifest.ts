@@ -13,18 +13,11 @@ import {
   isSupportedResourceKind,
   toPluralKindReference
 } from '../../../resourceCatalog'
+import { getFilenameFromFlags } from '../../../shared/filenameFlags'
 import type { ParsedCommand } from '../../../types'
 import { DELETE_TARGET_BY_KIND } from './config'
 import { getPodDeleteOptions } from './messages'
 import { deleteSingleResource } from './operations'
-
-const getFilenameFromFlags = (parsed: ParsedCommand): string | undefined => {
-  const filename = parsed.flags.f || parsed.flags.filename
-  if (typeof filename !== 'string') {
-    return undefined
-  }
-  return filename
-}
 
 const deleteFromManifest = (
   apiServer: ApiServerFacade,

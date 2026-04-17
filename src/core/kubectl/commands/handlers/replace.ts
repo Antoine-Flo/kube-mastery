@@ -18,6 +18,11 @@ import {
   toKindReference,
   toPluralKindReference
 } from '../resourceCatalog'
+import {
+  buildMustSpecifyFilenameFlagMessage,
+  buildNotFoundErrorMessage
+} from '../shared/errorMessages'
+import { getFilenameFromFlags } from '../shared/filenameFlags'
 
 type KubernetesResource = {
   kind: string
@@ -113,14 +118,6 @@ const resetPodManifestForReplacement = (
   }
 }
 
-const getFilenameFromFlags = (parsed: ParsedCommand): string | undefined => {
-  const filename = parsed.flags.f || parsed.flags.filename
-  if (typeof filename !== 'string') {
-    return undefined
-  }
-  return filename
-}
-
 const isNamespacedKind = (kind: ResourceKind): boolean => {
   return isNamespacedResourceKind(kind)
 }
@@ -139,9 +136,7 @@ const validateNamespaceExists = (
     return undefined
   }
 
-  return error(
-    `Error from server (NotFound): namespaces "${namespace}" not found`
-  )
+  return error(buildNotFoundErrorMessage('namespaces', namespace))
 }
 
 const loadManifestResource = (
@@ -150,7 +145,7 @@ const loadManifestResource = (
 ): ExecutionResult & { resource?: KubernetesResource } => {
   const filename = getFilenameFromFlags(parsed)
   if (!filename) {
-    return error('error: must specify one of -f or --filename')
+    return error(buildMustSpecifyFilenameFlagMessage())
   }
 
   const fileResult = fileSystem.readFileDetailed(filename)
@@ -215,9 +210,7 @@ const getManifestTarget = (
 }
 
 const formatNotFound = (kind: ResourceKind, name: string): ExecutionResult => {
-  return error(
-    `Error from server (NotFound): ${toPluralKindReference(kind)} "${name}" not found`
-  )
+  return error(buildNotFoundErrorMessage(toPluralKindReference(kind), name))
 }
 
 const replaceWithoutForce = (

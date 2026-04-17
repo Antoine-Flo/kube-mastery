@@ -38,6 +38,12 @@ export type AuthSubcommandSpec = {
   flags?: readonly LeafFlagDefinition[]
 }
 
+const AS_SUBJECT_FLAG: LeafFlagDefinition = {
+  kind: 'string',
+  name: 'as',
+  description: 'User to impersonate'
+}
+
 export const CONFIG_SUBCOMMAND_SPECS: readonly ConfigSubcommandSpec[] = [
   {
     token: 'get-contexts',
@@ -146,7 +152,7 @@ export const AUTH_SUBCOMMAND_SPECS: readonly AuthSubcommandSpec[] = [
     use: 'auth can-i VERB RESOURCE [--as=SUBJECT]',
     short: 'Check whether an action is allowed',
     transformKind: 'verbResource',
-    flags: [{ kind: 'string', name: 'as', description: 'User to impersonate' }]
+    flags: [AS_SUBJECT_FLAG]
   },
   {
     token: 'whoami',
@@ -154,7 +160,7 @@ export const AUTH_SUBCOMMAND_SPECS: readonly AuthSubcommandSpec[] = [
     use: 'auth whoami [--as=SUBJECT]',
     short: 'Display the current user identity',
     transformKind: 'none',
-    flags: [{ kind: 'string', name: 'as', description: 'User to impersonate' }]
+    flags: [AS_SUBJECT_FLAG]
   },
   {
     token: 'reconcile',

@@ -1,3 +1,5 @@
+import { err, ok, type Result as NeverthrowResult } from 'neverthrow'
+
 // ═══════════════════════════════════════════════════════════════════════════
 // SHARED RESULT TYPES & HELPERS
 // ═══════════════════════════════════════════════════════════════════════════
@@ -66,3 +68,38 @@ export const errorWithIO = (
   error: message,
   io
 })
+
+export const toNeverthrowResult = <T, E>(
+  result: Result<T, E>
+): NeverthrowResult<T, E> => {
+  if (result.ok) {
+    return ok(result.value)
+  }
+  return err(result.error)
+}
+
+export const fromNeverthrowResult = <T, E>(
+  result: NeverthrowResult<T, E>
+): Result<T, E> => {
+  return result.match(
+    (value) => {
+      return { ok: true, value }
+    },
+    (errorValue) => {
+      return { ok: false, error: errorValue }
+    }
+  )
+}
+
+export const executionResultFromNeverthrow = (
+  result: NeverthrowResult<string, string>
+): ExecutionResult => {
+  return result.match(
+    (value) => {
+      return success(value)
+    },
+    (errorValue) => {
+      return error(errorValue)
+    }
+  )
+}

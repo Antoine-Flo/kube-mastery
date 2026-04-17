@@ -9,6 +9,7 @@ import type { DescribeDependencies } from '../../describe/interface'
 import { toPluralResourceKindReference } from '../resourceCatalog'
 import { applyFilters, noResourcesMessage } from './internal/get/filters'
 import type { ParsedCommand } from '../types'
+import { buildNotFoundErrorMessage } from '../shared/errorMessages'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // KUBECTL DESCRIBE HANDLER
@@ -95,9 +96,7 @@ export const handleDescribe = (
 
   if (parsed.name && resourcesToDescribe.length === 0) {
     const reference = toPluralResourceKindReference(resourceType)
-    return error(
-      `Error from server (NotFound): ${reference} "${parsed.name}" not found`
-    )
+    return error(buildNotFoundErrorMessage(reference, parsed.name))
   }
   if (!parsed.name && resourcesToDescribe.length === 0) {
     return success(

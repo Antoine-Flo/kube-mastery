@@ -13,6 +13,15 @@ import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import { toKindReference, toPluralKindReference } from '../resourceCatalog'
 import type { ParsedCommand, Resource } from '../types'
+import { err as ntErr, ok as ntOk, type Result as NtResult } from 'neverthrow'
+import { dispatchByAction } from '../shared/actionDispatch'
+import {
+  buildNotFoundErrorMessage,
+  buildRequiresResourceNameMessage,
+  buildRequiresResourceTypeMessage,
+  buildRequiresSubcommandMessage,
+  buildUnsupportedSubcommandMessage
+} from '../shared/errorMessages'
 
 const RESTART_ANNOTATION = 'kubectl.kubernetes.io/restartedAt'
 const CHANGE_CAUSE_ANNOTATION = 'kubernetes.io/change-cause'
@@ -29,25 +38,33 @@ const deepClone = <T>(value: T): T => {
   return JSON.parse(JSON.stringify(value)) as T
 }
 
+const buildRolloutNotFoundError = (kind: ResourceKind, name: string): string => {
+  return buildNotFoundErrorMessage(toPluralKindReference(kind), name)
+}
+
+const buildMissingRevisionError = (revision: number): string => {
+  return `error: unable to find the specified revision ${revision}`
+}
+
 const parseRolloutTarget = (
   parsed: ParsedCommand
-): { kind: ResourceKind; name: string } | ExecutionResult => {
+): NtResult<{ kind: ResourceKind; name: string }, string> => {
   if (parsed.resource == null) {
-    return error('error: rollout requires a resource type')
+    return ntErr(buildRequiresResourceTypeMessage('rollout'))
   }
   const kind = ROLLOUT_RESOURCE_KIND_BY_RESOURCE[parsed.resource]
   if (kind == null) {
-    return error(
+    return ntErr(
       'error: rollout supports only deployments, daemonsets, and statefulsets'
     )
   }
   if (parsed.name == null || parsed.name.length === 0) {
-    return error('error: rollout requires a resource name')
+    return ntErr(buildRequiresResourceNameMessage('rollout'))
   }
-  return {
+  return ntOk({
     kind,
     name: parsed.name
-  }
+  })
 }
 
 const getWorkloadTemplate = (
@@ -151,6 +168,48 @@ const getOwnedReplicaSets = (
   })
 }
 
+const getDeploymentReplicaSetHistory = (
+  apiServer: ApiServerFacade,
+  deployment: Deployment
+): ReplicaSet[] => {
+  return getOwnedReplicaSets(apiServer, deployment).sort((a, b) => {
+    return getDeploymentRevisionFromReplicaSet(a) - getDeploymentRevisionFromReplicaSet(b)
+  })
+}
+
+const findReplicaSetByRevision = (
+  replicaSets: readonly ReplicaSet[],
+  revision: number
+): ReplicaSet | undefined => {
+  return replicaSets.find((replicaSet) => {
+    return getDeploymentRevisionFromReplicaSet(replicaSet) === revision
+  })
+}
+
+const resolveDeploymentTemplateFromHistory = (
+  replicaSets: readonly ReplicaSet[],
+  desiredRevision?: number
+): NtResult<{ template: unknown; revision: number }, string> => {
+  if (desiredRevision != null) {
+    const targetReplicaSet = findReplicaSetByRevision(replicaSets, desiredRevision)
+    if (targetReplicaSet == null) {
+      return ntErr(buildMissingRevisionError(desiredRevision))
+    }
+    return ntOk({
+      template: targetReplicaSet.spec.template,
+      revision: desiredRevision
+    })
+  }
+  if (replicaSets.length < 2) {
+    return ntErr('error: no revision found to roll back to')
+  }
+  const previousReplicaSet = replicaSets[replicaSets.length - 2]
+  return ntOk({
+    template: previousReplicaSet.spec.template,
+    revision: getDeploymentRevisionFromReplicaSet(previousReplicaSet)
+  })
+}
+
 const getOwnedControllerRevisions = (
   apiServer: ApiServerFacade,
   kind: 'DaemonSet' | 'StatefulSet',
@@ -239,21 +298,68 @@ const ensureControllerRevisionHistory = (
   return [...existing, newRevision]
 }
 
+const resolveControllerRevisionTemplate = (
+  revisions: readonly ControllerRevision[],
+  desiredRevision?: number
+): NtResult<{ template: unknown; revision: number }, string> => {
+  if (desiredRevision != null) {
+    const targetRevision = revisions.find((revision) => {
+      return revision.revision === desiredRevision
+    })
+    if (targetRevision == null) {
+      return ntErr(buildMissingRevisionError(desiredRevision))
+    }
+    return ntOk({
+      template: targetRevision.data.template,
+      revision: targetRevision.revision
+    })
+  }
+  if (revisions.length < 2) {
+    return ntErr('error: no revision found to roll back to')
+  }
+  const previousRevision = revisions[revisions.length - 2]
+  return ntOk({
+    template: previousRevision.data.template,
+    revision: previousRevision.revision
+  })
+}
+
+type DeploymentRolloutSnapshot = {
+  desired: number
+  updated: number
+  available: number
+  oldPendingTermination: number
+}
+
+const getDeploymentRolloutSnapshot = (
+  deployment: Deployment
+): DeploymentRolloutSnapshot => {
+  const desired = deployment.spec.replicas ?? 1
+  const replicas = deployment.status.replicas ?? desired
+  const updated = deployment.status.updatedReplicas ?? 0
+  const available = deployment.status.availableReplicas ?? 0
+  const oldPendingTermination = Math.max(0, replicas - updated)
+  return {
+    desired,
+    updated,
+    available,
+    oldPendingTermination
+  }
+}
+
 const rolloutStatusComplete = (
   resource: KindToResource<ResourceKind>
 ): { done: boolean; details: string } => {
   if (resource.kind === 'Deployment') {
     const deployment = resource as Deployment
-    const desired = deployment.spec.replicas ?? 1
-    const replicas = deployment.status.replicas ?? desired
-    const updated = deployment.status.updatedReplicas ?? 0
-    const available = deployment.status.availableReplicas ?? 0
-    const oldPendingTermination = Math.max(0, replicas - updated)
+    const snapshot = getDeploymentRolloutSnapshot(deployment)
     const done =
-      updated >= desired && available >= desired && oldPendingTermination === 0
+      snapshot.updated >= snapshot.desired &&
+      snapshot.available >= snapshot.desired &&
+      snapshot.oldPendingTermination === 0
     return {
       done,
-      details: `${updated}/${desired} updated, ${available}/${desired} available`
+      details: `${snapshot.updated}/${snapshot.desired} updated, ${snapshot.available}/${snapshot.desired} available`
     }
   }
   if (resource.kind === 'DaemonSet') {
@@ -284,19 +390,15 @@ const formatRolloutWaitingMessage = (
 ): string => {
   if (resource.kind === 'Deployment') {
     const deployment = resource as Deployment
-    const desired = deployment.spec.replicas ?? 1
-    const replicas = deployment.status.replicas ?? desired
-    const available = deployment.status.availableReplicas ?? 0
-    const updated = deployment.status.updatedReplicas ?? 0
-    const oldPendingTermination = Math.max(0, replicas - updated)
-    if (available < desired) {
-      return `Waiting for deployment "${name}" rollout to finish: ${available} of ${desired} updated replicas are available...`
+    const snapshot = getDeploymentRolloutSnapshot(deployment)
+    if (snapshot.available < snapshot.desired) {
+      return `Waiting for deployment "${name}" rollout to finish: ${snapshot.available} of ${snapshot.desired} updated replicas are available...`
     }
-    if (updated < desired) {
-      return `Waiting for deployment "${name}" rollout to finish: ${updated} out of ${desired} new replicas have been updated...`
+    if (snapshot.updated < snapshot.desired) {
+      return `Waiting for deployment "${name}" rollout to finish: ${snapshot.updated} out of ${snapshot.desired} new replicas have been updated...`
     }
-    if (oldPendingTermination > 0) {
-      return `Waiting for deployment "${name}" rollout to finish: ${oldPendingTermination} old replicas are pending termination...`
+    if (snapshot.oldPendingTermination > 0) {
+      return `Waiting for deployment "${name}" rollout to finish: ${snapshot.oldPendingTermination} old replicas are pending termination...`
     }
     return `Waiting for deployment "${name}" rollout to finish...`
   }
@@ -486,9 +588,7 @@ const handleRolloutStatus = (
   if (reconcileForWait == null) {
     const resourceResult = apiServer.findResource(kind, name, namespace)
     if (!resourceResult.ok) {
-      return error(
-        `Error from server (NotFound): ${toPluralKindReference(kind)} "${name}" not found`
-      )
+      return error(buildRolloutNotFoundError(kind, name))
     }
     const status = rolloutStatusComplete(resourceResult.value)
     if (status.done) {
@@ -507,9 +607,7 @@ const handleRolloutStatus = (
     }
     const resourceResult = apiServer.findResource(kind, name, namespace)
     if (!resourceResult.ok) {
-      return error(
-        `Error from server (NotFound): ${toPluralKindReference(kind)} "${name}" not found`
-      )
+      return error(buildRolloutNotFoundError(kind, name))
     }
     const status = rolloutStatusComplete(resourceResult.value)
     if (status.done) {
@@ -555,42 +653,27 @@ const handleRolloutHistory = (
       namespace
     )
     if (!deploymentResult.ok) {
-      return error(
-        `Error from server (NotFound): ${toPluralKindReference(kind)} "${name}" not found`
-      )
+      return error(buildRolloutNotFoundError(kind, name))
     }
-    const ownedReplicaSets = getOwnedReplicaSets(
-      apiServer,
-      deploymentResult.value
-    )
-    const sorted = [...ownedReplicaSets].sort((a, b) => {
-      return (
-        getDeploymentRevisionFromReplicaSet(a) -
-        getDeploymentRevisionFromReplicaSet(b)
-      )
-    })
+    const sorted = getDeploymentReplicaSetHistory(apiServer, deploymentResult.value)
     const revisionRows: HistorySummaryRow[] = sorted.map((replicaSet) => ({
       revision: getDeploymentRevisionFromReplicaSet(replicaSet),
       changeCause: replicaSet.metadata.annotations?.[CHANGE_CAUSE_ANNOTATION]
     }))
     if (parsed.rolloutRevision != null) {
-      const targetReplicaSet = sorted.find((replicaSet) => {
-        return (
-          getDeploymentRevisionFromReplicaSet(replicaSet) ===
-          parsed.rolloutRevision
-        )
-      })
-      if (targetReplicaSet == null) {
-        return error(
-          `error: unable to find the specified revision ${parsed.rolloutRevision}`
-        )
+      const targetTemplateResult = resolveDeploymentTemplateFromHistory(
+        sorted,
+        parsed.rolloutRevision
+      )
+      if (targetTemplateResult.isErr()) {
+        return error(targetTemplateResult.error)
       }
       return success(
         formatHistoryDetails(
           kind,
           name,
-          parsed.rolloutRevision,
-          targetReplicaSet.spec.template
+          targetTemplateResult.value.revision,
+          targetTemplateResult.value.template
         )
       )
     }
@@ -602,9 +685,7 @@ const handleRolloutHistory = (
       ? apiServer.findResource('DaemonSet', name, namespace)
       : apiServer.findResource('StatefulSet', name, namespace)
   if (!workloadResult.ok) {
-    return error(
-      `Error from server (NotFound): ${toPluralKindReference(kind)} "${name}" not found`
-    )
+    return error(buildRolloutNotFoundError(kind, name))
   }
 
   const revisions = ensureControllerRevisionHistory(
@@ -612,20 +693,19 @@ const handleRolloutHistory = (
     workloadResult.value
   )
   if (parsed.rolloutRevision != null) {
-    const targetRevision = revisions.find((revision) => {
-      return revision.revision === parsed.rolloutRevision
-    })
-    if (targetRevision == null) {
-      return error(
-        `error: unable to find the specified revision ${parsed.rolloutRevision}`
-      )
+    const targetTemplateResult = resolveControllerRevisionTemplate(
+      revisions,
+      parsed.rolloutRevision
+    )
+    if (targetTemplateResult.isErr()) {
+      return error(targetTemplateResult.error)
     }
     return success(
       formatHistoryDetails(
         kind,
         name,
-        targetRevision.revision,
-        targetRevision.data.template
+        targetTemplateResult.value.revision,
+        targetTemplateResult.value.template
       )
     )
   }
@@ -650,9 +730,7 @@ const handleRolloutRestart = (
 ): ExecutionResult => {
   const resourceResult = apiServer.findResource(kind, name, namespace)
   if (!resourceResult.ok) {
-    return error(
-      `Error from server (NotFound): ${toPluralKindReference(kind)} "${name}" not found`
-    )
+    return error(buildRolloutNotFoundError(kind, name))
   }
 
   if (kind === 'DaemonSet' || kind === 'StatefulSet') {
@@ -700,64 +778,34 @@ const handleRolloutUndo = (
 ): ExecutionResult => {
   const resourceResult = apiServer.findResource(kind, name, namespace)
   if (!resourceResult.ok) {
-    return error(
-      `Error from server (NotFound): ${toPluralKindReference(kind)} "${name}" not found`
-    )
+    return error(buildRolloutNotFoundError(kind, name))
   }
 
   let targetTemplate: unknown | undefined
   if (kind === 'Deployment') {
     const deployment = resourceResult.value as Deployment
-    const sortedReplicaSets = getOwnedReplicaSets(apiServer, deployment).sort(
-      (a, b) => {
-        return (
-          getDeploymentRevisionFromReplicaSet(a) -
-          getDeploymentRevisionFromReplicaSet(b)
-        )
-      }
+    const sortedReplicaSets = getDeploymentReplicaSetHistory(apiServer, deployment)
+    const targetTemplateResult = resolveDeploymentTemplateFromHistory(
+      sortedReplicaSets,
+      parsed.rolloutRevision
     )
-    const desiredRevision = parsed.rolloutRevision
-    if (desiredRevision != null) {
-      const targetReplicaSet = sortedReplicaSets.find((replicaSet) => {
-        return (
-          getDeploymentRevisionFromReplicaSet(replicaSet) === desiredRevision
-        )
-      })
-      if (targetReplicaSet == null) {
-        return error(
-          `error: unable to find the specified revision ${desiredRevision}`
-        )
-      }
-      targetTemplate = targetReplicaSet.spec.template
-    } else {
-      if (sortedReplicaSets.length < 2) {
-        return error('error: no revision found to roll back to')
-      }
-      targetTemplate =
-        sortedReplicaSets[sortedReplicaSets.length - 2].spec.template
+    if (targetTemplateResult.isErr()) {
+      return error(targetTemplateResult.error)
     }
+    targetTemplate = targetTemplateResult.value.template
   } else {
     const revisions = ensureControllerRevisionHistory(
       apiServer,
       resourceResult.value as DaemonSet | StatefulSet
     )
-    const desiredRevision = parsed.rolloutRevision
-    if (desiredRevision != null) {
-      const targetRevision = revisions.find((revision) => {
-        return revision.revision === desiredRevision
-      })
-      if (targetRevision == null) {
-        return error(
-          `error: unable to find the specified revision ${desiredRevision}`
-        )
-      }
-      targetTemplate = targetRevision.data.template
-    } else {
-      if (revisions.length < 2) {
-        return error('error: no revision found to roll back to')
-      }
-      targetTemplate = revisions[revisions.length - 2].data.template
+    const targetTemplateResult = resolveControllerRevisionTemplate(
+      revisions,
+      parsed.rolloutRevision
+    )
+    if (targetTemplateResult.isErr()) {
+      return error(targetTemplateResult.error)
     }
+    targetTemplate = targetTemplateResult.value.template
   }
 
   if (targetTemplate == null) {
@@ -792,46 +840,42 @@ export const handleRollout = (
   reconcileForWait?: (namespace?: string) => void
 ): ExecutionResult => {
   const target = parseRolloutTarget(parsed)
-  if ('ok' in target) {
-    return target
+  if (target.isErr()) {
+    return error(target.error)
   }
 
   const subcommand = parsed.rolloutSubcommand
   if (subcommand == null) {
-    return error('error: rollout requires a subcommand')
+    return error(buildRequiresSubcommandMessage('rollout'))
   }
 
   const namespace = parsed.namespace ?? 'default'
-  if (subcommand === 'status') {
-    return handleRolloutStatus(
-      apiServer,
-      target.kind,
-      target.name,
-      namespace,
-      parsed,
-      reconcileForWait
-    )
+  const { kind, name } = target.value
+  const subcommandHandlers: Record<
+    NonNullable<ParsedCommand['rolloutSubcommand']>,
+    () => ExecutionResult
+  > = {
+    status: () => {
+      return handleRolloutStatus(
+        apiServer,
+        kind,
+        name,
+        namespace,
+        parsed,
+        reconcileForWait
+      )
+    },
+    history: () => {
+      return handleRolloutHistory(apiServer, kind, name, namespace, parsed)
+    },
+    restart: () => {
+      return handleRolloutRestart(apiServer, kind, name, namespace)
+    },
+    undo: () => {
+      return handleRolloutUndo(apiServer, kind, name, namespace, parsed)
+    }
   }
-  if (subcommand === 'history') {
-    return handleRolloutHistory(
-      apiServer,
-      target.kind,
-      target.name,
-      namespace,
-      parsed
-    )
-  }
-  if (subcommand === 'restart') {
-    return handleRolloutRestart(apiServer, target.kind, target.name, namespace)
-  }
-  if (subcommand === 'undo') {
-    return handleRolloutUndo(
-      apiServer,
-      target.kind,
-      target.name,
-      namespace,
-      parsed
-    )
-  }
-  return error(`error: unsupported rollout subcommand "${subcommand}"`)
+  return dispatchByAction(subcommand, subcommandHandlers, (action) => {
+    return error(buildUnsupportedSubcommandMessage('rollout', action))
+  })
 }

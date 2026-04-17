@@ -104,6 +104,19 @@ try {
         </div> */
         }
       </div>
+      <div class="featured-on">
+        <a
+        href="https://startupfa.me/s/kubemastery?utm_source=kubemastery.com"
+        target="_blank"
+        ><img
+          src="https://startupfa.me/badges/featured/dark-small.webp"
+          alt="KubeMastery - Featured on Startup Fame"
+          width="224"
+          height="36"
+        /></a
+      >
+      </div>
+
     </section>
 
     <div class="features">
@@ -465,12 +478,17 @@ try {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1.5rem;
-    justify-content: center;
-    min-height: 830px;
     position: relative;
-    padding-block: 3rem;
+    padding-top: 5rem;
+    padding-bottom: 2rem;
     padding-inline: 2rem;
+  }
+
+  @media (min-width: 1081px) {
+    .hero {
+      padding-top: 7rem;
+      padding-bottom: 3rem;
+    }
   }
 
   .early-access-badge {
@@ -512,6 +530,7 @@ try {
     gap: 2rem;
     width: 100%;
     max-width: var(--content-max-width);
+    flex-shrink: 0;
   }
   @media (min-width: 1024px) {
     .hero .content {
@@ -653,6 +672,31 @@ try {
     font-size: var(--text-sm);
     color: var(--color-gray-10);
     text-align: center;
+  }
+
+  .featured-on {
+    width: 100%;
+    max-width: var(--content-max-width);
+    margin-top: 5rem;
+    margin-bottom: 0.5rem;
+    animation: fadeInUp 0.8s ease-out 0.5s both;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+
+  .featured-on-link:focus-visible {
+    outline: 2px solid var(--color-cyan-8);
+    outline-offset: 3px;
+  }
+
+  .featured-on-badge {
+    display: block;
+    max-width: min(224px, 100%);
+    height: auto;
+    border-radius: 4px;
+    vertical-align: middle;
   }
 
   .cta :global(.btn[data-color='cyan'][data-variant='solid']) {

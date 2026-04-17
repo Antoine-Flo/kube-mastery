@@ -11,6 +11,11 @@ import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import type { ParsedCommand, Resource } from '../types'
 import { toKindReference, toPluralKindReference } from '../resourceCatalog'
+import {
+  buildNotFoundErrorMessage,
+  buildRequiresResourceNameMessage,
+  buildRequiresResourceTypeMessage
+} from '../shared/errorMessages'
 
 type ContainerLike = {
   name: string
@@ -113,7 +118,7 @@ const parseSetImageTarget = (
   parsed: ParsedCommand
 ): { kind: ResourceKind; name: string } | ExecutionResult => {
   if (parsed.resource == null) {
-    return error('error: set image requires a resource type')
+    return error(buildRequiresResourceTypeMessage('set image'))
   }
   const kind = SET_IMAGE_RESOURCE_KIND_BY_RESOURCE[parsed.resource]
   if (kind == null) {
@@ -122,7 +127,7 @@ const parseSetImageTarget = (
     )
   }
   if (parsed.name == null || parsed.name.length === 0) {
-    return error('error: set image requires a resource name')
+    return error(buildRequiresResourceNameMessage('set image'))
   }
   return {
     kind,
@@ -172,7 +177,10 @@ export const handleSetImage = (
   )
   if (!existing.ok) {
     return error(
-      `Error from server (NotFound): ${toPluralKindReference(targetResult.kind)} "${targetResult.name}" not found`
+      buildNotFoundErrorMessage(
+        toPluralKindReference(targetResult.kind),
+        targetResult.name
+      )
     )
   }
 

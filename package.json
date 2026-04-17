@@ -63,10 +63,13 @@
     "dotenv": "^17.2.4",
     "driver.js": "^1.4.0",
     "drizzle-orm": "^0.45.1",
+    "eslint-plugin-neverthrow": "^1.1.4",
     "jquery": "^3.7.1",
     "jquery.terminal": "^2.45.2",
     "jsonpath-plus": "^10.4.0",
+    "neverthrow": "^8.2.0",
     "postgres": "^3.4.8",
+    "remeda": "^2.33.7",
     "simple-icons-astro": "^16.1.0",
     "tsx": "^4.21.0",
     "yaml": "^2.8.2"

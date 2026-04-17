@@ -4,6 +4,7 @@ import type { PodTemplateSpec } from '../../../../../cluster/ressources/ReplicaS
 import type { ExecutionResult } from '../../../../../shared/result'
 import { error } from '../../../../../shared/result'
 import { createResourceWithEvents } from '../../../resourceCatalog'
+import { buildRequiredFlagNotSetMessage } from '../../../shared/errorMessages'
 import type { ParsedCommand } from '../../../types'
 
 export const getCreateImages = (parsed: ParsedCommand): string[] => {
@@ -137,7 +138,7 @@ export const validateCreateDeploymentCommand = (
 
   const images = getCreateImages(parsed)
   if (images.length === 0) {
-    return error('error: required flag(s) "image" not set')
+    return error(buildRequiredFlagNotSetMessage('image'))
   }
   if (
     images.length > 1 &&

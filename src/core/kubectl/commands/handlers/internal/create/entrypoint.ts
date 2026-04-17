@@ -9,6 +9,8 @@ import { error } from '../../../../../shared/result'
 import { parseKubernetesYaml } from '../../../../yamlParser'
 import { formatKubectlFileSystemError } from '../../../filesystemErrorPresenter'
 import { createResourceWithEvents } from '../../../resourceCatalog'
+import { buildMustSpecifyFilenameFlagMessage } from '../../../shared/errorMessages'
+import { getFilenameFromFlags } from '../../../shared/filenameFlags'
 import type { ParsedCommand } from '../../../types'
 import {
   buildCreateConfigMapDryRunManifest,
@@ -48,14 +50,6 @@ import {
   isCreateServiceImperative
 } from './service'
 
-const getFilenameFromFlags = (parsed: ParsedCommand): string | undefined => {
-  const filename = parsed.flags.f || parsed.flags.filename
-  if (typeof filename !== 'string') {
-    return undefined
-  }
-  return filename
-}
-
 const splitCsvValues = (raw: string): string[] => {
   return raw
     .split(',')
@@ -90,7 +84,7 @@ const loadAndParseYaml = (
   const filename = getFilenameFromFlags(parsed)
 
   if (!filename) {
-    return error('error: must specify one of -f or --filename')
+    return error(buildMustSpecifyFilenameFlagMessage())
   }
 
   const fileResult = fileSystem.readFileDetailed(filename as string)

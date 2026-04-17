@@ -9,15 +9,9 @@ import {
   resolveManifestFilePathsFromFilenameFlag
 } from '../../../manifestFilePathsFromFlag'
 import { applyResourceWithEvents } from '../../../resourceCatalog'
+import { buildMustSpecifyFilenameFlagMessage } from '../../../shared/errorMessages'
+import { getFilenameFromFlags } from '../../../shared/filenameFlags'
 import type { ParsedCommand } from '../../../types'
-
-const getFilenameFromFlags = (parsed: ParsedCommand): string | undefined => {
-  const filename = parsed.flags.f || parsed.flags.filename
-  if (typeof filename !== 'string') {
-    return undefined
-  }
-  return filename
-}
 
 export const handleApply = (
   fileSystem: FileSystem,
@@ -26,7 +20,7 @@ export const handleApply = (
 ): ExecutionResult => {
   const filename = getFilenameFromFlags(parsed)
   if (!filename) {
-    return error('error: must specify one of -f or --filename')
+    return error(buildMustSpecifyFilenameFlagMessage())
   }
 
   const pathsResult = resolveManifestFilePathsFromFilenameFlag(

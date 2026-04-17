@@ -16,6 +16,11 @@ import type { ParsedCommand } from '../types'
 import { buildDryRunResponse } from './create'
 import { createResourceWithEvents } from '../resourceCatalog'
 import { executeRuntimeAttachedCommand } from './internal/runtimeCommand'
+import { err as ntErr, ok as ntOk, type Result as NtResult } from 'neverthrow'
+import {
+  buildRequiredFlagNotSetMessage,
+  buildRequiresResourceNameMessage
+} from '../shared/errorMessages'
 
 const INTERACTIVE_SHELLS = new Set(['sh', 'bash', '/bin/sh', '/bin/bash'])
 
@@ -49,6 +54,62 @@ const stripMatchingQuotes = (raw: string): string => {
     return trimmed.slice(1, -1).trim()
   }
   return trimmed
+}
+
+const parseEnvVars = (runEnv: readonly string[]): NtResult<EnvVar[], string> => {
+  const envVars: EnvVar[] = []
+  for (const rawEnvValue of runEnv) {
+    const envValue = stripMatchingQuotes(rawEnvValue)
+    const equalsIndex = envValue.indexOf('=')
+    if (equalsIndex <= 0 || equalsIndex === envValue.length - 1) {
+      return ntErr(`error: invalid env: ${envValue}`)
+    }
+    const envName = envValue.slice(0, equalsIndex).trim()
+    const envRawValue = envValue.slice(equalsIndex + 1).trim()
+    if (envName.length === 0 || envRawValue.length === 0) {
+      return ntErr(`error: invalid env: ${envValue}`)
+    }
+    envVars.push({
+      name: envName,
+      source: {
+        type: 'value',
+        value: envRawValue
+      }
+    })
+  }
+  return ntOk(envVars)
+}
+
+const validateDryRunFlag = (
+  dryRunFlag: string | boolean | undefined
+): NtResult<undefined, string> => {
+  if (
+    typeof dryRunFlag === 'string' &&
+    dryRunFlag !== 'none' &&
+    dryRunFlag !== 'server' &&
+    dryRunFlag !== 'client'
+  ) {
+    return ntErr(
+      `error: Invalid dry-run value (${dryRunFlag}). Must be "none", "server", or "client".`
+    )
+  }
+  return ntOk(undefined)
+}
+
+const validateRunRestartPolicy = (
+  runRestart: ParsedCommand['runRestart']
+): NtResult<undefined, string> => {
+  if (
+    runRestart != null &&
+    runRestart !== 'Always' &&
+    runRestart !== 'OnFailure' &&
+    runRestart !== 'Never'
+  ) {
+    return ntErr(
+      kubectlUsageError('kubectl run', `invalid restart policy: ${runRestart}`)
+    )
+  }
+  return ntOk(undefined)
 }
 
 const buildRunDryRunManifest = (
@@ -126,28 +187,16 @@ export const handleRun = (
 ): ExecutionResult => {
   const image = parsed.runImage
   if (typeof image !== 'string' || image.length === 0) {
-    return error('error: required flag(s) "image" not set')
+    return error(buildRequiredFlagNotSetMessage('image'))
   }
 
   const podName = parsed.name
   if (typeof podName !== 'string' || podName.length === 0) {
-    return error('run requires a resource name')
+    return error(buildRequiresResourceNameMessage('run', false))
   }
   const podNameValidation = validateMetadataNameByKind('Pod', podName)
   if (podNameValidation != null) {
     return podNameValidation
-  }
-
-  const dryRunFlag = parsed.flags['dry-run']
-  if (
-    typeof dryRunFlag === 'string' &&
-    dryRunFlag !== 'none' &&
-    dryRunFlag !== 'server' &&
-    dryRunFlag !== 'client'
-  ) {
-    return error(
-      `error: Invalid dry-run value (${dryRunFlag}). Must be "none", "server", or "client".`
-    )
   }
 
   const runCommand = parsed.runCommand
@@ -160,41 +209,22 @@ export const handleRun = (
   if (parsed.runRemove === true && !isAttachLike) {
     return error('error: --rm should only be used for attached containers')
   }
-  if (
-    parsed.runRestart != null &&
-    parsed.runRestart !== 'Always' &&
-    parsed.runRestart !== 'OnFailure' &&
-    parsed.runRestart !== 'Never'
-  ) {
-    return error(
-      kubectlUsageError(
-        'kubectl run',
-        `invalid restart policy: ${parsed.runRestart}`
-      )
-    )
+
+  const dryRunValidation = validateDryRunFlag(parsed.flags['dry-run'])
+  if (dryRunValidation.isErr()) {
+    return error(dryRunValidation.error)
   }
 
-  const envVars: EnvVar[] = []
-  const runEnv = parsed.runEnv || []
-  for (const rawEnvValue of runEnv) {
-    const envValue = stripMatchingQuotes(rawEnvValue)
-    const equalsIndex = envValue.indexOf('=')
-    if (equalsIndex <= 0 || equalsIndex === envValue.length - 1) {
-      return error(`error: invalid env: ${envValue}`)
-    }
-    const envName = envValue.slice(0, equalsIndex).trim()
-    const envRawValue = envValue.slice(equalsIndex + 1).trim()
-    if (envName.length === 0 || envRawValue.length === 0) {
-      return error(`error: invalid env: ${envValue}`)
-    }
-    envVars.push({
-      name: envName,
-      source: {
-        type: 'value',
-        value: envRawValue
-      }
-    })
+  const restartValidation = validateRunRestartPolicy(parsed.runRestart)
+  if (restartValidation.isErr()) {
+    return error(restartValidation.error)
   }
+
+  const envVarsResult = parseEnvVars(parsed.runEnv || [])
+  if (envVarsResult.isErr()) {
+    return error(envVarsResult.error)
+  }
+  const envVars = envVarsResult.value
 
   const pod = createPod({
     name: podName,

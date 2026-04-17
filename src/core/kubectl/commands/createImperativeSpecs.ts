@@ -1,5 +1,6 @@
 import type { Action, Resource } from './types'
 import type { LeafFlagDefinition } from './subcommandSpecs'
+import { map, pipe } from 'remeda'
 
 type CreateLeafSpec = {
   token: string
@@ -26,6 +27,38 @@ export type CreateResourceSpec = CreateLeafSpec & {
   pluralToken: string
 }
 
+const OUTPUT_FLAG: LeafFlagDefinition = {
+  kind: 'string',
+  name: 'output',
+  short: 'o',
+  description: 'Output format'
+}
+
+const DRY_RUN_FLAG: LeafFlagDefinition = {
+  kind: 'enum',
+  name: 'dry-run',
+  description: 'Must be none, server or client',
+  enumValues: ['none', 'server', 'client']
+}
+
+const OUTPUT_AND_DRY_RUN_FLAGS: readonly LeafFlagDefinition[] = [
+  OUTPUT_FLAG,
+  DRY_RUN_FLAG
+]
+
+const VERB_AND_RESOURCE_FLAGS: readonly LeafFlagDefinition[] = [
+  {
+    kind: 'stringArray',
+    name: 'verb',
+    description: 'Verbs allowed on the resources'
+  },
+  {
+    kind: 'stringArray',
+    name: 'resource',
+    description: 'Resources this rule applies to'
+  }
+]
+
 export const CREATE_RESOURCE_SPECS: readonly CreateResourceSpec[] = [
   {
     token: 'deployment',
@@ -39,13 +72,7 @@ export const CREATE_RESOURCE_SPECS: readonly CreateResourceSpec[] = [
       { kind: 'stringArray', name: 'image', description: 'Image name' },
       { kind: 'string', name: 'replicas', description: 'Replica count' },
       { kind: 'string', name: 'port', description: 'Port number' },
-      { kind: 'string', name: 'output', short: 'o', description: 'Output format' },
-      {
-        kind: 'enum',
-        name: 'dry-run',
-        description: 'Must be none, server or client',
-        enumValues: ['none', 'server', 'client']
-      }
+      ...OUTPUT_AND_DRY_RUN_FLAGS
     ]
   },
   {
@@ -63,13 +90,7 @@ export const CREATE_RESOURCE_SPECS: readonly CreateResourceSpec[] = [
         description: 'Host/path backend rule'
       },
       { kind: 'string', name: 'class', description: 'Ingress class name' },
-      { kind: 'string', name: 'output', short: 'o', description: 'Output format' },
-      {
-        kind: 'enum',
-        name: 'dry-run',
-        description: 'Must be none, server or client',
-        enumValues: ['none', 'server', 'client']
-      }
+      ...OUTPUT_AND_DRY_RUN_FLAGS
     ]
   },
   {
@@ -81,15 +102,7 @@ export const CREATE_RESOURCE_SPECS: readonly CreateResourceSpec[] = [
     short: 'Create a namespace',
     action: 'create',
     aliases: ['ns'],
-    flags: [
-      { kind: 'string', name: 'output', short: 'o', description: 'Output format' },
-      {
-        kind: 'enum',
-        name: 'dry-run',
-        description: 'Must be none, server or client',
-        enumValues: ['none', 'server', 'client']
-      }
-    ]
+    flags: [...OUTPUT_AND_DRY_RUN_FLAGS]
   },
   {
     token: 'clusterrole',
@@ -100,23 +113,8 @@ export const CREATE_RESOURCE_SPECS: readonly CreateResourceSpec[] = [
     short: 'Create a ClusterRole',
     action: 'create',
     flags: [
-      {
-        kind: 'stringArray',
-        name: 'verb',
-        description: 'Verbs allowed on the resources'
-      },
-      {
-        kind: 'stringArray',
-        name: 'resource',
-        description: 'Resources this rule applies to'
-      },
-      { kind: 'string', name: 'output', short: 'o', description: 'Output format' },
-      {
-        kind: 'enum',
-        name: 'dry-run',
-        description: 'Must be none, server or client',
-        enumValues: ['none', 'server', 'client']
-      }
+      ...VERB_AND_RESOURCE_FLAGS,
+      ...OUTPUT_AND_DRY_RUN_FLAGS
     ]
   },
   {
@@ -128,23 +126,8 @@ export const CREATE_RESOURCE_SPECS: readonly CreateResourceSpec[] = [
     short: 'Create a Role',
     action: 'create',
     flags: [
-      {
-        kind: 'stringArray',
-        name: 'verb',
-        description: 'Verbs allowed on the resources'
-      },
-      {
-        kind: 'stringArray',
-        name: 'resource',
-        description: 'Resources this rule applies to'
-      },
-      { kind: 'string', name: 'output', short: 'o', description: 'Output format' },
-      {
-        kind: 'enum',
-        name: 'dry-run',
-        description: 'Must be none, server or client',
-        enumValues: ['none', 'server', 'client']
-      }
+      ...VERB_AND_RESOURCE_FLAGS,
+      ...OUTPUT_AND_DRY_RUN_FLAGS
     ]
   },
   {
@@ -166,13 +149,7 @@ export const CREATE_RESOURCE_SPECS: readonly CreateResourceSpec[] = [
         name: 'serviceaccount',
         description: 'ServiceAccount subject in namespace:name form'
       },
-      { kind: 'string', name: 'output', short: 'o', description: 'Output format' },
-      {
-        kind: 'enum',
-        name: 'dry-run',
-        description: 'Must be none, server or client',
-        enumValues: ['none', 'server', 'client']
-      }
+      ...OUTPUT_AND_DRY_RUN_FLAGS
     ]
   },
   {
@@ -194,13 +171,7 @@ export const CREATE_RESOURCE_SPECS: readonly CreateResourceSpec[] = [
         name: 'serviceaccount',
         description: 'ServiceAccount subject in namespace:name form'
       },
-      { kind: 'string', name: 'output', short: 'o', description: 'Output format' },
-      {
-        kind: 'enum',
-        name: 'dry-run',
-        description: 'Must be none, server or client',
-        enumValues: ['none', 'server', 'client']
-      }
+      ...OUTPUT_AND_DRY_RUN_FLAGS
     ]
   },
   {
@@ -218,13 +189,7 @@ export const CREATE_RESOURCE_SPECS: readonly CreateResourceSpec[] = [
         name: 'from-literal',
         description: 'Literal key=value entries'
       },
-      { kind: 'string', name: 'output', short: 'o', description: 'Output format' },
-      {
-        kind: 'enum',
-        name: 'dry-run',
-        description: 'Must be none, server or client',
-        enumValues: ['none', 'server', 'client']
-      }
+      ...OUTPUT_AND_DRY_RUN_FLAGS
     ]
   }
 ] as const
@@ -282,13 +247,7 @@ export const CREATE_SERVICE_COMMON_FLAGS: readonly LeafFlagDefinition[] = [
   { kind: 'string', name: 'tcp', description: 'Port mapping list' },
   { kind: 'string', name: 'node-port', description: 'NodePort value' },
   { kind: 'string', name: 'external-name', description: 'External DNS name' },
-  { kind: 'string', name: 'output', short: 'o', description: 'Output format' },
-  {
-    kind: 'enum',
-    name: 'dry-run',
-    description: 'Must be none, server or client',
-    enumValues: ['none', 'server', 'client']
-  }
+  ...OUTPUT_AND_DRY_RUN_FLAGS
 ] as const
 
 export const CREATE_SECRET_GENERIC_FLAGS: readonly LeafFlagDefinition[] = [
@@ -307,25 +266,13 @@ export const CREATE_SECRET_GENERIC_FLAGS: readonly LeafFlagDefinition[] = [
     name: 'from-env-file',
     description: 'Env file entries'
   },
-  { kind: 'string', name: 'output', short: 'o', description: 'Output format' },
-  {
-    kind: 'enum',
-    name: 'dry-run',
-    description: 'Must be none, server or client',
-    enumValues: ['none', 'server', 'client']
-  }
+  ...OUTPUT_AND_DRY_RUN_FLAGS
 ] as const
 
 export const CREATE_SECRET_TLS_FLAGS: readonly LeafFlagDefinition[] = [
   { kind: 'string', name: 'cert', description: 'Certificate path' },
   { kind: 'string', name: 'key', description: 'Private key path' },
-  { kind: 'string', name: 'output', short: 'o', description: 'Output format' },
-  {
-    kind: 'enum',
-    name: 'dry-run',
-    description: 'Must be none, server or client',
-    enumValues: ['none', 'server', 'client']
-  }
+  ...OUTPUT_AND_DRY_RUN_FLAGS
 ] as const
 
 export const CREATE_SECRET_DOCKER_REGISTRY_FLAGS: readonly LeafFlagDefinition[] = [
@@ -333,17 +280,12 @@ export const CREATE_SECRET_DOCKER_REGISTRY_FLAGS: readonly LeafFlagDefinition[] 
   { kind: 'string', name: 'docker-username', description: 'Docker username' },
   { kind: 'string', name: 'docker-password', description: 'Docker password' },
   { kind: 'string', name: 'docker-email', description: 'Docker email' },
-  { kind: 'string', name: 'output', short: 'o', description: 'Output format' },
-  {
-    kind: 'enum',
-    name: 'dry-run',
-    description: 'Must be none, server or client',
-    enumValues: ['none', 'server', 'client']
-  }
+  ...OUTPUT_AND_DRY_RUN_FLAGS
 ] as const
 
-export const CREATE_IMPERATIVE_PLURAL_TOKENS = CREATE_RESOURCE_SPECS.map(
-  (spec) => {
+export const CREATE_IMPERATIVE_PLURAL_TOKENS = pipe(
+  CREATE_RESOURCE_SPECS,
+  map((spec) => {
     return spec.pluralToken
-  }
+  })
 )
