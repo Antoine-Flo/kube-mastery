@@ -93,19 +93,33 @@ const parseTimestampFromLogLine = (
   line: string,
   fallbackYear: number
 ): number => {
-  const isoMatch = line.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)/)
+  const isoMatch = line.match(
+    /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(\.\d+)?Z/
+  )
   if (isoMatch != null) {
-    return Date.parse(isoMatch[1])
+    const fraction = isoMatch[2] ?? ''
+    const parsed = Date.parse(`${isoMatch[1]}${fraction}Z`)
+    if (Number.isNaN(parsed)) {
+      return Number.NaN
+    }
+    if (fraction.length === 0) {
+      return parsed + 999
+    }
+    return parsed
   }
 
   const nginxMatch = line.match(
-    /^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2}):(\d{2})/
+    /^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2}):(\d{2})(\.\d+)?/
   )
   if (nginxMatch != null) {
+    const fraction = nginxMatch[7] ?? ''
     const parsed = Date.parse(
-      `${nginxMatch[1]}-${nginxMatch[2]}-${nginxMatch[3]}T${nginxMatch[4]}:${nginxMatch[5]}:${nginxMatch[6]}Z`
+      `${nginxMatch[1]}-${nginxMatch[2]}-${nginxMatch[3]}T${nginxMatch[4]}:${nginxMatch[5]}:${nginxMatch[6]}${fraction}Z`
     )
     if (!Number.isNaN(parsed)) {
+      if (fraction.length === 0) {
+        return parsed + 999
+      }
       return parsed
     }
   }
@@ -114,11 +128,12 @@ const parseTimestampFromLogLine = (
     /^[IWE](\d{2})(\d{2}) (\d{2}):(\d{2}):(\d{2})\.(\d{6})/
   )
   if (kubeMatch != null) {
+    const fractionalMs = Math.floor(Number.parseInt(kubeMatch[6], 10) / 1000)
     const parsed = Date.parse(
       `${fallbackYear}-${kubeMatch[1]}-${kubeMatch[2]}T${kubeMatch[3]}:${kubeMatch[4]}:${kubeMatch[5]}Z`
     )
     if (!Number.isNaN(parsed)) {
-      return parsed
+      return parsed + fractionalMs
     }
   }
 
