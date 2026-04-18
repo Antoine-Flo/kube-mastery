@@ -1,5 +1,5 @@
 import type { UiLang } from '../courses/types'
-import type { DrillFile } from './types'
+import type { DrillFile, DrillRuntimeEnvMeta } from './types'
 import type { DrillIndexPort } from './port'
 import { parseDrillFile } from './domain'
 
@@ -11,6 +11,19 @@ const enMarkdownGlob = import.meta.glob<string>(
 const frMarkdownGlob = import.meta.glob<string>(
   '../../courses/drills/*/fr.md',
   { eager: true, query: '?raw', import: 'default' }
+)
+
+const drillFsModuleGlob = import.meta.glob('../../courses/drills/*/fs.ts', {
+  eager: false
+})
+
+const drillClusterYamlGlob = import.meta.glob(
+  '../../courses/drills/*/cluster.yaml',
+  {
+    eager: false,
+    query: '?raw',
+    import: 'default'
+  }
 )
 
 function extractDrillId(path: string): string | null {
@@ -50,9 +63,23 @@ function getDrillFile(drillId: string, lang: UiLang): DrillFile | null {
   return null
 }
 
+function getDrillRuntimeEnv(drillId: string): DrillRuntimeEnvMeta {
+  const hasFsModule = Object.keys(drillFsModuleGlob).some(
+    (k) => extractDrillId(k) === drillId
+  )
+  const hasClusterYaml = Object.keys(drillClusterYamlGlob).some(
+    (k) => extractDrillId(k) === drillId
+  )
+  return {
+    hasFsModule,
+    hasClusterYaml
+  }
+}
+
 export function createDrillGlobAdapter(): DrillIndexPort {
   return {
     getDrillIds,
-    getDrillFile
+    getDrillFile,
+    getDrillRuntimeEnv
   }
 }

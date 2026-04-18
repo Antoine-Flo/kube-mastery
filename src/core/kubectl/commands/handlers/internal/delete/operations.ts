@@ -14,6 +14,10 @@ import {
 import { formatDeletedMessage, formatNotFoundMessage } from './messages'
 import type { DeleteManifestTargetConfig, PodDeleteOptions } from './types'
 
+const toDryRunDeleteMessage = (message: string): string => {
+  return `${message} (dry run)`
+}
+
 export const deleteNamespacedResourcesForNamespace = (
   apiServer: ApiServerFacade,
   namespace: string
@@ -180,10 +184,18 @@ export const deleteSingleResource = (
   namespace: string,
   podDeleteOptions: PodDeleteOptions
 ): ExecutionResult => {
+  const dryRunRequested = podDeleteOptions.dryRun === true
   if (config.kind === 'Namespace') {
     const existingNamespace = apiServer.findResource('Namespace', name)
     if (!existingNamespace.ok) {
       return formatNotFoundMessage(config.kindRefPlural, name)
+    }
+    if (dryRunRequested) {
+      return success(
+        toDryRunDeleteMessage(
+          formatDeletedMessage(config.kindRef, name, namespace, false)
+        )
+      )
     }
     const cascadeResult = deleteNamespacedResourcesForNamespace(apiServer, name)
     if (cascadeResult != null) {
@@ -197,6 +209,17 @@ export const deleteSingleResource = (
   }
 
   if (config.namespaced) {
+    if (dryRunRequested) {
+      const findResult = apiServer.findResource(config.kind, name, namespace)
+      if (!findResult.ok) {
+        return formatNotFoundMessage(config.kindRefPlural, name)
+      }
+      return success(
+        toDryRunDeleteMessage(
+          formatDeletedMessage(config.kindRef, name, namespace, true)
+        )
+      )
+    }
     const deleteResult =
       config.kind === 'Pod'
         ? apiServer.deleteResource(
@@ -212,6 +235,17 @@ export const deleteSingleResource = (
     return success(formatDeletedMessage(config.kindRef, name, namespace, true))
   }
 
+  if (dryRunRequested) {
+    const findResult = apiServer.findResource(config.kind, name)
+    if (!findResult.ok) {
+      return formatNotFoundMessage(config.kindRefPlural, name)
+    }
+    return success(
+      toDryRunDeleteMessage(
+        formatDeletedMessage(config.kindRef, name, namespace, false)
+      )
+    )
+  }
   const deleteResult = apiServer.deleteResource(config.kind, name)
   if (!deleteResult.ok) {
     return formatNotFoundMessage(config.kindRefPlural, name)
@@ -297,8 +331,23 @@ const deleteWithNotFoundMessage = (
   namespace: string,
   notFoundPlural: string,
   kindRef: string,
-  namespaced: boolean
+  namespaced: boolean,
+  podDeleteOptions: PodDeleteOptions
 ): ExecutionResult => {
+  const dryRunRequested = podDeleteOptions.dryRun === true
+  if (dryRunRequested) {
+    const findResult = namespaced
+      ? apiServer.findResource(kind, name, namespace)
+      : apiServer.findResource(kind, name)
+    if (!findResult.ok) {
+      return formatNotFoundMessage(notFoundPlural, name)
+    }
+    return success(
+      toDryRunDeleteMessage(
+        formatDeletedMessage(kindRef, name, namespace, namespaced)
+      )
+    )
+  }
   const deleteResult = namespaced
     ? apiServer.deleteResource(kind, name, namespace)
     : apiServer.deleteResource(kind, name)
@@ -315,6 +364,7 @@ export const deleteNamedResources = (
   namespace: string,
   podDeleteOptions: PodDeleteOptions
 ): ExecutionResult => {
+  const dryRunRequested = podDeleteOptions.dryRun === true
   if (
     resource === 'pods' ||
     resource === 'configmaps' ||
@@ -334,6 +384,20 @@ export const deleteNamedResources = (
           : 'secret'
     const messages: string[] = []
     for (const name of names) {
+      if (dryRunRequested) {
+        const findResult = apiServer.findResource(kind, name, namespace)
+        if (!findResult.ok) {
+          return error(
+            `Error from server (NotFound): ${resource} "${name}" not found`
+          )
+        }
+        messages.push(
+          toDryRunDeleteMessage(
+            formatDeletedMessage(kindRef, name, namespace, true)
+          )
+        )
+        continue
+      }
       const deleteResult =
         kind === 'Pod'
           ? apiServer.deleteResource(kind, name, namespace, podDeleteOptions)
@@ -356,7 +420,8 @@ export const deleteNamedResources = (
         namespace,
         'deployments.apps',
         'deployment.apps',
-        true
+        true,
+        podDeleteOptions
       )
       if (!result.ok) {
         return result
@@ -376,7 +441,8 @@ export const deleteNamedResources = (
         namespace,
         'daemonsets.apps',
         'daemonset.apps',
-        true
+        true,
+        podDeleteOptions
       )
       if (!result.ok) {
         return result
@@ -396,7 +462,8 @@ export const deleteNamedResources = (
         namespace,
         'statefulsets.apps',
         'statefulset.apps',
-        true
+        true,
+        podDeleteOptions
       )
       if (!result.ok) {
         return result
@@ -409,6 +476,20 @@ export const deleteNamedResources = (
   if (resource === 'services') {
     const messages: string[] = []
     for (const name of names) {
+      if (dryRunRequested) {
+        const findResult = apiServer.findResource('Service', name, namespace)
+        if (!findResult.ok) {
+          return error(
+            `Error from server (NotFound): services "${name}" not found`
+          )
+        }
+        messages.push(
+          toDryRunDeleteMessage(
+            formatDeletedMessage('service', name, namespace, true)
+          )
+        )
+        continue
+      }
       const deleteResult = apiServer.deleteResource('Service', name, namespace)
       if (!deleteResult.ok) {
         return error(deleteResult.error)
@@ -428,7 +509,8 @@ export const deleteNamedResources = (
         namespace,
         'ingresses.networking.k8s.io',
         'ingress.networking.k8s.io',
-        true
+        true,
+        podDeleteOptions
       )
       if (!result.ok) {
         return result
@@ -448,7 +530,8 @@ export const deleteNamedResources = (
         namespace,
         'persistentvolumes',
         'persistentvolume',
-        false
+        false,
+        podDeleteOptions
       )
       if (!result.ok) {
         return result
@@ -468,7 +551,8 @@ export const deleteNamedResources = (
         namespace,
         'persistentvolumeclaims',
         'persistentvolumeclaim',
-        true
+        true,
+        podDeleteOptions
       )
       if (!result.ok) {
         return result
@@ -484,6 +568,14 @@ export const deleteNamedResources = (
       const existingNamespace = apiServer.findResource('Namespace', name)
       if (!existingNamespace.ok) {
         return formatNotFoundMessage('namespaces', name)
+      }
+      if (dryRunRequested) {
+        messages.push(
+          toDryRunDeleteMessage(
+            formatDeletedMessage('namespace', name, namespace, false)
+          )
+        )
+        continue
       }
       const cascadeResult = deleteNamespacedResourcesForNamespace(
         apiServer,
@@ -511,7 +603,8 @@ export const deleteNamedResources = (
         namespace,
         'leases',
         'lease',
-        true
+        true,
+        podDeleteOptions
       )
       if (!result.ok) {
         return result

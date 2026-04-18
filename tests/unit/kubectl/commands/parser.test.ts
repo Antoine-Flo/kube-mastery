@@ -372,6 +372,17 @@ describe('kubectl parser - run', () => {
     expect(result.value.runLabels).toEqual({ app: 'web' })
   })
 
+  it('should reject run labels when label spec is malformed', () => {
+    const result = parseCommand(
+      'kubectl run web --image=nginx:1.28 --labels=app==web,tier=frontend --dry-run=client -o yaml'
+    )
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('error: unexpected label spec: app==web')
+    }
+  })
+
   it('should parse run with dry-run client', () => {
     const result = parseCommand(
       'kubectl run test-pod --image=busybox --dry-run=client'
@@ -417,6 +428,30 @@ describe('kubectl parser - run', () => {
     expect(result.value.runTty).toBe(true)
     expect(result.value.runRemove).toBe(true)
     expect(result.value.runRestart).toBe('Never')
+  })
+
+  it('should parse run with --attach flag', () => {
+    const result = parseCommand('kubectl run test-pod --image=busybox --attach')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.flags.attach).toBe(true)
+  })
+
+  it('should parse run with --image-pull-policy flag', () => {
+    const result = parseCommand(
+      'kubectl run test-pod --image=busybox --image-pull-policy=IfNotPresent'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.flags['image-pull-policy']).toBe('IfNotPresent')
   })
 
   it('should reject run when image is missing', () => {

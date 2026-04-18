@@ -491,6 +491,7 @@ export function buildDrillDetail(
   if (!file || file.isDraft === true || file.comingSoon === true) {
     return null
   }
+  const runtimeEnv = port.getDrillRuntimeEnv(drillId)
 
   return {
     id: drillId,
@@ -500,6 +501,7 @@ export function buildDrillDetail(
     ckaTargetMinutes: file.ckaTargetMinutes,
     isFree: file.isFree === true,
     tasks: file.tasks,
-    tag: file.tag ?? null
+    tag: file.tag ?? null,
+    runtimeEnv
   }
 }

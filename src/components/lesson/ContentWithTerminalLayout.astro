@@ -11,13 +11,19 @@ import { Kubernetes } from 'simple-icons-astro'
 
 interface Props {
   seedName: string
+  drillId?: string
+  drillHasFsModule?: boolean
+  drillHasClusterYaml?: boolean
   lang: 'en' | 'fr'
   showSidebar?: boolean
   supportContextId?: string
   /** When false, terminal is a locked placeholder (no cluster simulation). */
   terminalInteractive?: boolean
   terminalLockPrimaryHref?: string
+  terminalLockPrimaryLabel?: string
   terminalLockSecondaryHref?: string
+  terminalLockTitle?: string
+  terminalLockBody?: string
   terminalDocsHref?: string
   terminalDocsTabLabel?: string
   terminalShellTabLabel?: string
@@ -25,12 +31,18 @@ interface Props {
 
 const {
   seedName,
+  drillId,
+  drillHasFsModule = false,
+  drillHasClusterYaml = false,
   lang,
   showSidebar = false,
   supportContextId,
   terminalInteractive = true,
   terminalLockPrimaryHref = '',
+  terminalLockPrimaryLabel,
   terminalLockSecondaryHref = '',
+  terminalLockTitle,
+  terminalLockBody,
   terminalDocsHref = '',
   terminalDocsTabLabel = 'Docs',
   terminalShellTabLabel = 'Terminal'
@@ -48,6 +60,9 @@ const KUBERNETES_DOCS_IFRAME_SANDBOX =
   <div
     class="lesson-layout-root"
     data-seed-name={seedName}
+    data-drill-id={drillId ?? undefined}
+    data-drill-has-fs-module={drillHasFsModule ? 'true' : 'false'}
+    data-drill-has-cluster-yaml={drillHasClusterYaml ? 'true' : 'false'}
     data-lang={lang}
     data-terminal-open="false"
     data-outline-open="false"
@@ -202,9 +217,11 @@ const KUBERNETES_DOCS_IFRAME_SANDBOX =
                       </div>
                       <div class="lesson-terminal-lock__card">
                         <h2 class="lesson-terminal-lock__title">
-                          {t('lesson_terminalLock_title')}
+                          {terminalLockTitle ?? t('lesson_terminalLock_title')}
                         </h2>
-                        <p class="lesson-terminal-lock__body">{t('lesson_terminalLock_body')}</p>
+                        <p class="lesson-terminal-lock__body">
+                          {terminalLockBody ?? t('lesson_terminalLock_body')}
+                        </p>
                         <div class="lesson-terminal-lock__ctas">
                           <Button
                             href={terminalLockPrimaryHref}
@@ -212,16 +229,18 @@ const KUBERNETES_DOCS_IFRAME_SANDBOX =
                             color="cyan"
                             size="sm"
                           >
-                            {t('lesson_terminalLock_ctaUpgrade')}
+                            {terminalLockPrimaryLabel ?? t('lesson_terminalLock_ctaUpgrade')}
                           </Button>
-                          <Button
-                            href={terminalLockSecondaryHref}
-                            variant="outline"
-                            color="gray"
-                            size="sm"
-                          >
-                            {t('lesson_terminalLock_tryFreeCrashCourse')}
-                          </Button>
+                          {terminalLockSecondaryHref && (
+                            <Button
+                              href={terminalLockSecondaryHref}
+                              variant="outline"
+                              color="gray"
+                              size="sm"
+                            >
+                              {t('lesson_terminalLock_tryFreeCrashCourse')}
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>

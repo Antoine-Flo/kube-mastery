@@ -7,7 +7,7 @@ let beforeUnloadBound = false
 async function teardownGlobalLessonEnv() {
   const globalState = globalThis as {
     __lessonEnv?: EmulatedEnvironment
-    __lessonEnvSeed?: string
+    __lessonEnvKey?: string
   }
   if (!globalState.__lessonEnv) {
     lessonEnv = null
@@ -15,7 +15,7 @@ async function teardownGlobalLessonEnv() {
   }
   const env = globalState.__lessonEnv
   delete globalState.__lessonEnv
-  delete globalState.__lessonEnvSeed
+  delete globalState.__lessonEnvKey
   lessonEnv = null
 
   if (cachedDestroy) {
@@ -41,12 +41,22 @@ async function setupLessonEnv() {
     return
   }
   const seedName = root.getAttribute('data-seed-name') ?? 'minimal'
+  const drillId = root.getAttribute('data-drill-id') ?? undefined
+  const hasFsModule = root.getAttribute('data-drill-has-fs-module') === 'true'
+  const hasClusterYaml =
+    root.getAttribute('data-drill-has-cluster-yaml') === 'true'
+  const lessonEnvKey = [
+    seedName,
+    drillId ?? '',
+    hasFsModule ? 'fs' : 'no-fs',
+    hasClusterYaml ? 'cluster' : 'no-cluster'
+  ].join('|')
   const globalState = globalThis as {
     __lessonEnv?: EmulatedEnvironment
-    __lessonEnvSeed?: string
+    __lessonEnvKey?: string
   }
 
-  if (globalState.__lessonEnv && globalState.__lessonEnvSeed === seedName) {
+  if (globalState.__lessonEnv && globalState.__lessonEnvKey === lessonEnvKey) {
     lessonEnv = globalState.__lessonEnv
   } else {
     if (globalState.__lessonEnv) {
@@ -54,9 +64,14 @@ async function setupLessonEnv() {
     }
     const mod = await import('../../../components/lesson/lessonEmulatedEnvironment')
     cachedDestroy = mod.destroyEmulatedEnvironment
-    lessonEnv = mod.createLessonEmulatedEnvironment(seedName)
+    lessonEnv = mod.createLessonEmulatedEnvironment({
+      seedName,
+      drillId,
+      hasFsModule,
+      hasClusterYaml
+    })
     globalState.__lessonEnv = lessonEnv
-    globalState.__lessonEnvSeed = seedName
+    globalState.__lessonEnvKey = lessonEnvKey
   }
 
   if (!lessonEnv) {
@@ -114,8 +129,8 @@ export function setupBeforeUnloadCleanup() {
       cachedDestroy(env)
       delete globalState.__lessonEnv
     }
-    const seedState = globalThis as { __lessonEnvSeed?: string }
-    delete seedState.__lessonEnvSeed
+    const envState = globalThis as { __lessonEnvKey?: string }
+    delete envState.__lessonEnvKey
     lessonEnv = null
   })
 }

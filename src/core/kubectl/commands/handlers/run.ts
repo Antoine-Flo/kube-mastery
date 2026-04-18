@@ -96,6 +96,12 @@ const validateDryRunFlag = (
   return ntOk(undefined)
 }
 
+const isRunDryRunRequested = (
+  dryRunFlag: string | boolean | undefined
+): boolean => {
+  return dryRunFlag === 'client' || dryRunFlag === 'server'
+}
+
 const validateRunRestartPolicy = (
   runRestart: ParsedCommand['runRestart']
 ): NtResult<undefined, string> => {
@@ -112,6 +118,95 @@ const validateRunRestartPolicy = (
   return ntOk(undefined)
 }
 
+const validateRunTtyFlags = (
+  runTty: ParsedCommand['runTty'],
+  runStdin: ParsedCommand['runStdin']
+): NtResult<undefined, string> => {
+  if (runTty === true && runStdin !== true) {
+    return ntErr(
+      kubectlUsageError(
+        'kubectl run',
+        '-i/--stdin is required for containers with -t/--tty=true'
+      )
+    )
+  }
+  return ntOk(undefined)
+}
+
+const validateRunDryRunAttachCompatibility = (
+  dryRunFlag: string | boolean | undefined,
+  isAttachLike: boolean
+): NtResult<undefined, string> => {
+  if (isRunDryRunRequested(dryRunFlag) && isAttachLike) {
+    return ntErr(
+      kubectlUsageError(
+        'kubectl run',
+        "--dry-run=[server|client] can't be used with attached containers options (--attach, --stdin, or --tty)"
+      )
+    )
+  }
+  return ntOk(undefined)
+}
+
+const validateRunImagePullPolicy = (
+  imagePullPolicyValue: string | boolean | undefined
+): NtResult<undefined, string> => {
+  if (imagePullPolicyValue == null) {
+    return ntOk(undefined)
+  }
+  if (typeof imagePullPolicyValue !== 'string') {
+    return ntErr(
+      kubectlUsageError(
+        'kubectl run',
+        `invalid image pull policy: ${String(imagePullPolicyValue)}`
+      )
+    )
+  }
+  if (
+    imagePullPolicyValue === 'Always' ||
+    imagePullPolicyValue === 'IfNotPresent' ||
+    imagePullPolicyValue === 'Never'
+  ) {
+    return ntOk(undefined)
+  }
+  return ntErr(
+    kubectlUsageError(
+      'kubectl run',
+      `invalid image pull policy: ${imagePullPolicyValue}`
+    )
+  )
+}
+
+const validateRunImageName = (image: string): NtResult<undefined, string> => {
+  const imagePattern = /^[a-zA-Z0-9][a-zA-Z0-9._/:@-]*$/
+  if (imagePattern.test(image)) {
+    return ntOk(undefined)
+  }
+  return ntErr(`Invalid image name "${image}": invalid reference format`)
+}
+
+const resolveRunRestartPolicy = (parsed: ParsedCommand): 'Always' | 'OnFailure' | 'Never' => {
+  if (parsed.runRestart != null) {
+    return parsed.runRestart
+  }
+  if (parsed.runStdin === true) {
+    return 'OnFailure'
+  }
+  return 'Always'
+}
+
+const resolveRunLabels = (
+  podName: string,
+  runLabels: ParsedCommand['runLabels']
+): Record<string, string> => {
+  if (runLabels != null && Object.keys(runLabels).length > 0) {
+    return { ...runLabels }
+  }
+  return {
+    run: podName
+  }
+}
+
 const buildRunDryRunManifest = (
   podName: string,
   parsed: ParsedCommand,
@@ -121,10 +216,11 @@ const buildRunDryRunManifest = (
   runCommand?: string[],
   runArgs?: string[]
 ): Record<string, unknown> => {
-  const restartPolicy = parsed.runRestart ?? 'Always'
-  const metadataLabels = {
-    ...(parsed.runLabels ?? {})
-  }
+  const restartPolicy = resolveRunRestartPolicy(parsed)
+  const metadataLabels = resolveRunLabels(podName, parsed.runLabels)
+  const includeNamespaceInDryRun =
+    typeof parsed.flags.namespace === 'string' ||
+    typeof parsed.flags.n === 'string'
   const env = envVars
     .map((envVar) => {
       if (envVar.source.type !== 'value') {
@@ -159,14 +255,18 @@ const buildRunDryRunManifest = (
     containerSpec['env'] = env
   }
 
+  const metadata: Record<string, unknown> = {
+    labels: metadataLabels,
+    name: podName
+  }
+  if (includeNamespaceInDryRun) {
+    metadata['namespace'] = namespace
+  }
+
   return {
     apiVersion: 'v1',
     kind: 'Pod',
-    metadata: {
-      labels: metadataLabels,
-      name: podName,
-      namespace
-    },
+    metadata,
     spec: {
       containers: [containerSpec],
       dnsPolicy: 'ClusterFirst',
@@ -188,6 +288,11 @@ export const handleRun = (
   const image = parsed.runImage
   if (typeof image !== 'string' || image.length === 0) {
     return error(buildRequiredFlagNotSetMessage('image'))
+  }
+
+  const imageValidation = validateRunImageName(image)
+  if (imageValidation.isErr()) {
+    return error(imageValidation.error)
   }
 
   const podName = parsed.name
@@ -214,6 +319,23 @@ export const handleRun = (
   if (dryRunValidation.isErr()) {
     return error(dryRunValidation.error)
   }
+  const ttyValidation = validateRunTtyFlags(parsed.runTty, parsed.runStdin)
+  if (ttyValidation.isErr()) {
+    return error(ttyValidation.error)
+  }
+  const dryRunAttachValidation = validateRunDryRunAttachCompatibility(
+    parsed.flags['dry-run'],
+    isAttachLike
+  )
+  if (dryRunAttachValidation.isErr()) {
+    return error(dryRunAttachValidation.error)
+  }
+  const imagePullPolicyValidation = validateRunImagePullPolicy(
+    parsed.flags['image-pull-policy']
+  )
+  if (imagePullPolicyValidation.isErr()) {
+    return error(imagePullPolicyValidation.error)
+  }
 
   const restartValidation = validateRunRestartPolicy(parsed.runRestart)
   if (restartValidation.isErr()) {
@@ -225,12 +347,14 @@ export const handleRun = (
     return error(envVarsResult.error)
   }
   const envVars = envVarsResult.value
+  const runLabels = resolveRunLabels(podName, parsed.runLabels)
 
+  const restartPolicy = resolveRunRestartPolicy(parsed)
   const pod = createPod({
     name: podName,
     namespace: runtimeNamespace,
-    restartPolicy: parsed.runRestart ?? 'Always',
-    labels: { ...(parsed.runLabels ?? {}) },
+    restartPolicy,
+    labels: runLabels,
     containers: [
       {
         name: podName,
@@ -246,7 +370,7 @@ export const handleRun = (
     phase: 'Pending'
   })
 
-  if (parsed.runDryRunClient) {
+  if (isRunDryRunRequested(parsed.flags['dry-run'])) {
     const dryRunManifest = buildRunDryRunManifest(
       podName,
       parsed,
@@ -280,7 +404,7 @@ export const handleRun = (
     const sourcePodForTraffic: SimTrafficPodIdentity = {
       name: podName,
       namespace: runtimeNamespace,
-      labels: { ...(parsed.runLabels ?? {}) }
+      labels: runLabels
     }
     const runtimeResult = executeRuntimeAttachedCommand(
       commandToExecute,

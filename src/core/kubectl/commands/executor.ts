@@ -68,12 +68,16 @@ export type KubectlExecutorOptions = {
 }
 
 const toGetExecutionResult = (output: string): ExecutionResult => {
-  if (
-    output.startsWith('Error from server') ||
-    output.startsWith('error:') ||
-    output.startsWith('Error:')
-  ) {
-    return error(output)
+  const lines = output.split('\n')
+  for (const line of lines) {
+    const trimmed = line.trim()
+    if (
+      trimmed.startsWith('Error from server') ||
+      trimmed.startsWith('error:') ||
+      trimmed.startsWith('Error:')
+    ) {
+      return error(output)
+    }
   }
   return success(output)
 }

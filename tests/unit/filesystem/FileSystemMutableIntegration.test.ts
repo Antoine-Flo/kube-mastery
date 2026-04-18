@@ -265,4 +265,32 @@ describe('FileSystem Mutable Mode - Integration Tests', () => {
       expect(subscriber).toHaveBeenCalledTimes(2)
     })
   })
+
+  describe('filesystem depth constraints', () => {
+    it('should reject mkdir -p when resulting depth exceeds max depth', () => {
+      const fileSystem = createFileSystem(fileSystemState, eventBus, {
+        mutable: true
+      })
+
+      const result = fileSystem.createDirectory('a/b/c', true)
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toContain('Maximum depth exceeded')
+      }
+    })
+
+    it('should reject creating a new file when resulting depth exceeds max depth', () => {
+      const fileSystem = createFileSystem(fileSystemState, eventBus, {
+        mutable: true
+      })
+      fileSystem.createDirectory('a', true)
+      fileSystem.createDirectory('a/b', true)
+
+      const result = fileSystem.writeFile('a/b/c/test.yaml', 'apiVersion: v1')
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toContain('Maximum depth exceeded')
+      }
+    })
+  })
 })

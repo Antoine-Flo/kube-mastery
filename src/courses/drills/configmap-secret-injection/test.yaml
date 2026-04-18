@@ -1,0 +1,93 @@
+version: 1
+drillId: configmap-secret-injection
+resetKindBeforeRun: false
+timeoutMs: 60000
+
+manifests:
+  - path: app-pod.yaml
+    content: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: app
+        namespace: exercise-03
+      spec:
+        containers:
+          - name: app
+            image: busybox:1.36
+            command: ["sleep", "3600"]
+            envFrom:
+              - configMapRef:
+                  name: app-config
+              - secretRef:
+                  name: db-creds
+            volumeMounts:
+              - name: config-vol
+                mountPath: /etc/config
+        volumes:
+          - name: config-vol
+            configMap:
+              name: app-config
+
+steps:
+  - id: cleanup-namespace
+    run: kubectl delete namespace exercise-03 --ignore-not-found=true
+    expectParity: false
+  - id: create-namespace
+    run: kubectl create namespace exercise-03
+  - id: create-configmap
+    run: kubectl create configmap app-config -n exercise-03 --from-literal=APP_MODE=production --from-literal=LOG_LEVEL=debug
+  - id: create-secret
+    run: kubectl create secret generic db-creds -n exercise-03 --from-literal=DB_USER=admin --from-literal=DB_PASS=s3cretP@ss
+  - id: apply-pod
+    run: kubectl apply -f app-pod.yaml
+  - id: wait-ready
+    run: kubectl wait --for=condition=Ready pod/app -n exercise-03 --timeout=60s
+  - id: verify-env-values
+    run: kubectl exec app -n exercise-03 -- env | grep -E 'APP_MODE|LOG_LEVEL|DB_USER|DB_PASS'
+    expectParity: false
+  - id: verify-mounted-config
+    run: kubectl exec app -n exercise-03 -- ls /etc/config
+    expectParity: false
+
+checks:
+  cluster:
+    - id: configmap-mode
+      kind: configmap
+      namespace: exercise-03
+      name: app-config
+      path: '{.data.APP_MODE}'
+      expected: 'production'
+    - id: configmap-log-level
+      kind: configmap
+      namespace: exercise-03
+      name: app-config
+      path: '{.data.LOG_LEVEL}'
+      expected: 'debug'
+    - id: pod-running
+      kind: pod
+      namespace: exercise-03
+      name: app
+      path: '{.status.phase}'
+      expected: 'Running'
+    - id: secret-user-key
+      kind: secret
+      namespace: exercise-03
+      name: db-creds
+      path: '{.data.DB_USER}'
+      expected: 'YWRtaW4='
+
+  filesystem:
+    - id: pod-manifest-envfrom
+      path: app-pod.yaml
+      contains: 'envFrom:'
+    - id: pod-manifest-secret-ref
+      path: app-pod.yaml
+      contains: 'secretRef:'
+    - id: pod-manifest-configmap-mount
+      path: app-pod.yaml
+      contains: 'mountPath: /etc/config'
+
+compare:
+  normalize:
+    stripAgeValues: true

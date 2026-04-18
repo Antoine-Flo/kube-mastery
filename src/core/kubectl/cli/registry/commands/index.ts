@@ -139,7 +139,13 @@ const deleteCommand = createLeafCommand({
       name: 'wait',
       description: 'Wait for resources to terminate'
     },
-    { kind: 'string', name: 'selector', short: 'l', description: 'Selector' }
+    { kind: 'string', name: 'selector', short: 'l', description: 'Selector' },
+    {
+      kind: 'enum',
+      name: 'dry-run',
+      description: 'Must be none, server or client',
+      enumValues: ['none', 'server', 'client']
+    }
   ]
 })
 
@@ -149,7 +155,13 @@ const applyCommand = createLeafCommand({
   short: 'Apply a configuration to a resource by file name or stdin',
   handlerId: 'apply',
   flags: [
-    { kind: 'string', name: 'filename', short: 'f', description: 'File path' }
+    { kind: 'string', name: 'filename', short: 'f', description: 'File path' },
+    {
+      kind: 'enum',
+      name: 'dry-run',
+      description: 'Must be none, server or client',
+      enumValues: ['none', 'server', 'client']
+    }
   ]
 })
 
@@ -322,7 +334,13 @@ const labelCommand = createLeafCommand({
     resourceNames: { mode: 'fromResourceType' }
   },
   flags: [
-    { kind: 'bool', name: 'overwrite', description: 'Overwrite existing value' }
+    { kind: 'bool', name: 'overwrite', description: 'Overwrite existing value' },
+    {
+      kind: 'enum',
+      name: 'dry-run',
+      description: 'Must be none, server or client',
+      enumValues: ['none', 'server', 'client']
+    }
   ]
 })
 
@@ -336,7 +354,13 @@ const annotateCommand = createLeafCommand({
     resourceNames: { mode: 'fromResourceType' }
   },
   flags: [
-    { kind: 'bool', name: 'overwrite', description: 'Overwrite existing value' }
+    { kind: 'bool', name: 'overwrite', description: 'Overwrite existing value' },
+    {
+      kind: 'enum',
+      name: 'dry-run',
+      description: 'Must be none, server or client',
+      enumValues: ['none', 'server', 'client']
+    }
   ]
 })
 
@@ -417,7 +441,13 @@ const replaceCommand = createLeafCommand({
   handlerId: 'replace',
   flags: [
     { kind: 'string', name: 'filename', short: 'f', description: 'File path' },
-    { kind: 'bool', name: 'force', description: 'Force replacement' }
+    { kind: 'bool', name: 'force', description: 'Force replacement' },
+    {
+      kind: 'enum',
+      name: 'dry-run',
+      description: 'Must be none, server or client',
+      enumValues: ['none', 'server', 'client']
+    }
   ]
 })
 
@@ -445,7 +475,15 @@ const editCommand = createLeafCommand({
   completion: {
     resourceTypes: { mode: 'all' },
     resourceNames: { mode: 'fromResourceType' }
-  }
+  },
+  flags: [
+    {
+      kind: 'enum',
+      name: 'dry-run',
+      description: 'Must be none, server or client',
+      enumValues: ['none', 'server', 'client']
+    }
+  ]
 })
 
 const patchCommand = createLeafCommand({
@@ -464,7 +502,13 @@ const patchCommand = createLeafCommand({
       description: 'Patch type',
       enumValues: ['merge']
     },
-    { kind: 'string', name: 'patch', short: 'p', description: 'Patch payload' }
+    { kind: 'string', name: 'patch', short: 'p', description: 'Patch payload' },
+    {
+      kind: 'enum',
+      name: 'dry-run',
+      description: 'Must be none, server or client',
+      enumValues: ['none', 'server', 'client']
+    }
   ]
 })
 
@@ -478,7 +522,15 @@ const scaleCommand = createLeafCommand({
     resourceTypes: { mode: 'all' },
     resourceNames: { mode: 'fromResourceType' }
   },
-  flags: [{ kind: 'string', name: 'replicas', description: 'Replica count' }]
+  flags: [
+    { kind: 'string', name: 'replicas', description: 'Replica count' },
+    {
+      kind: 'enum',
+      name: 'dry-run',
+      description: 'Must be none, server or client',
+      enumValues: ['none', 'server', 'client']
+    }
+  ]
 })
 
 const exposeCommand = createLeafCommand({
@@ -533,9 +585,17 @@ const runCommand = createLeafCommand({
   handlerId: 'run',
   flags: [
     { kind: 'string', name: 'image', description: 'Container image' },
+    { kind: 'bool', name: 'attach', description: 'Attach to pod after start' },
     { kind: 'bool', name: 'command', description: 'Use command mode' },
     { kind: 'stringArray', name: 'env', description: 'Environment variables' },
+    { kind: 'stringArray', name: 'annotations', description: 'Annotations' },
     { kind: 'string', name: 'labels', description: 'Labels' },
+    {
+      kind: 'string',
+      name: 'image-pull-policy',
+      description: 'Image pull policy'
+    },
+    { kind: 'bool', name: 'expose', description: 'Expose service' },
     {
       kind: 'string',
       name: 'output',

@@ -5,10 +5,7 @@ import DrillValidations from '../../../../components/drills/DrillValidations.ast
 import Button from '../../../../components/ui/Button.astro'
 import { useLocalePath, useTranslations } from '../../../../i18n/utils'
 import { getDrillDetail } from '../../../../content/drills/facade'
-import { getCourseOverview } from '../../../../content/overview/facade'
-import { getLayoutAuthContext } from '../../../../lib/auth/server'
 import { getProgressContext } from '../../../../lib/progress/server'
-import { getFirstNonPlaceholderLessonIdFromSections } from '../../../../lib/lesson/lessonTerminalAccess'
 import {
   drillSolutionTextToHtml,
   inlineBackticksToHtml
@@ -30,23 +27,10 @@ const { userId } = await getProgressContext(
   Astro.request,
   Astro.cookies
 )
-const auth = await getLayoutAuthContext(
-  Astro.locals,
-  Astro.request,
-  Astro.cookies
-)
 
 const drillDetail = getDrillDetail(drillId, lang)
 if (!drillDetail) {
   return Astro.redirect(localePath('/drills'))
-}
-
-const allowUnauthenticated = drillDetail.isFree === true
-if (!userId && !allowUnauthenticated) {
-  const redirectTarget = `${Astro.url.pathname}${Astro.url.search}`
-  return Astro.redirect(
-    localePath('/auth') + '?redirect=' + encodeURIComponent(redirectTarget)
-  )
 }
 
 if (runMode === null) {
@@ -58,18 +42,14 @@ const withMode = (path: string) =>
 
 const env = drillDetail.environment?.trim().toLowerCase()
 const seedName = env && env !== 'empty' ? env : 'minimal'
+const drillHasFsModule = drillDetail.runtimeEnv.hasFsModule
+const drillHasClusterYaml = drillDetail.runtimeEnv.hasClusterYaml
 
-const terminalInteractive =
-  drillDetail.isFree === true || auth.hasPaidSubscription
-const crashOverview = getCourseOverview('crash-course', lang)
-const crashFirstLessonId = crashOverview
-  ? getFirstNonPlaceholderLessonIdFromSections(crashOverview.content.sections)
-  : null
-const terminalLockCrashCourseHref = crashFirstLessonId
-  ? localePath(`/courses/crash-course/${crashFirstLessonId}`)
-  : localePath('/courses')
-const terminalLockPrimaryHref = localePath('/pricing')
-const terminalLockSecondaryHref = terminalLockCrashCourseHref
+const hasUserSession = userId != null && userId !== ''
+const terminalInteractive = hasUserSession
+const redirectTarget = `${Astro.url.pathname}${Astro.url.search}`
+const terminalLockPrimaryHref =
+  localePath('/auth') + '?redirect=' + encodeURIComponent(redirectTarget)
 const drillBackHref = localePath('/drills')
 const retryHref = withMode(localePath(`/drills/${drillId}`))
 
@@ -81,12 +61,17 @@ const tasks = drillDetail.tasks
 <Layout bodyClass="lp-fill navbar-app" showFooter={false}>
   <ContentWithTerminalLayout
     seedName={seedName}
+    drillId={drillId}
+    drillHasFsModule={drillHasFsModule}
+    drillHasClusterYaml={drillHasClusterYaml}
     lang={lang}
     showSidebar={false}
     supportContextId={`drills/${drillId}`}
     terminalInteractive={terminalInteractive}
     terminalLockPrimaryHref={terminalLockPrimaryHref}
-    terminalLockSecondaryHref={terminalLockSecondaryHref}
+    terminalLockPrimaryLabel={t('drills_terminalLock_cta')}
+    terminalLockTitle={t('drills_terminalLock_title')}
+    terminalLockBody={t('drills_terminalLock_body')}
     terminalDocsHref={kubernetesDocsUrl}
     terminalDocsTabLabel="Docs"
     terminalShellTabLabel="Terminal"

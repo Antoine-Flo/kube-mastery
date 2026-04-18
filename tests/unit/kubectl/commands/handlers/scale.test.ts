@@ -255,6 +255,45 @@ describe('kubectl scale handler', () => {
 
       expect(result.ok).toBe(true)
     })
+
+    it('should not mutate deployment on scale --dry-run=client', () => {
+      const deployment = createDeployment({
+        name: 'dry-run-deployment',
+        namespace: 'default',
+        replicas: 2,
+        selector: { matchLabels: { app: 'nginx' } },
+        template: {
+          metadata: { labels: { app: 'nginx' } },
+          spec: { containers: [{ name: 'nginx', image: 'nginx:latest' }] }
+        }
+      })
+      apiServer.createResource('Deployment', deployment)
+
+      const parsed = createParsedCommand({
+        name: 'dry-run-deployment',
+        resource: 'deployments',
+        replicas: 6,
+        flags: { 'dry-run': 'client' }
+      })
+
+      const result = handleScale(apiServer, parsed)
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+      expect(result.value).toContain('(dry run)')
+
+      const unchanged = apiServer.findResource(
+        'Deployment',
+        'dry-run-deployment',
+        'default'
+      )
+      expect(unchanged.ok).toBe(true)
+      if (!unchanged.ok) {
+        return
+      }
+      expect(unchanged.value.spec.replicas).toBe(2)
+    })
   })
 
   describe('scaling replicasets', () => {

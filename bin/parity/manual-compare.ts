@@ -14,13 +14,6 @@ import {
   printParityHeader,
   printResultPayload
 } from './cli/surface'
-import {
-  normalizeForParityMatch,
-  normalizeKubectlCommandStderrForParity,
-  normalizeKubectlCommandStdoutForParity,
-  normalizeStdStreamsForParity,
-  stripDynamicAgeValuesForParity
-} from './kubectl/surface'
 import { CONFIG } from '../../src/config'
 
 const useKubectlContext = (contextName: string): boolean => {
@@ -70,7 +63,8 @@ const main = (): void => {
     }
   }
   const kindRunner = createKindCommandRunner({
-    timeoutMs: options.timeoutMs
+    timeoutMs: options.timeoutMs,
+    trimOutput: false
   })
 
   printParityHeader(session.id, options.contextName, options.verbose)
@@ -84,39 +78,11 @@ const main = (): void => {
     const simulationResult = simulationManager.runCommand(session.id, command)
     const kindResult = kindRunner.run(command)
     comparedCount += 1
-    const normalizedSimulationIo = normalizeStdStreamsForParity(
-      simulationResult.stdout,
-      simulationResult.stderr
-    )
-    const normalizedKindIo = normalizeStdStreamsForParity(
-      kindResult.stdout,
-      kindResult.stderr
-    )
-    const simulationComparable = stripDynamicAgeValuesForParity(
-      normalizeForParityMatch(
-        normalizeKubectlCommandStdoutForParity(
-          command,
-          normalizedSimulationIo.stdout
-        )
-      )
-    )
-    const kindComparable = stripDynamicAgeValuesForParity(
-      normalizeForParityMatch(
-        normalizeKubectlCommandStdoutForParity(command, normalizedKindIo.stdout)
-      )
-    )
+    const simulationComparable = simulationResult.stdout
+    const kindComparable = kindResult.stdout
     const sameExitCode = simulationResult.exitCode === kindResult.exitCode
     const sameStdout = simulationComparable === kindComparable
-    const sameStderr =
-      normalizeForParityMatch(
-        normalizeKubectlCommandStderrForParity(
-          command,
-          normalizedSimulationIo.stderr
-        )
-      ) ===
-      normalizeForParityMatch(
-        normalizeKubectlCommandStderrForParity(command, normalizedKindIo.stderr)
-      )
+    const sameStderr = simulationResult.stderr === kindResult.stderr
     const matched = sameExitCode && sameStdout && sameStderr
     if (!matched) {
       mismatchCount += 1
@@ -128,14 +94,6 @@ const main = (): void => {
     if (options.verbose || !matched) {
       printResultPayload('simulation', simulationResult)
       printResultPayload('kind', kindResult)
-      if (!matched) {
-        console.log('\n[normalized:simulation:stdout]')
-        console.log(
-          simulationComparable.length > 0 ? simulationComparable : '(empty)'
-        )
-        console.log('\n[normalized:kind:stdout]')
-        console.log(kindComparable.length > 0 ? kindComparable : '(empty)')
-      }
     }
   }
 

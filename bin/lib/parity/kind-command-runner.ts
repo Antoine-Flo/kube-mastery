@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process'
 import type { CommandExecutionResult } from '../conformance-types'
 export interface KindCommandRunnerOptions {
   timeoutMs?: number
+  trimOutput?: boolean
 }
 
 export interface KindCommandRunner {
@@ -15,6 +16,7 @@ export const createKindCommandRunner = (
   options: KindCommandRunnerOptions = {}
 ): KindCommandRunner => {
   const defaultTimeoutMs = options.timeoutMs ?? 60000
+  const trimOutput = options.trimOutput ?? false
 
   return {
     run(command, runOptions = {}) {
@@ -25,8 +27,10 @@ export const createKindCommandRunner = (
         stdio: ['pipe', 'pipe', 'pipe'],
         timeout: timeoutMs
       })
-      const stdout = (result.stdout ?? '').trim()
-      const stderr = (result.stderr ?? '').trim()
+      const rawStdout = result.stdout ?? ''
+      const rawStderr = result.stderr ?? ''
+      const stdout = trimOutput ? rawStdout.trim() : rawStdout
+      const stderr = trimOutput ? rawStderr.trim() : rawStderr
       const signal = result.signal == null ? '' : String(result.signal)
       const timeoutMessage =
         result.error != null && signal.length > 0

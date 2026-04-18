@@ -12,6 +12,11 @@ export const isDryRunClient = (parsed: ParsedCommand): boolean => {
   return parsed.flags['dry-run'] === 'client'
 }
 
+export const isDryRunRequested = (parsed: ParsedCommand): boolean => {
+  const dryRunValue = parsed.flags['dry-run']
+  return dryRunValue === 'client' || dryRunValue === 'server'
+}
+
 export const isSupportedDryRunValue = (value: unknown): boolean => {
   if (value === undefined) {
     return true

@@ -231,4 +231,49 @@ describe('kubectl patch handler', () => {
       expect(result.error).toContain('field is immutable')
     }
   })
+
+  it('should not mutate deployment on patch --dry-run=client', () => {
+    apiServer.createResource(
+      'Deployment',
+      createDeployment({
+        name: 'dry-run-patch',
+        namespace: 'default',
+        replicas: 2,
+        selector: { matchLabels: { app: 'dry-run-patch' } },
+        template: {
+          metadata: { labels: { app: 'dry-run-patch' } },
+          spec: { containers: [{ name: 'app', image: 'nginx:1.28' }] }
+        }
+      })
+    )
+
+    const result = handlePatch(
+      apiServer,
+      createParsed({
+        name: 'dry-run-patch',
+        patchPayload: '{"spec":{"replicas":7}}',
+        flags: {
+          type: 'merge',
+          patch: '{"spec":{"replicas":7}}',
+          'dry-run': 'client'
+        }
+      })
+    )
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('(dry run)')
+
+    const deployment = apiServer.findResource(
+      'Deployment',
+      'dry-run-patch',
+      'default'
+    )
+    expect(deployment.ok).toBe(true)
+    if (!deployment.ok) {
+      return
+    }
+    expect(deployment.value.spec.replicas).toBe(2)
+  })
 })

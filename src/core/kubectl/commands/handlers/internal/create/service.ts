@@ -55,9 +55,12 @@ const parseTcpFlag = (
       return parsedPort
     }
 
-    if (parts.length === 1 || parts[1].trim().length === 0) {
+    if (parts.length === 1) {
       ports.push({ port: parsedPort, targetPort: parsedPort })
       continue
+    }
+    if (parts[1].trim().length === 0) {
+      return error('error: invalid --tcp format, expected port[:targetPort]')
     }
 
     const parsedTargetPort = parsePositivePortNumber(parts[1], '--tcp')

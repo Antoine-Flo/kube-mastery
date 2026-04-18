@@ -60,6 +60,7 @@ describe('kubectl delete handler', () => {
       const errorMessage = expectErr(result)
       expect(errorMessage).toContain('must specify the name')
     })
+
   })
 
   describe('declarative delete with -f', () => {
@@ -468,6 +469,36 @@ spec:
       }
       expect(podResult.value.metadata.deletionTimestamp).toBeDefined()
       expect(podResult.value.metadata.deletionGracePeriodSeconds).toBe(0)
+    })
+
+    it('should not mutate pod on delete --dry-run=client', () => {
+      apiServer.createResource(
+        'Pod',
+        createPod({
+          name: 'dry-run-pod',
+          namespace: 'default',
+          containers: [{ name: 'main', image: 'busybox' }]
+        })
+      )
+      const parsed = createParsedCommand({
+        name: 'dry-run-pod',
+        resource: 'pods',
+        flags: { 'dry-run': 'client' }
+      })
+
+      const result = handleDelete(apiServer, parsed)
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+      expect(result.value).toContain('(dry run)')
+
+      const podResult = apiServer.findResource('Pod', 'dry-run-pod', 'default')
+      expect(podResult.ok).toBe(true)
+      if (!podResult.ok) {
+        return
+      }
+      expect(podResult.value.metadata.deletionTimestamp).toBeUndefined()
     })
   })
 

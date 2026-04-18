@@ -8,10 +8,7 @@ const buildMutationEventTypesForKind = (kind: string): string[] => {
 }
 
 const WATCH_EVENT_OVERRIDES: Partial<Record<Resource, string[]>> = {
-  pods: ['PodCreated', 'PodUpdated', 'PodDeleted', 'PodBound'],
-  nodes: [],
-  namespaces: [],
-  ingresses: []
+  pods: ['PodCreated', 'PodUpdated', 'PodDeleted', 'PodBound']
 }
 
 const buildWatchEventTypesByResource = (): Record<Resource, string[]> => {

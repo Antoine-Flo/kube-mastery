@@ -76,6 +76,30 @@ describe('applyCreate handler', () => {
     }
   })
 
+  it('should not mutate cluster state on apply --dry-run=client', () => {
+    const yaml = `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dry-run-only
+data:
+  key: value
+`
+    fileSystem.createFile('dry-run-only.yaml')
+    fileSystem.writeFile('dry-run-only.yaml', yaml)
+
+    const parsed = parseCommand('kubectl apply -f dry-run-only.yaml --dry-run=client')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleApply(fileSystem, apiServer, parsed.value)
+    expect(result.ok).toBe(true)
+
+    const configMap = apiServer.findResource('ConfigMap', 'dry-run-only', 'default')
+    expect(configMap.ok).toBe(false)
+  })
+
   it('should return error when multiple images are used with command', () => {
     const parsed = parseCommand(
       'kubectl create deployment my-dep --image=busybox --image=nginx -- date'
@@ -979,6 +1003,38 @@ spec:
     expect(service.value.spec.ports[0].targetPort).toBe(8080)
   })
 
+  it('should not create role on create role --dry-run=client', () => {
+    const parsed = parseCommand(
+      'kubectl create role pod-reader --verb=get,list --resource=pods --dry-run=client'
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
+    expect(result.ok).toBe(true)
+
+    const role = apiServer.findResource('Role', 'pod-reader', 'default')
+    expect(role.ok).toBe(false)
+  })
+
+  it('should reject create service when --tcp targetPort is empty', () => {
+    const parsed = parseCommand('kubectl create service clusterip my-svc --tcp=80:')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain(
+        'error: invalid --tcp format, expected port[:targetPort]'
+      )
+    }
+  })
+
   it('should return yaml for create service nodeport dry-run client', () => {
     const parsed = parseCommand(
       'kubectl create service nodeport my-svc --tcp=80:8080 --node-port=30080 --dry-run=client -o yaml'
@@ -1061,7 +1117,7 @@ spec:
     expect(configMap.ok).toBe(false)
   })
 
-  it('should return pod yaml for run dry-run client without null creationTimestamp', () => {
+  it('should return pod yaml for run dry-run client without null creationTimestamp and implicit default namespace', () => {
     const parsed = parseCommand(
       'kubectl run run-dry-run --image=busybox --dry-run=client -o yaml'
     )
@@ -1077,8 +1133,66 @@ spec:
     }
 
     expect(result.value).toContain('kind: Pod')
-    expect(result.value).toContain('namespace: default')
+    expect(result.value).not.toContain('namespace: default')
     expect(result.value).not.toContain('creationTimestamp: null')
+  })
+
+  it('should match kubectl pod yaml shape for run dry-run with args', () => {
+    const parsed = parseCommand(
+      'kubectl run app -n my-db --image=busybox:1.36 --dry-run=client -o yaml -- sleep 3600'
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleRun(apiServer, parsed.value)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value).toBe(
+      `${[
+        'apiVersion: v1',
+        'kind: Pod',
+        'metadata:',
+        '  labels:',
+        '    run: app',
+        '  name: app',
+        '  namespace: my-db',
+        'spec:',
+        '  containers:',
+        '  - args:',
+        '    - sleep',
+        '    - "3600"',
+        '    image: busybox:1.36',
+        '    name: app',
+        '    resources: {}',
+        '  dnsPolicy: ClusterFirst',
+        '  restartPolicy: Always',
+        'status: {}'
+      ].join('\n')}\n`
+    )
+  })
+
+  it('should keep explicit run labels without injecting default run label', () => {
+    const parsed = parseCommand(
+      'kubectl run app --image=busybox:1.36 --labels=app=demo --dry-run=client -o yaml -- sleep 3600'
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleRun(apiServer, parsed.value)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value).toContain('    app: demo')
+    expect(result.value).not.toContain('    run: app')
   })
 
   it('should include target namespace in run dry-run client yaml', () => {

@@ -6,6 +6,7 @@ import {
 import type { ExecutionResult, Result } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import { toEqualitySelectorMap } from '../../../shared/labelSelector'
+import { stripMatchingQuotes } from '../../../shared/parsing'
 import type { ParsedCommand } from '../types'
 import { createResourceWithEvents } from '../resourceCatalog'
 import { buildDryRunResponse } from './create'
@@ -195,6 +196,41 @@ const parseExposeResource = (
   return resource as ExposeTargetResource
 }
 
+const parseStrictExposeLabelSpec = (
+  labelSpec: string
+): Result<{ key: string; value: string }, string> => {
+  const parts = labelSpec.split('=')
+  if (parts.length !== 2) {
+    return error(`error: unexpected label spec: ${labelSpec}`)
+  }
+  const key = stripMatchingQuotes(parts[0]).trim()
+  const value = stripMatchingQuotes(parts[1])
+  if (key.length === 0) {
+    return error('error: unexpected empty label key')
+  }
+  return success({
+    key,
+    value
+  })
+}
+
+const parseStrictExposeSelector = (
+  selector: string
+): Result<Record<string, string>, string> => {
+  const selectorParts = stripMatchingQuotes(selector)
+    .split(',')
+    .map((selectorPart) => selectorPart.trim())
+  const parsedSelector: Record<string, string> = {}
+  for (const selectorPart of selectorParts) {
+    const parsedLabelSpec = parseStrictExposeLabelSpec(selectorPart)
+    if (!parsedLabelSpec.ok) {
+      return parsedLabelSpec
+    }
+    parsedSelector[parsedLabelSpec.value.key] = parsedLabelSpec.value.value
+  }
+  return success(parsedSelector)
+}
+
 const resolveSelectorFromResource = (
   apiServer: ApiServerFacade,
   resource: ExposeTargetResource,
@@ -299,11 +335,20 @@ export const handleExpose = (
 
   let selector: Record<string, string>
   if (parsed.selector != null) {
-    const selectorMapResult = toEqualitySelectorMap(parsed.selector)
-    if (!selectorMapResult.ok) {
-      return selectorMapResult
+    const rawSelectorFlag = parsed.flags.selector
+    if (typeof rawSelectorFlag === 'string') {
+      const strictSelectorResult = parseStrictExposeSelector(rawSelectorFlag)
+      if (!strictSelectorResult.ok) {
+        return strictSelectorResult
+      }
+      selector = strictSelectorResult.value
+    } else {
+      const selectorMapResult = toEqualitySelectorMap(parsed.selector)
+      if (!selectorMapResult.ok) {
+        return selectorMapResult
+      }
+      selector = selectorMapResult.value
     }
-    selector = selectorMapResult.value
   } else {
     const selectorResult = resolveSelectorFromResource(
       apiServer,

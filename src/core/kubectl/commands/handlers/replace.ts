@@ -13,6 +13,11 @@ import { formatKubectlFileSystemError } from '../filesystemErrorPresenter'
 import type { ParsedCommand } from '../types'
 import { validateMetadataNameByKind } from '../resourceCatalog'
 import {
+  buildDryRunResponse,
+  isDryRunRequested,
+  isSupportedDryRunValue
+} from './internal/create/dryRunResponse'
+import {
   isNamespacedResourceKind,
   isSupportedResourceKind,
   toKindReference,
@@ -330,12 +335,21 @@ export const handleReplace = (
   apiServer: ApiServerFacade,
   parsed: ParsedCommand
 ): ExecutionResult => {
+  const dryRunFlag = parsed.flags['dry-run']
+  if (!isSupportedDryRunValue(dryRunFlag)) {
+    return error(
+      `error: Invalid dry-run value (${String(dryRunFlag)}). Must be "none", "server", or "client".`
+    )
+  }
   const loadResult = loadManifestResource(fileSystem, parsed)
   if (!loadResult.ok) {
     return loadResult
   }
   if (loadResult.resource == null) {
     return error('error: internal error: missing resource in manifest')
+  }
+  if (isDryRunRequested(parsed)) {
+    return buildDryRunResponse(loadResult.resource, parsed)
   }
 
   const target = getManifestTarget(loadResult.resource, parsed)

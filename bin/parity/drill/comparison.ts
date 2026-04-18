@@ -1,10 +1,3 @@
-import {
-  normalizeForParityMatch,
-  normalizeKubectlCommandStderrForParity,
-  normalizeKubectlCommandStdoutForParity,
-  normalizeStdStreamsForParity,
-  stripDynamicAgeValuesForParity
-} from '../kubectl/surface'
 import type { CommandExecutionResult } from '../../lib/conformance-types'
 
 export type DrillMismatchCategory =
@@ -33,45 +26,15 @@ const containsReadinessSignal = (value: string): boolean => {
   )
 }
 
-const normalizeStdout = (
-  command: string,
-  value: string,
-  stripAgeValues: boolean
-): string => {
-  const normalized = normalizeForParityMatch(
-    normalizeKubectlCommandStdoutForParity(command, value)
-  )
-  if (stripAgeValues) {
-    return stripDynamicAgeValuesForParity(normalized)
-  }
-  return normalized
-}
-
-const normalizeStderr = (command: string, value: string): string => {
-  return normalizeForParityMatch(
-    normalizeKubectlCommandStderrForParity(command, value)
-  )
-}
-
 export const compareStepResults = (
-  command: string,
+  _command: string,
   simulationResult: CommandExecutionResult,
-  kindResult: CommandExecutionResult,
-  stripAgeValues: boolean
+  kindResult: CommandExecutionResult
 ): DrillStepComparison => {
-  const simulationIo = normalizeStdStreamsForParity(
-    simulationResult.stdout,
-    simulationResult.stderr
-  )
-  const kindIo = normalizeStdStreamsForParity(kindResult.stdout, kindResult.stderr)
-  const normalizedSimulationStdout = normalizeStdout(
-    command,
-    simulationIo.stdout,
-    stripAgeValues
-  )
-  const normalizedKindStdout = normalizeStdout(command, kindIo.stdout, stripAgeValues)
-  const normalizedSimulationStderr = normalizeStderr(command, simulationIo.stderr)
-  const normalizedKindStderr = normalizeStderr(command, kindIo.stderr)
+  const normalizedSimulationStdout = simulationResult.stdout
+  const normalizedKindStdout = kindResult.stdout
+  const normalizedSimulationStderr = simulationResult.stderr
+  const normalizedKindStderr = kindResult.stderr
 
   const sameExitCode = simulationResult.exitCode === kindResult.exitCode
   const sameStdout = normalizedSimulationStdout === normalizedKindStdout

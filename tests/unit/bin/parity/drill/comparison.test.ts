@@ -25,8 +25,7 @@ describe('compareStepResults', () => {
     const comparison = compareStepResults(
       command,
       simulationResult,
-      kindResult,
-      true
+      kindResult
     )
     expect(comparison.matched).toBe(true)
     expect(comparison.categories).toEqual([])
@@ -39,8 +38,7 @@ describe('compareStepResults', () => {
     const comparison = compareStepResults(
       command,
       simulationResult,
-      kindResult,
-      true
+      kindResult
     )
     expect(comparison.matched).toBe(false)
     expect(comparison.categories).toContain('exit_code')
@@ -53,8 +51,7 @@ describe('compareStepResults', () => {
     const comparison = compareStepResults(
       command,
       simulationResult,
-      kindResult,
-      true
+      kindResult
     )
     expect(comparison.matched).toBe(false)
     expect(comparison.categories).toContain('timing_readiness')

@@ -1,6 +1,5 @@
 ---
 import Layout from '../../layouts/Layout.astro'
-import Dialog from '../../components/ui/Dialog.astro'
 import { useLocalePath, useTranslations } from '../../i18n/utils'
 import '../../styles/components/page-halo.css'
 import {
@@ -8,7 +7,6 @@ import {
   type DrillListItem,
   type DrillTagId
 } from '../../content/drills/facade'
-import { getLayoutAuthContext } from '../../lib/auth/server'
 import { Bug, HardDrive, Layers, Network, Timer } from '@lucide/astro'
 
 const DRILL_TAG_ICON = {
@@ -40,16 +38,6 @@ function compareDrillListOrder(a: DrillListItem, b: DrillListItem): number {
 }
 
 const drills = [...getDrills(lang)].sort(compareDrillListOrder)
-const auth = await getLayoutAuthContext(
-  Astro.locals,
-  Astro.request,
-  Astro.cookies
-)
-const firstFreeDrill = drills.find((d) => d.isFree && !d.comingSoon)
-const tryFreeDrillHref = firstFreeDrill
-  ? `${localePath(`/drills/${firstFreeDrill.id}`)}?mode=guided`
-  : localePath('/drills')
-const pricingHref = localePath('/pricing')
 
 const DRILL_TAG_UI_KEY: Record<
   DrillTagId,
@@ -79,10 +67,7 @@ const DRILL_TAG_UI_KEY: Record<
             const CategoryIcon = drill.tag
               ? DRILL_TAG_ICON[drill.tag]
               : null
-            const showTopRow =
-              drill.comingSoon ||
-              drill.tag ||
-              (drill.isFree && !auth.hasPaidSubscription)
+            const showTopRow = drill.comingSoon || drill.tag || drill.isFree
             return (
               <li>
                 <button
@@ -95,13 +80,7 @@ const DRILL_TAG_UI_KEY: Record<
                   data-drill-id={drill.id}
                   data-drill-title={drill.title}
                   data-drill-base-href={localePath(`/drills/${drill.id}`)}
-                  data-drill-can-access={
-                    drill.comingSoon
-                      ? 'false'
-                      : drill.isFree || auth.hasPaidSubscription
-                        ? 'true'
-                        : 'false'
-                  }
+                  data-drill-can-access={drill.comingSoon ? 'false' : 'true'}
                 >
                   {showTopRow && (
                     <div class="drill-card__top">
@@ -119,7 +98,7 @@ const DRILL_TAG_UI_KEY: Record<
                         )}
                       </div>
                       <div class="drill-card__top-right">
-                        {drill.isFree && !auth.hasPaidSubscription && (
+                        {drill.isFree && (
                           <span class="drill-card__free-badge">
                             {t('drills_badge_free')}
                           </span>
@@ -166,35 +145,10 @@ const DRILL_TAG_UI_KEY: Record<
     </main>
   </div>
 
-  <Dialog
-    id="drill-pro-required-dialog"
-    title={t('drills_proOnly_title')}
-    description={t('drills_proOnly_body')}
-    size="md"
-  >
-    <div slot="footer" class="dialog__footer drill-pro-dialog__footer">
-      <a
-        href={tryFreeDrillHref}
-        class="drill-pro-dialog__cta drill-pro-dialog__cta--secondary"
-      >
-        {t('drills_proOnly_tryFree')}
-      </a>
-      <a
-        href={pricingHref}
-        class="drill-pro-dialog__cta drill-pro-dialog__cta--primary"
-      >
-        {t('drills_proOnly_viewPlans')}
-      </a>
-    </div>
-  </Dialog>
 </Layout>
 
 <script>
   function initDrillCardTriggers() {
-    const proDialog = document.getElementById(
-      'drill-pro-required-dialog'
-    ) as HTMLDialogElement | null
-
     document
       .querySelectorAll<HTMLButtonElement>('[data-drill-id]')
       .forEach((btn) => {
@@ -203,11 +157,6 @@ const DRILL_TAG_UI_KEY: Record<
             return
           }
           const baseHref = btn.dataset.drillBaseHref ?? ''
-          const canAccess = btn.dataset.drillCanAccess === 'true'
-          if (!canAccess) {
-            proDialog?.showModal()
-            return
-          }
           window.location.href = `${baseHref}?mode=guided`
         })
       })

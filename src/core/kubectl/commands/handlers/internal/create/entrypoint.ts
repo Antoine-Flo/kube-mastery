@@ -27,6 +27,7 @@ import {
 import {
   buildDryRunResponse,
   isDryRunClient,
+  isDryRunRequested,
   isSupportedDryRunValue
 } from './dryRunResponse'
 import {
@@ -196,6 +197,9 @@ export const handleCreate = (
         }
       ]
     })
+    if (isDryRunRequested(parsed)) {
+      return buildDryRunResponse(role, parsed)
+    }
     return createResourceWithEvents(role, apiServer)
   }
 
@@ -215,6 +219,9 @@ export const handleCreate = (
         }
       ]
     })
+    if (isDryRunRequested(parsed)) {
+      return buildDryRunResponse(clusterRole, parsed)
+    }
     return createResourceWithEvents(clusterRole, apiServer)
   }
 
@@ -246,6 +253,9 @@ export const handleCreate = (
         }
       ]
     })
+    if (isDryRunRequested(parsed)) {
+      return buildDryRunResponse(roleBinding, parsed)
+    }
     return createResourceWithEvents(roleBinding, apiServer)
   }
 
@@ -281,6 +291,9 @@ export const handleCreate = (
         }
       ]
     })
+    if (isDryRunRequested(parsed)) {
+      return buildDryRunResponse(clusterRoleBinding, parsed)
+    }
     return createResourceWithEvents(clusterRoleBinding, apiServer)
   }
 

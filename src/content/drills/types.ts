@@ -147,6 +147,7 @@ export interface DrillFile {
   comingSoon?: boolean
   isFree?: boolean
   tag?: DrillTagId
+  runtimeEnv?: DrillRuntimeEnvMeta
   tasks: DrillTask[]
 }
 
@@ -169,4 +170,10 @@ export interface DrillDetail {
   isFree: boolean
   tasks: DrillTask[]
   tag: DrillTagId | null
+  runtimeEnv: DrillRuntimeEnvMeta
+}
+
+export interface DrillRuntimeEnvMeta {
+  hasFsModule: boolean
+  hasClusterYaml: boolean
 }

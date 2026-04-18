@@ -173,6 +173,51 @@ describe('kubectl expose handler', () => {
     }
   })
 
+  it('should reject malformed selector label specs for expose', () => {
+    const apiServer = createApiServerFacade()
+    apiServer.createResource(
+      'Deployment',
+      createDeployment({
+        name: 'web',
+        namespace: 'default',
+        selector: { matchLabels: { app: 'web' } },
+        template: {
+          metadata: { labels: { app: 'web' } },
+          spec: {
+            containers: [
+              {
+                name: 'web',
+                image: 'nginx',
+                ports: [{ containerPort: 8080 }]
+              }
+            ]
+          }
+        }
+      })
+    )
+
+    const result = handleExpose(
+      apiServer,
+      createParsedExpose({
+        flags: {
+          port: '80',
+          selector: 'app==web,tier=frontend'
+        },
+        selector: {
+          requirements: [
+            { key: 'app', operator: 'Equals', values: ['web'] },
+            { key: 'tier', operator: 'Equals', values: ['frontend'] }
+          ]
+        }
+      })
+    )
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('error: unexpected label spec: app==web')
+    }
+  })
+
   it('should create a service from pod expose with explicit selector', () => {
     const apiServer = createApiServerFacade()
     apiServer.createResource(

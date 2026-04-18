@@ -455,7 +455,6 @@ const main = (): void => {
     spec.manifests
   )
   const stepRecords: StepComparisonRecord[] = []
-  const stripAgeValues = spec.compare?.normalize?.stripAgeValues ?? true
 
   try {
     console.log(`Simulation session: ${simulationSession.id}`)
@@ -473,8 +472,7 @@ const main = (): void => {
       const comparison = compareStepResults(
         rewrittenCommand,
         simulationResult,
-        kindResult,
-        stripAgeValues
+        kindResult
       )
       stepRecords.push({
         stepId: step.id,

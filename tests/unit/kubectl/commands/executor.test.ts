@@ -1180,15 +1180,15 @@ data:
         const result = executor.execute(
           "kubectl get deployments my-app o jsonpath='{.metadata.labels}'"
         )
-        expect(result.ok).toBe(true)
-        if (!result.ok) {
+        expect(result.ok).toBe(false)
+        if (result.ok) {
           return
         }
-        expect(result.value).toContain('my-app')
-        expect(result.value).toContain(
+        expect(result.error).toContain('my-app')
+        expect(result.error).toContain(
           'Error from server (NotFound): deployments.apps "o" not found'
         )
-        expect(result.value).toContain(
+        expect(result.error).toContain(
           `Error from server (NotFound): deployments.apps "jsonpath='{.metadata.labels}'" not found`
         )
       })

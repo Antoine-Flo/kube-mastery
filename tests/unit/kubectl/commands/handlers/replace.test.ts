@@ -116,6 +116,50 @@ spec:
     expect(pod.value.spec.containers[0].image).toBe('busybox:latest')
   })
 
+  it('should not mutate cluster state on replace --dry-run=client', () => {
+    apiServer.createResource(
+      'Pod',
+      createPod({
+        name: 'dry-run-replace',
+        namespace: 'default',
+        containers: [{ name: 'main', image: 'nginx:1.28' }]
+      })
+    )
+
+    fileSystem.createFile('dry-run-replace.yaml')
+    fileSystem.writeFile(
+      'dry-run-replace.yaml',
+      `apiVersion: v1
+kind: Pod
+metadata:
+  name: dry-run-replace
+  namespace: default
+spec:
+  containers:
+    - name: main
+      image: busybox:latest
+`
+    )
+
+    const parsed = parseCommand(
+      'kubectl replace -f dry-run-replace.yaml --dry-run=client'
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleReplace(fileSystem, apiServer, parsed.value)
+    expect(result.ok).toBe(true)
+
+    const pod = apiServer.findResource('Pod', 'dry-run-replace', 'default')
+    expect(pod.ok).toBe(true)
+    if (!pod.ok) {
+      return
+    }
+    expect(pod.value.spec.containers[0].image).toBe('nginx:1.28')
+  })
+
   it('should reset pod to ContainerCreating on force replace even when manifest has running status', () => {
     apiServer.createResource(
       'Pod',

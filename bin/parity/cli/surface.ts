@@ -86,6 +86,7 @@ export const printParityHeader = (
   console.log(`Simulation session: ${sessionId}`)
   console.log(`Kind context: ${contextName}`)
   console.log(`Output mode: ${verbose ? 'verbose' : 'compact'}`)
+  console.log('Comparison mode: strict-bytes (raw)')
 }
 
 export const printParityCommandBanner = (command: string): void => {

@@ -32,14 +32,6 @@ export interface DrillParityFilesystemCheck {
   notEmpty?: boolean
 }
 
-export interface DrillParityNormalizeConfig {
-  stripAgeValues?: boolean
-}
-
-export interface DrillParityCompareConfig {
-  normalize?: DrillParityNormalizeConfig
-}
-
 export interface DrillParityChecks {
   cluster: DrillParityClusterCheck[]
   filesystem: DrillParityFilesystemCheck[]
@@ -54,7 +46,6 @@ export interface DrillParitySpec {
   manifests: DrillParityManifest[]
   steps: DrillParityStep[]
   checks: DrillParityChecks
-  compare?: DrillParityCompareConfig
 }
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> => {
@@ -250,27 +241,6 @@ const parseChecks = (value: unknown): Result<DrillParityChecks> => {
   })
 }
 
-const parseCompare = (value: unknown): Result<DrillParityCompareConfig | undefined> => {
-  if (value == null) {
-    return success(undefined)
-  }
-  if (!isObjectRecord(value)) {
-    return error('`compare` must be an object')
-  }
-  const normalize = value.normalize
-  if (normalize == null) {
-    return success({})
-  }
-  if (!isObjectRecord(normalize)) {
-    return error('`compare.normalize` must be an object')
-  }
-  return success({
-    normalize: {
-      stripAgeValues: readBoolean(normalize, 'stripAgeValues')
-    }
-  })
-}
-
 export const parseDrillParitySpec = (yamlText: string): Result<DrillParitySpec> => {
   let parsed: unknown
   try {
@@ -299,11 +269,6 @@ export const parseDrillParitySpec = (yamlText: string): Result<DrillParitySpec> 
   if (!checksResult.ok) {
     return checksResult
   }
-  const compareResult = parseCompare(parsed.compare)
-  if (!compareResult.ok) {
-    return compareResult
-  }
-
   return success({
     version,
     drillId,
@@ -312,8 +277,7 @@ export const parseDrillParitySpec = (yamlText: string): Result<DrillParitySpec> 
     resetKindBeforeRun: readBoolean(parsed, 'resetKindBeforeRun'),
     manifests: manifestsResult.value,
     steps: stepsResult.value,
-    checks: checksResult.value,
-    compare: compareResult.value
+    checks: checksResult.value
   })
 }
 

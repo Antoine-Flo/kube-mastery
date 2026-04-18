@@ -10,6 +10,10 @@ import { error, success } from '../../../shared/result'
 import { validateMetadataNameByKind } from '../resourceCatalog'
 import type { ParsedCommand } from '../types'
 import {
+  isDryRunRequested,
+  isSupportedDryRunValue
+} from './internal/create/dryRunResponse'
+import {
   isNamespacedResourceKind,
   RESOURCE_KIND_BY_RESOURCE,
   toKindReference,
@@ -272,6 +276,13 @@ export const handleEdit = (
   parsed: ParsedCommand,
   options: EditHandlerOptions = {}
 ): ExecutionResult => {
+  const dryRunFlag = parsed.flags['dry-run']
+  if (!isSupportedDryRunValue(dryRunFlag)) {
+    return error(
+      `error: Invalid dry-run value (${String(dryRunFlag)}). Must be "none", "server", or "client".`
+    )
+  }
+  const dryRunRequested = isDryRunRequested(parsed)
   if (options.editorModal == null) {
     return error(
       'error: interactive editor is not available in this environment'
@@ -359,29 +370,35 @@ export const handleEdit = (
           return reopenWithError(nameValidation.error)
         }
 
-        const updateResult = isNamespacedKind(target.kind)
-          ? apiServer.updateResource(
-              target.kind,
-              target.name,
-              parsedEditedResource as unknown as KindToResource<
-                typeof target.kind
-              >,
-              namespace
-            )
-          : apiServer.updateResource(
-              target.kind,
-              target.name,
-              parsedEditedResource as unknown as KindToResource<
-                typeof target.kind
-              >
-            )
-        if (!updateResult.ok) {
-          return reopenWithError(updateResult.error)
+        if (!dryRunRequested) {
+          const updateResult = isNamespacedKind(target.kind)
+            ? apiServer.updateResource(
+                target.kind,
+                target.name,
+                parsedEditedResource as unknown as KindToResource<
+                  typeof target.kind
+                >,
+                namespace
+              )
+            : apiServer.updateResource(
+                target.kind,
+                target.name,
+                parsedEditedResource as unknown as KindToResource<
+                  typeof target.kind
+                >
+              )
+          if (!updateResult.ok) {
+            return reopenWithError(updateResult.error)
+          }
         }
 
         emitAsync(
           options,
-          success(`${toKindReference(target.kind)}/${target.name} edited`)
+          success(
+            dryRunRequested
+              ? `${toKindReference(target.kind)}/${target.name} edited (dry run)`
+              : `${toKindReference(target.kind)}/${target.name} edited`
+          )
         )
         return true
       },

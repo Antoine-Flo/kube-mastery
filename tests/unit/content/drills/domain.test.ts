@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import type { DrillFile } from '../../../../src/content/drills/types'
+import type {
+  DrillFile,
+  DrillRuntimeEnvMeta
+} from '../../../../src/content/drills/types'
 import type { DrillIndexPort } from '../../../../src/content/drills/port'
 import type { UiLang } from '../../../../src/content/courses/types'
 import {
@@ -10,10 +13,17 @@ import {
 function createMockPort(overrides: {
   drillIds?: string[]
   getDrillFile?: (drillId: string, lang: UiLang) => DrillFile | null
+  getDrillRuntimeEnv?: (drillId: string) => DrillRuntimeEnvMeta
 }): DrillIndexPort {
   return {
     getDrillIds: () => overrides.drillIds ?? [],
-    getDrillFile: overrides.getDrillFile ?? (() => null)
+    getDrillFile: overrides.getDrillFile ?? (() => null),
+    getDrillRuntimeEnv:
+      overrides.getDrillRuntimeEnv ??
+      (() => ({
+        hasFsModule: false,
+        hasClusterYaml: false
+      }))
   }
 }
 
@@ -157,6 +167,10 @@ describe('buildDrillDetail', () => {
     expect(detail!.tasks[0]).toEqual(SAMPLE_TASK)
     expect(detail!.tag).toBeNull()
     expect(detail!.isFree).toBe(false)
+    expect(detail!.runtimeEnv).toEqual({
+      hasFsModule: false,
+      hasClusterYaml: false
+    })
   })
 
   it('includes isFree when set on file', () => {

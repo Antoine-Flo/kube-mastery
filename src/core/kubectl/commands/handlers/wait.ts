@@ -3,7 +3,10 @@ import type { Pod } from '../../../cluster/ressources/Pod'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import type { ParsedCommand } from '../types'
-import { buildRequiresResourceNameMessage } from '../shared/errorMessages'
+import {
+  buildNotFoundErrorMessage,
+  buildRequiresResourceNameMessage
+} from '../shared/errorMessages'
 
 // kubectl wait: only pods and condition=Ready are supported for conformance
 const DEFAULT_WAIT_CONDITION = 'condition=Ready'
@@ -71,7 +74,7 @@ export const handleWait = (
 
     const podResult = apiServer.findResource('Pod', podName, namespace)
     if (!podResult.ok) {
-      return error(`error: no matching resources found`)
+      return error(buildNotFoundErrorMessage('pods', podName))
     }
 
     const pod = podResult.value as Pod

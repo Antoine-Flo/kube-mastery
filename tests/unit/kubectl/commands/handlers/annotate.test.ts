@@ -89,4 +89,34 @@ describe('kubectl annotate handler', () => {
       )
     }
   })
+
+  it('should not mutate resource on annotate --dry-run=server', () => {
+    const pod = createPod({
+      name: 'dry-run-pod',
+      namespace: 'default',
+      containers: [{ name: 'main', image: 'nginx:latest' }],
+      annotations: { owner: 'team-a' }
+    })
+    apiServer.createResource('Pod', pod)
+
+    const parsed = createParsedCommand({
+      name: 'dry-run-pod',
+      flags: { 'dry-run': 'server' },
+      annotationChanges: { description: 'preview-only' }
+    })
+
+    const result = handleAnnotate(apiServer, parsed)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('(dry run)')
+
+    const updatedPod = apiServer.findResource('Pod', 'dry-run-pod', 'default')
+    expect(updatedPod.ok).toBe(true)
+    if (!updatedPod.ok) {
+      return
+    }
+    expect(updatedPod.value.metadata.annotations).toEqual({ owner: 'team-a' })
+  })
 })

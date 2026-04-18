@@ -16,6 +16,10 @@ import type { ExecutionResult, Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
 import type { ParsedCommand } from './types'
 import { RESOURCE_KIND_BY_RESOURCE } from './resourceCatalog'
+import {
+  isDryRunRequested,
+  isSupportedDryRunValue
+} from './handlers/internal/create/dryRunResponse'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // METADATA HELPERS (LABELS & ANNOTATIONS)
@@ -177,6 +181,12 @@ export const handleMetadataChange = (
   parsed: ParsedCommand,
   config: MetadataOperationConfig
 ): ExecutionResult => {
+  const dryRunFlag = parsed.flags['dry-run']
+  if (!isSupportedDryRunValue(dryRunFlag)) {
+    return error(
+      `error: Invalid dry-run value (${String(dryRunFlag)}). Must be "none", "server", or "client".`
+    )
+  }
   const namespace = parsed.namespace || 'default'
 
   // Validate resource type
@@ -201,6 +211,7 @@ export const handleMetadataChange = (
   }
 
   const overwrite = isFlagEnabled(parsed.flags['overwrite'])
+  const dryRunRequested = isDryRunRequested(parsed)
 
   return handleMetadataChangeWithEvents(
     parsed.resource,
@@ -208,6 +219,7 @@ export const handleMetadataChange = (
     namespace,
     changes,
     overwrite,
+    dryRunRequested,
     config,
     apiServer
   )
@@ -233,6 +245,7 @@ const handleMetadataChangeWithEvents = (
   namespace: string,
   changes: Record<string, string | null>,
   overwrite: boolean,
+  dryRunRequested: boolean,
   config: MetadataOperationConfig,
   apiServer: ApiServerFacade
 ): ExecutionResult => {
@@ -268,6 +281,14 @@ const handleMetadataChangeWithEvents = (
   const updatedResource = updateResult.value as KindToResource<
     typeof accessor.kind
   >
+  if (dryRunRequested) {
+    const allRemovals = Object.values(changes).every((value) => value === null)
+    const pastTense =
+      allRemovals && config.metadataType === 'labels'
+        ? 'unlabeled'
+        : config.actionPastTense
+    return success(`${accessor.singularName}/${name} ${pastTense} (dry run)`)
+  }
   const metadataKey = config.metadataType
   const metadataForEvents =
     updatedResource.metadata as ResourceWithMetadata['metadata']

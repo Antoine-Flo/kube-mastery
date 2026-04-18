@@ -370,7 +370,27 @@ describe('kubectl logs handler', () => {
       }
     })
 
-    it('should return full logs for negative --tail value', () => {
+    it('should return full logs for --tail=-1', () => {
+      const pod = createPod({
+        name: 'nginx-pod',
+        namespace: 'default',
+        containers: [{ name: 'nginx', image: 'nginx:latest' }],
+        logs: ['line1', 'line2', 'line3']
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        name: 'nginx-pod',
+        flags: { tail: '-1' }
+      })
+
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
+
+      expect(result).toEqual({ ok: true, value: 'line1\nline2\nline3' })
+    })
+
+    it('should reject --tail values lower than -1', () => {
       const pod = createPod({
         name: 'nginx-pod',
         namespace: 'default',
@@ -386,9 +406,9 @@ describe('kubectl logs handler', () => {
       apiServer.etcd.restore(state)
       const result = handleLogsApi(apiServer, parsed)
 
-      expect(result.ok).toBe(true)
-      if (result.ok) {
-        expect(result.value.length).toBeGreaterThan(0)
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toContain('--tail must be greater than or equal to -1')
       }
     })
   })
@@ -438,6 +458,72 @@ describe('kubectl logs handler', () => {
         expect(result.error).toContain('invalid argument "abc"')
         expect(result.error).toContain('"--since"')
       }
+    })
+
+    it('should support millisecond precision duration', () => {
+      const nowMs = Date.now()
+      const oldLine = `${new Date(nowMs - 3_000).toISOString().substring(0, 19)}Z INFO old`
+      const recentLine = `${new Date(nowMs - 1_000).toISOString().substring(0, 19)}Z INFO recent`
+      const pod = createPod({
+        name: 'since-ms',
+        namespace: 'default',
+        containers: [{ name: 'app', image: 'nginx:latest' }],
+        logs: [oldLine, recentLine]
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        name: 'since-ms',
+        flags: { since: '1500ms' }
+      })
+
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
+
+      expect(result).toEqual({ ok: true, value: recentLine })
+    })
+
+    it('should support decimal duration values', () => {
+      const nowMs = Date.now()
+      const oldLine = `${new Date(nowMs - 3_000).toISOString().substring(0, 19)}Z INFO old`
+      const recentLine = `${new Date(nowMs - 1_000).toISOString().substring(0, 19)}Z INFO recent`
+      const pod = createPod({
+        name: 'since-decimal',
+        namespace: 'default',
+        containers: [{ name: 'app', image: 'nginx:latest' }],
+        logs: [oldLine, recentLine]
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        name: 'since-decimal',
+        flags: { since: '1.5s' }
+      })
+
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
+
+      expect(result).toEqual({ ok: true, value: recentLine })
+    })
+
+    it('should accept microsecond unit syntax', () => {
+      const pod = createPod({
+        name: 'since-micro',
+        namespace: 'default',
+        containers: [{ name: 'app', image: 'nginx:latest' }],
+        logs: ['2026-01-01T00:00:00Z INFO hello']
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        name: 'since-micro',
+        flags: { since: '1000us' }
+      })
+
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
+
+      expect(result.ok).toBe(true)
     })
 
     it('should apply --since before --tail', () => {
@@ -588,6 +674,46 @@ describe('kubectl logs handler', () => {
       if (!result.ok) {
         expect(result.error).toContain('namespaces "dev" not found')
       }
+    })
+  })
+
+  describe('selector default tail behavior', () => {
+    it('should default to 10 lines when selector is used without --tail', () => {
+      const pod = createPod({
+        name: 'selector-pod',
+        namespace: 'default',
+        labels: { app: 'demo' },
+        containers: [{ name: 'app', image: 'nginx:latest' }],
+        logs: Array.from({ length: 20 }, (_, index) => {
+          return `line-${index + 1}`
+        })
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        selector: { app: 'demo' },
+        flags: { l: 'app=demo' }
+      })
+
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+      expect(result.value.split('\n')).toEqual([
+        'line-11',
+        'line-12',
+        'line-13',
+        'line-14',
+        'line-15',
+        'line-16',
+        'line-17',
+        'line-18',
+        'line-19',
+        'line-20'
+      ])
     })
   })
 

@@ -54,14 +54,15 @@ describe('handleWait', () => {
     expect(result.error).toContain('only supports --for=condition=Ready')
   })
 
-  it('returns no matching resources when pod is absent', () => {
+  it('returns not found when pod is absent', () => {
     const apiServer = createApiServerFacade({ eventBus: createEventBus() })
     const result = handleWait(apiServer, createParsedCommand())
     expect(result.ok).toBe(false)
     if (result.ok) {
       return
     }
-    expect(result.error).toContain('no matching resources found')
+    expect(result.error).toContain('Error from server (NotFound)')
+    expect(result.error).toContain('pods "web" not found')
   })
 
   it('returns success when pod is already ready', () => {

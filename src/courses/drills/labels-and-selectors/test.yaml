@@ -1,0 +1,62 @@
+version: 1
+drillId: labels-and-selectors
+resetKindBeforeRun: false
+timeoutMs: 60000
+
+manifests:
+  - path: cluster.yaml
+    sourcePath: cluster.yaml
+
+steps:
+  - id: cleanup-pod
+    run: kubectl delete pod nginx -n default
+    expectParity: false
+  - id: cleanup-service
+    run: kubectl delete svc nginx-svc -n default
+    expectParity: false
+  - id: apply-initial-state
+    run: kubectl apply -f cluster.yaml
+  - id: relabel-pod
+    run: kubectl label pod nginx -n default env=production track=stable --overwrite
+  - id: wait-ready
+    run: kubectl wait --for=condition=Ready pod/nginx -n default --timeout=60s
+  - id: verify-endpoint-slices
+    run: kubectl get endpointslices -n default -l kubernetes.io/service-name=nginx-svc -o jsonpath='{.items[*].endpoints[*].targetRef.name}'
+
+checks:
+  cluster:
+    - id: pod-env-label
+      kind: pod
+      namespace: default
+      name: nginx
+      path: '{.metadata.labels.env}'
+      expected: 'production'
+    - id: pod-track-label
+      kind: pod
+      namespace: default
+      name: nginx
+      path: '{.metadata.labels.track}'
+      expected: 'stable'
+    - id: service-selector-env
+      kind: service
+      namespace: default
+      name: nginx-svc
+      path: '{.spec.selector.env}'
+      expected: 'production'
+    - id: service-selector-track
+      kind: service
+      namespace: default
+      name: nginx-svc
+      path: '{.spec.selector.track}'
+      expected: 'stable'
+  filesystem:
+    - id: cluster-manifest-has-staging-label
+      path: cluster.yaml
+      contains: 'env: staging'
+    - id: cluster-manifest-has-service-selector
+      path: cluster.yaml
+      contains: 'track: stable'
+
+compare:
+  normalize:
+    stripAgeValues: true

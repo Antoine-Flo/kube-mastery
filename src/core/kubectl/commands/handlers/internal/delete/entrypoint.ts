@@ -3,6 +3,7 @@ import type { FileSystem } from '../../../../../filesystem/FileSystem'
 import type { ExecutionResult } from '../../../../../shared/result'
 import { error } from '../../../../../shared/result'
 import type { ParsedCommand } from '../../../types'
+import { isSupportedDryRunValue } from '../create/dryRunResponse'
 import { getDeleteTargetConfig } from './config'
 import { handleDeleteFromManifestFiles } from './manifest'
 import { getPodDeleteOptions } from './messages'
@@ -27,6 +28,12 @@ export const handleDelete = (
   parsed: ParsedCommand,
   fileSystem?: FileSystem
 ): ExecutionResult => {
+  const dryRunFlag = parsed.flags['dry-run']
+  if (!isSupportedDryRunValue(dryRunFlag)) {
+    return error(
+      `error: Invalid dry-run value (${String(dryRunFlag)}). Must be "none", "server", or "client".`
+    )
+  }
   const manifestResult = handleDeleteFromManifestFiles(
     apiServer,
     parsed,

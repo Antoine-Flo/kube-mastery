@@ -7,6 +7,10 @@ import type { ExecutionResult, Result } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import type { ParsedCommand, Resource } from '../types'
 import {
+  isDryRunRequested,
+  isSupportedDryRunValue
+} from './internal/create/dryRunResponse'
+import {
   RESOURCE_KIND_BY_RESOURCE,
   toKindReference,
   toPluralKindReference
@@ -128,6 +132,12 @@ export const handlePatch = (
   apiServer: ApiServerFacade,
   parsed: ParsedCommand
 ): ExecutionResult => {
+  const dryRunFlag = parsed.flags['dry-run']
+  if (!isSupportedDryRunValue(dryRunFlag)) {
+    return error(
+      `error: Invalid dry-run value (${String(dryRunFlag)}). Must be "none", "server", or "client".`
+    )
+  }
   const typeValidation = validatePatchType(parsed)
   if (typeValidation != null) {
     return typeValidation
@@ -178,6 +188,9 @@ export const handlePatch = (
   )
   if (immutableError != null) {
     return error(immutableError)
+  }
+  if (isDryRunRequested(parsed)) {
+    return success(`${toKindReference(kindResult.kind)}/${parsed.name} patched (dry run)`)
   }
 
   const updateResult = apiServer.updateResource(

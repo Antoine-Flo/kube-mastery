@@ -464,4 +464,51 @@ describe('kubectl edit handler', () => {
     expect(capturedContent).toContain('# deployments.apps "web" was not valid:')
     expect(capturedContent).toContain('spec.selector: field is immutable')
   })
+
+  it('should not mutate resource on edit --dry-run=client', () => {
+    apiServer.createResource(
+      'Pod',
+      createPod({
+        name: 'edit-dry-run',
+        namespace: 'default',
+        containers: [{ name: 'web', image: 'nginx:1.25' }]
+      })
+    )
+    let capturedContent = ''
+    let capturedSave: ((newContent: string) => void) | undefined
+    const messages: string[] = []
+    const parsed = parseCommand('kubectl edit pod edit-dry-run --dry-run=client')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleEdit(apiServer, parsed.value, {
+      editorModal: {
+        open: (_filename, content, onSave) => {
+          capturedContent = content
+          capturedSave = onSave
+        }
+      },
+      onAsyncOutput: (message) => {
+        messages.push(message)
+      }
+    })
+    expect(result.ok).toBe(true)
+    expect(capturedSave).toBeDefined()
+    if (capturedSave == null) {
+      return
+    }
+    capturedSave(capturedContent.replace('nginx:1.25', 'nginx:1.26'))
+
+    const unchangedPod = apiServer.findResource('Pod', 'edit-dry-run', 'default')
+    expect(unchangedPod.ok).toBe(true)
+    if (!unchangedPod.ok) {
+      return
+    }
+    expect(unchangedPod.value.spec.containers[0].image).toBe('nginx:1.25')
+    expect(
+      messages.some((entry) => entry.includes('pod/edit-dry-run edited (dry run)'))
+    ).toBe(true)
+  })
 })

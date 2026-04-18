@@ -9,6 +9,11 @@ import {
   resolveManifestFilePathsFromFilenameFlag
 } from '../../../manifestFilePathsFromFlag'
 import { applyResourceWithEvents } from '../../../resourceCatalog'
+import {
+  buildDryRunResponse,
+  isDryRunRequested,
+  isSupportedDryRunValue
+} from '../create/dryRunResponse'
 import { buildMustSpecifyFilenameFlagMessage } from '../../../shared/errorMessages'
 import { getFilenameFromFlags } from '../../../shared/filenameFlags'
 import type { ParsedCommand } from '../../../types'
@@ -18,6 +23,12 @@ export const handleApply = (
   apiServer: ApiServerFacade,
   parsed: ParsedCommand
 ): ExecutionResult => {
+  const dryRunFlag = parsed.flags['dry-run']
+  if (!isSupportedDryRunValue(dryRunFlag)) {
+    return error(
+      `error: Invalid dry-run value (${String(dryRunFlag)}). Must be "none", "server", or "client".`
+    )
+  }
   const filename = getFilenameFromFlags(parsed)
   if (!filename) {
     return error(buildMustSpecifyFilenameFlagMessage())
@@ -38,12 +49,21 @@ export const handleApply = (
   }
 
   const lines: string[] = []
+  const dryRunRequested = isDryRunRequested(parsed)
   for (let i = 0; i < filesResult.value.length; i++) {
     const parseResult = parseKubernetesYamlDocuments(filesResult.value[i])
     if (!parseResult.ok) {
       return error(`error: ${parseResult.error}`)
     }
     for (let j = 0; j < parseResult.value.length; j++) {
+      if (dryRunRequested) {
+        const dryRunResult = buildDryRunResponse(parseResult.value[j], parsed)
+        if (!dryRunResult.ok) {
+          return dryRunResult
+        }
+        lines.push(dryRunResult.value)
+        continue
+      }
       const applyResult = applyResourceWithEvents(
         parseResult.value[j],
         apiServer

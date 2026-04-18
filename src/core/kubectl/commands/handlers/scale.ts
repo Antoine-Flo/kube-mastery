@@ -8,6 +8,10 @@ import type { ReplicaSet } from '../../../cluster/ressources/ReplicaSet'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import type { ParsedCommand } from '../types'
+import {
+  isDryRunRequested,
+  isSupportedDryRunValue
+} from './internal/create/dryRunResponse'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // KUBECTL SCALE HANDLER
@@ -27,6 +31,12 @@ export const handleScale = (
   apiServer: ApiServerFacade,
   parsed: ParsedCommand
 ): ExecutionResult => {
+  const dryRunFlag = parsed.flags['dry-run']
+  if (!isSupportedDryRunValue(dryRunFlag)) {
+    return error(
+      `error: Invalid dry-run value (${String(dryRunFlag)}). Must be "none", "server", or "client".`
+    )
+  }
   const namespace = parsed.namespace || 'default'
   const { resource, name, replicas } = parsed
 
@@ -60,12 +70,24 @@ export const handleScale = (
 
   // Scale deployment
   if (resource === 'deployments') {
-    return scaleDeployment(apiServer, name, namespace, replicas)
+    return scaleDeployment(
+      apiServer,
+      name,
+      namespace,
+      replicas,
+      isDryRunRequested(parsed)
+    )
   }
 
   // Scale replicaset
   if (resource === 'replicasets') {
-    return scaleReplicaSet(apiServer, name, namespace, replicas)
+    return scaleReplicaSet(
+      apiServer,
+      name,
+      namespace,
+      replicas,
+      isDryRunRequested(parsed)
+    )
   }
 
   return error(`error: the resource type "${resource}" is not scalable`)
@@ -78,7 +100,8 @@ const scaleDeployment = (
   apiServer: ApiServerFacade,
   name: string,
   namespace: string,
-  replicas: number
+  replicas: number,
+  dryRunRequested: boolean
 ): ExecutionResult => {
   const findResult = apiServer.findResource('Deployment', name, namespace)
   if (!findResult.ok) {
@@ -95,6 +118,9 @@ const scaleDeployment = (
       ...deployment.spec,
       replicas
     }
+  }
+  if (dryRunRequested) {
+    return success(`deployment.apps/${name} scaled (dry run)`)
   }
 
   // Emit update event - DeploymentController will handle ReplicaSet/Pod reconciliation
@@ -118,7 +144,8 @@ const scaleReplicaSet = (
   apiServer: ApiServerFacade,
   name: string,
   namespace: string,
-  replicas: number
+  replicas: number,
+  dryRunRequested: boolean
 ): ExecutionResult => {
   const findResult = apiServer.findResource('ReplicaSet', name, namespace)
   if (!findResult.ok) {
@@ -135,6 +162,9 @@ const scaleReplicaSet = (
       ...replicaSet.spec,
       replicas
     }
+  }
+  if (dryRunRequested) {
+    return success(`replicaset.apps/${name} scaled (dry run)`)
   }
 
   // Emit update event - ReplicaSetController will handle Pod reconciliation

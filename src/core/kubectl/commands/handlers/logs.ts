@@ -31,6 +31,12 @@ const parseTailCount = (
       `error: invalid argument "${tailText}" for "--tail" flag: strconv.ParseInt: parsing "${tailText}": invalid syntax\nSee 'kubectl logs --help' for usage.`
     )
   }
+  const parsedTail = Number.parseInt(tailText, 10)
+  if (parsedTail < -1) {
+    return error(
+      'error: --tail must be greater than or equal to -1\nSee \'kubectl logs --help\' for usage.'
+    )
+  }
   return success(tailText)
 }
 
@@ -41,37 +47,46 @@ const parseSinceDurationMs = (
     return success('')
   }
   const sinceText = String(sinceValue).trim()
-  const segmentRegex = /(\d+)([smh])/g
+  const normalizedSinceText = sinceText.replaceAll('µs', 'us')
+  const segmentRegex = /(\d+(?:\.\d+)?)(ns|us|ms|s|m|h)/g
   let totalMs = 0
   let consumed = 0
-  let match = segmentRegex.exec(sinceText)
+  let match = segmentRegex.exec(normalizedSinceText)
 
   while (match != null) {
     const amountText = match[1]
     const unit = match[2]
-    const amount = Number.parseInt(amountText, 10)
+    const amount = Number.parseFloat(amountText)
     if (!Number.isFinite(amount)) {
       return error(
         `error: invalid argument "${sinceText}" for "--since" flag: time: invalid duration "${sinceText}"\nSee 'kubectl logs --help' for usage.`
       )
     }
-    if (unit === 's') {
-      totalMs += amount * 1000
-    } else if (unit === 'm') {
-      totalMs += amount * 60 * 1000
-    } else if (unit === 'h') {
-      totalMs += amount * 60 * 60 * 1000
+    const durationByUnit: Record<string, number> = {
+      ns: 1 / 1_000_000,
+      us: 1 / 1_000,
+      ms: 1,
+      s: 1_000,
+      m: 60 * 1_000,
+      h: 60 * 60 * 1_000
     }
+    const unitDuration = durationByUnit[unit]
+    if (unitDuration == null) {
+      return error(
+        `error: invalid argument "${sinceText}" for "--since" flag: time: invalid duration "${sinceText}"\nSee 'kubectl logs --help' for usage.`
+      )
+    }
+    totalMs += amount * unitDuration
     consumed += match[0].length
-    match = segmentRegex.exec(sinceText)
+    match = segmentRegex.exec(normalizedSinceText)
   }
 
-  if (consumed !== sinceText.length || totalMs <= 0) {
+  if (consumed !== normalizedSinceText.length || totalMs <= 0) {
     return error(
       `error: invalid argument "${sinceText}" for "--since" flag: time: invalid duration "${sinceText}"\nSee 'kubectl logs --help' for usage.`
     )
   }
-  return success(String(totalMs))
+  return success(String(Math.floor(totalMs)))
 }
 
 const parseTimestampFromLogLine = (
@@ -304,6 +319,8 @@ export const handleLogs = (
     tailParseResult.value.length > 0
       ? Number.parseInt(tailParseResult.value, 10)
       : undefined
+  const effectiveTailCount =
+    parsedTailCount === undefined && selector != null ? 10 : parsedTailCount
   const parsedSinceDurationMs =
     sinceParseResult.value.length > 0
       ? Number.parseInt(sinceParseResult.value, 10)
@@ -437,7 +454,7 @@ export const handleLogs = (
     sourceEntries,
     nowMs,
     parsedSinceDurationMs,
-    parsedTailCount
+    effectiveTailCount
   )
   const output = filteredEntries.map((entry) => entry.line).join('\n')
   return success(output)

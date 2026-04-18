@@ -238,6 +238,135 @@ const reorderNetworkPolicyForKubectlYaml = (payload: unknown): unknown => {
   return orderedPayload
 }
 
+const reorderPodContainerForKubectlYaml = (container: unknown): unknown => {
+  if (!isRecord(container)) {
+    return container
+  }
+
+  const orderedContainer: Record<string, unknown> = {}
+  if (container.args != null) {
+    orderedContainer.args = container.args
+  }
+  if (container.command != null) {
+    orderedContainer.command = container.command
+  }
+  if (container.env != null) {
+    orderedContainer.env = container.env
+  }
+  if (container.image != null) {
+    orderedContainer.image = container.image
+  }
+  if (container.name != null) {
+    orderedContainer.name = container.name
+  }
+  if (container.ports != null) {
+    orderedContainer.ports = container.ports
+  }
+  if (container.resources != null) {
+    orderedContainer.resources = container.resources
+  }
+
+  for (const [key, value] of Object.entries(container)) {
+    if (orderedContainer[key] != null) {
+      continue
+    }
+    orderedContainer[key] = value
+  }
+
+  return orderedContainer
+}
+
+const reorderPodSpecForKubectlYaml = (spec: unknown): unknown => {
+  if (!isRecord(spec)) {
+    return spec
+  }
+
+  const orderedSpec: Record<string, unknown> = {}
+  if (Array.isArray(spec.containers)) {
+    orderedSpec.containers = spec.containers.map(reorderPodContainerForKubectlYaml)
+  } else if (spec.containers != null) {
+    orderedSpec.containers = spec.containers
+  }
+  if (spec.dnsPolicy != null) {
+    orderedSpec.dnsPolicy = spec.dnsPolicy
+  }
+  if (spec.restartPolicy != null) {
+    orderedSpec.restartPolicy = spec.restartPolicy
+  }
+
+  for (const [key, value] of Object.entries(spec)) {
+    if (orderedSpec[key] != null) {
+      continue
+    }
+    orderedSpec[key] = value
+  }
+
+  return orderedSpec
+}
+
+const reorderPodMetadataForKubectlYaml = (metadata: unknown): unknown => {
+  if (!isRecord(metadata)) {
+    return metadata
+  }
+
+  const orderedMetadata: Record<string, unknown> = {}
+  if (metadata.labels != null) {
+    orderedMetadata.labels = metadata.labels
+  }
+  if (metadata.name != null) {
+    orderedMetadata.name = metadata.name
+  }
+  if (metadata.namespace != null) {
+    orderedMetadata.namespace = metadata.namespace
+  }
+
+  for (const [key, value] of Object.entries(metadata)) {
+    if (orderedMetadata[key] != null) {
+      continue
+    }
+    orderedMetadata[key] = value
+  }
+
+  return orderedMetadata
+}
+
+const reorderPodForKubectlYaml = (payload: unknown): unknown => {
+  if (!isRecord(payload)) {
+    return payload
+  }
+
+  const isPod = payload.apiVersion === 'v1' && payload.kind === 'Pod'
+  if (!isPod) {
+    return payload
+  }
+
+  const orderedPayload: Record<string, unknown> = {}
+  if (payload.apiVersion != null) {
+    orderedPayload.apiVersion = payload.apiVersion
+  }
+  if (payload.kind != null) {
+    orderedPayload.kind = payload.kind
+  }
+  if (payload.metadata != null) {
+    orderedPayload.metadata = reorderPodMetadataForKubectlYaml(payload.metadata)
+  }
+  if (payload.spec != null) {
+    orderedPayload.spec = reorderPodSpecForKubectlYaml(payload.spec)
+  }
+  if (payload.status != null) {
+    orderedPayload.status = payload.status
+  }
+
+  for (const [key, value] of Object.entries(payload)) {
+    if (orderedPayload[key] != null) {
+      continue
+    }
+    orderedPayload[key] = value
+  }
+
+  return orderedPayload
+}
+
 const stripMatchingQuotes = (raw: string): string => {
   const trimmed = raw.trim()
   if (trimmed.length < 2) {
@@ -408,18 +537,18 @@ export const renderStructuredPayload = (
   directive: OutputDirective
 ): Result<string> => {
   if (directive.kind === 'json') {
-    return success(JSON.stringify(payload, null, KUBECTL_JSON_INDENT))
+    return success(`${JSON.stringify(payload, null, KUBECTL_JSON_INDENT)}\n`)
   }
   if (directive.kind === 'yaml') {
     const normalizedYamlPayload = reorderSecretForKubectlYaml(
       reorderConfigMapForKubectlYaml(
-        reorderNetworkPolicyForKubectlYaml(payload)
+        reorderNetworkPolicyForKubectlYaml(reorderPodForKubectlYaml(payload))
       )
     )
     const yamlOutput = yamlStringify(normalizedYamlPayload, {
       indentSeq: false,
       aliasDuplicateObjects: false
-    }).trimEnd()
+    })
     return success(quoteCreationTimestampScalars(yamlOutput))
   }
   if (directive.kind === 'jsonpath') {

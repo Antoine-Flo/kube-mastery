@@ -18,6 +18,7 @@ export type DeleteManifestTargetConfig = {
 export type PodDeleteOptions = {
   gracePeriodSeconds?: number
   force?: boolean
+  dryRun?: boolean
 }
 
 export type DeletableResource = Exclude<Resource, 'all'>

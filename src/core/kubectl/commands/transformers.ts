@@ -1,6 +1,6 @@
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import { parseSelector, stripMatchingQuotes } from '../../shared/parsing'
+import { stripMatchingQuotes } from '../../shared/parsing'
 import { RESOURCE_ALIAS_MAP } from './resourceCatalog'
 import { parseResourceTargetToken } from './resourceCatalog'
 import {
@@ -370,26 +370,45 @@ const parseChanges = (tokens: string[]): Record<string, string | null> => {
   return changes
 }
 
+const parseRunLabelSpec = (
+  labelSpec: string
+): Result<{ key: string; value: string }> => {
+  const parts = labelSpec.split('=')
+  if (parts.length !== 2) {
+    return error(`error: unexpected label spec: ${labelSpec}`)
+  }
+  const key = stripMatchingQuotes(parts[0]).trim()
+  const value = stripMatchingQuotes(parts[1])
+  if (key.length === 0) {
+    return error('error: unexpected empty label key')
+  }
+  return success({ key, value })
+}
+
 const parseRunLabels = (
   labelsValues: string[]
-): Record<string, string> | undefined => {
+): Result<Record<string, string> | undefined> => {
   if (labelsValues.length === 0) {
-    return undefined
+    return success(undefined)
   }
 
   const parsed: Record<string, string> = {}
   for (const labelsValue of labelsValues) {
-    const fromSelector = parseSelector(labelsValue)
-    for (const [key, value] of Object.entries(fromSelector)) {
-      parsed[key] = value
+    const labelSpecs = stripMatchingQuotes(labelsValue).split(',')
+    for (const labelSpec of labelSpecs) {
+      const parsedLabelSpec = parseRunLabelSpec(labelSpec)
+      if (!parsedLabelSpec.ok) {
+        return parsedLabelSpec
+      }
+      parsed[parsedLabelSpec.value.key] = parsedLabelSpec.value.value
     }
   }
 
   if (Object.keys(parsed).length === 0) {
-    return undefined
+    return success(undefined)
   }
 
-  return parsed
+  return success(parsed)
 }
 
 const hasShortFlag = (tokens: string[], shortFlag: string): boolean => {
@@ -817,7 +836,13 @@ const runTransformer: ActionTransformer = (ctx) => {
   const runImages = extractFlagValues(beforeSeparator, 'image')
   const runImage = runImages.length > 0 ? runImages[0] : undefined
   const runEnvs = extractFlagValues(beforeSeparator, 'env')
-  const runLabels = parseRunLabels(extractFlagValues(beforeSeparator, 'labels'))
+  const runLabelsResult = parseRunLabels(
+    extractFlagValues(beforeSeparator, 'labels')
+  )
+  if (!runLabelsResult.ok) {
+    return runLabelsResult
+  }
+  const runLabels = runLabelsResult.value
   const dryRunValues = extractFlagValues(beforeSeparator, 'dry-run')
   const runDryRunClient = dryRunValues.includes('client')
   const restartValues = extractFlagValues(beforeSeparator, 'restart')

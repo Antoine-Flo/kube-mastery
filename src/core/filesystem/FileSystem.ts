@@ -36,6 +36,7 @@ export interface FileSystemState {
  * Simulated login home for the kube user (matches env and default cwd).
  */
 const SIMULATED_HOME_DIRECTORY = '/home/kube'
+const MAX_FILESYSTEM_DEPTH = 3
 
 /**
  * Expand leading ~ to the simulated home directory (POSIX-style).
@@ -96,6 +97,20 @@ const resolvePath = (currentPath: string, targetPath: string): string => {
 const normalizePath = (path: string): string => {
   const parts = path.split('/').filter((p) => p.length > 0)
   return '/' + parts.join('/')
+}
+
+const getPathDepth = (path: string): number => {
+  const normalizedPath = normalizePath(path)
+  const simulatedHomePrefix = `${SIMULATED_HOME_DIRECTORY}/`
+  const relativeToHome =
+    normalizedPath === SIMULATED_HOME_DIRECTORY
+      ? '/'
+      : normalizedPath.startsWith(simulatedHomePrefix)
+        ? normalizedPath.slice(SIMULATED_HOME_DIRECTORY.length)
+        : normalizedPath
+  return normalizePath(relativeToHome)
+    .split('/')
+    .filter((segment) => segment.length > 0).length
 }
 
 const basename = (path: string): string => {
@@ -338,6 +353,11 @@ const validateDirectoryCreation = (
       `mkdir: cannot create directory '${absolutePath}': File exists`
     )
   }
+  if (getPathDepth(absolutePath) > MAX_FILESYSTEM_DEPTH) {
+    return error(
+      `mkdir: cannot create directory '${absolutePath}': Maximum depth exceeded (${MAX_FILESYSTEM_DEPTH})`
+    )
+  }
 
   return success(undefined)
 }
@@ -357,6 +377,11 @@ const validateFileCreation = (
   const existing = findNode(tree, absolutePath)
   if (existing) {
     return error(`touch: cannot touch '${absolutePath}': File exists`)
+  }
+  if (getPathDepth(absolutePath) > MAX_FILESYSTEM_DEPTH) {
+    return error(
+      `touch: cannot touch '${absolutePath}': Maximum depth exceeded (${MAX_FILESYSTEM_DEPTH})`
+    )
   }
 
   return success(undefined)
@@ -580,6 +605,11 @@ const createFileOps = (
 
     // Si le fichier n'existe pas, le créer
     if (!node) {
+      if (getPathDepth(absolutePath) > MAX_FILESYSTEM_DEPTH) {
+        return error(
+          `nano: cannot create file '${path}': Maximum depth exceeded (${MAX_FILESYSTEM_DEPTH})`
+        )
+      }
       const parentPath = dirname(absolutePath)
       const parent = findNode(state.tree, parentPath)
 

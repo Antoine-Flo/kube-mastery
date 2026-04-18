@@ -26,18 +26,9 @@ import { parseKubernetesYaml } from '../../kubectl/yamlParser'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
 import { createSimulatorBootstrapConfig } from '../systemBootstrap'
+import { splitYamlDocuments } from './yamlDocuments'
 import { readdirSync, readFileSync } from 'fs'
 import { join } from 'path'
-
-// ─── Multi-Document YAML Parsing ──────────────────────────────────────────
-
-/**
- * Split multi-document YAML by `---` separator
- */
-const splitYamlDocuments = (yamlContent: string): string[] => {
-  const documents = yamlContent.split(/^---\s*$/m)
-  return documents.filter((doc) => doc.trim().length > 0)
-}
 
 /**
  * Parse a single YAML document (supported kinds only)
