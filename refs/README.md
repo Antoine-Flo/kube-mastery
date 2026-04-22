@@ -21,6 +21,7 @@ update_strategy: git_submodule
 | k8s-client-go          | `refs/k8s/client-go`          | https://github.com/kubernetes/client-go.git               | Client Go officiel Kubernetes                          | client, informers, workqueue   |
 | k8s-kubectl            | `refs/k8s/kubectl`            | https://github.com/kubernetes/kubectl.git                 | Logique de la CLI kubectl                              | cli, commands, printers        |
 | k8s-controller-runtime | `refs/k8s/controller-runtime` | https://github.com/kubernetes-sigs/controller-runtime.git | Base pour operators/controllers                        | controller, reconcile, manager |
+| k8s-kubernetes         | `refs/k8s/kubernetes`         | https://github.com/kubernetes/kubernetes.git              | Monorepo Kubernetes (kubectl, apiserver, controllers)  | core, apiserver, scheduler     |
 
 ## Prompt hints (IA)
 
@@ -90,6 +91,13 @@ git submodule status
       "upstream": "https://github.com/kubernetes-sigs/controller-runtime.git",
       "focus": "Controller/operator framework",
       "tags": ["controller", "reconcile", "manager"]
+    },
+    {
+      "key": "k8s-kubernetes",
+      "path": "refs/k8s/kubernetes",
+      "upstream": "https://github.com/kubernetes/kubernetes.git",
+      "focus": "Kubernetes core monorepo",
+      "tags": ["core", "apiserver", "scheduler"]
     }
   ]
 }

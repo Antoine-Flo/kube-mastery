@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import type { CommandExecutionResult } from '../conformance-types'
+import type { CommandExecutionResult } from '../execution-types'
 export interface KindCommandRunnerOptions {
   timeoutMs?: number
   trimOutput?: boolean

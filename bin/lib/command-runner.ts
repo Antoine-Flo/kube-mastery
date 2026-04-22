@@ -1,5 +1,5 @@
 import { spawnSync } from 'child_process'
-import type { CommandExecutionResult } from './conformance-types'
+import type { CommandExecutionResult } from './execution-types'
 
 export const runShellCommandDetailed = (
   command: string

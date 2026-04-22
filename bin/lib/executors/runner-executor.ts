@@ -30,7 +30,7 @@ import type {
   ApplyYamlAction,
   CommandExecutionResult,
   DeleteYamlAction
-} from '../conformance-types'
+} from '../execution-types'
 import { error, success } from '../../../src/core/shared/result'
 
 interface ParsedManifestResource {

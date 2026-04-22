@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { CONFIG } from '../../../src/config'
-import type { CommandExecutionResult } from '../conformance-types'
+import type { CommandExecutionResult } from '../execution-types'
 import {
   createRunnerExecutor,
   type RunnerExecutor

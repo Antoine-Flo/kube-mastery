@@ -10,7 +10,7 @@ import type {
   ApplyYamlAction,
   CommandExecutionResult,
   DeleteYamlAction
-} from '../conformance-types'
+} from '../execution-types'
 import type { Result } from '../types'
 import { error, success } from '../types'
 

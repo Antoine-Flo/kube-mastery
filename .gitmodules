@@ -13,3 +13,6 @@
 [submodule "refs/k8s/controller-runtime"]
 	path = refs/k8s/controller-runtime
 	url = https://github.com/kubernetes-sigs/controller-runtime.git
+[submodule "refs/k8s/kubernetes"]
+	path = refs/k8s/kubernetes
+	url = https://github.com/kubernetes/kubernetes.git

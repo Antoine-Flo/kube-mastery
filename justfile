@@ -3,9 +3,6 @@ set dotenv-load := true
 kind-cluster := "conformance"
 kind-config := "src/courses/seeds/clusterConfig/multi-node.yaml"
 
-conformance:
-    npx tsx conformance/run.ts
-
 stop:
     kind delete cluster --name {{kind-cluster}} || true
 

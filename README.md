@@ -69,12 +69,6 @@ Opens at `http://localhost:4321`.
 npm run test
 ```
 
-Run the conformance suite (requires a running kind cluster):
-
-```sh
-npm run conformance
-```
-
 ---
 
 ## Commands
@@ -86,7 +80,6 @@ npm run conformance
 | `npm run preview` | Preview the production build locally |
 | `npm run test` | Run unit and integration tests |
 | `npm run coverage` | Run tests with coverage |
-| `npm run conformance` | Run kubectl conformance suite |
 | `npm run check` | Run Astro type checks |
 | `npm run format` | Format all files with Prettier |
 

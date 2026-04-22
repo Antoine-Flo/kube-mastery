@@ -1,4 +1,4 @@
-import type { CommandExecutionResult } from '../../lib/conformance-types'
+import type { CommandExecutionResult } from '../../lib/execution-types'
 
 export type DrillMismatchCategory =
   | 'exit_code'
