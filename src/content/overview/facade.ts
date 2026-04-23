@@ -34,6 +34,14 @@ export type {
   LessonLocation
 } from './types'
 
+function buildLessonSourceRepoPath(args: {
+  moduleId: string
+  topicDir: string
+  lang: UiLang
+}): string {
+  return `src/courses/modules/${args.moduleId}/${args.topicDir}/${args.lang}/content.md`
+}
+
 export function getCourseOverview(
   courseId: string,
   lang: UiLang
@@ -221,4 +229,19 @@ export function getLessonQuiz(
   }
 
   return getAdapter().getLessonQuiz(loc, lang)
+}
+
+export function getLessonSourceRepoPath(
+  type: OverviewType,
+  id: string,
+  lessonId: string,
+  lang: UiLang
+): string {
+  const loc = getLessonLocation(type, id, lessonId)!
+
+  return buildLessonSourceRepoPath({
+    moduleId: loc.moduleId,
+    topicDir: loc.topicDir,
+    lang
+  })
 }

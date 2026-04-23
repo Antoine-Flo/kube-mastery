@@ -3,11 +3,12 @@ import Layout from '../../../../../layouts/Layout.astro'
 import CourseOutline from '../../../../../components/CourseOutline.astro'
 import ContentWithTerminalLayout from '../../../../../components/lesson/ContentWithTerminalLayout.astro'
 import LessonNav from '../../../../../components/lesson/LessonNav.astro'
-import { useLocalePath } from '../../../../../i18n/utils'
+import { useLocalePath, useTranslations } from '../../../../../i18n/utils'
 import {
   getCourseOverview,
   getModuleOverview,
   getLessonContent,
+  getLessonSourceRepoPath,
   type LessonFrontmatter,
   type OverviewType
 } from '../../../../../content/overview/facade'
@@ -21,6 +22,7 @@ import {
   buildTerminalLockSecondaryHref,
   getModuleCourseContext
 } from '../../../../../lib/lesson/lessonPageContext'
+import { Github } from 'simple-icons-astro'
 import '../../../../../styles/components/lesson-content.css'
 import '../../../../../styles/components/cluster-visualization.css'
 
@@ -29,7 +31,9 @@ const type = Astro.params.type as OverviewType
 const id = Astro.params.id!
 const lessonId = Astro.params.lessonId!
 const localePath = useLocalePath(lang)
+const t = useTranslations(lang)
 const pricingHref = localePath('/pricing')
+const REPO_URL = 'https://github.com/Antoine-Flo/kube-mastery'
 
 const lessonEntry = getLessonContent(type, id, lessonId, lang)
 if (!lessonEntry) {
@@ -86,6 +90,14 @@ const navigation = buildLessonNavigationState({
 const currentLessonTitle = navigation.currentLessonTitle ?? overview.title
 const lessonBaseUrl = localePath(`/${type}/${id}`)
 const { Content } = lessonEntry
+const lessonSourceRepoPath = getLessonSourceRepoPath(type, id, lessonId, lang)
+const lessonSourceEditUrl = `${REPO_URL}/edit/main/${lessonSourceRepoPath}`
+const lessonGithubIssueUrl = `${REPO_URL}/issues/new?${new URLSearchParams({
+  title: `[Lesson feedback] ${currentLessonTitle}`,
+  body: [`Page: ${Astro.url.href}`, '', 'Issue:'].join(
+    '\n'
+  )
+}).toString()}`
 
 const lessonFrontmatter = (lessonEntry.frontmatter ?? {}) as LessonFrontmatter
 const lessonSeo = buildLessonSeo({
@@ -111,6 +123,7 @@ const lessonSeo = buildLessonSeo({
     terminalInteractive={terminalInteractive}
     terminalLockPrimaryHref={pricingHref}
     terminalLockSecondaryHref={terminalLockSecondaryHref}
+    feedbackGithubIssueUrl={lessonGithubIssueUrl}
   >
     <div slot="sidebar">
       <CourseOutline
@@ -121,6 +134,15 @@ const lessonSeo = buildLessonSeo({
       />
     </div>
     <article class="lesson-content" data-lesson-tour="lesson-main">
+      <a
+        class="lesson-source-link"
+        href={lessonSourceEditUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <Github size={14} />
+        <span>{t('lesson_suggestEdit')}</span>
+      </a>
       <Content />
     </article>
     <LessonNav
@@ -149,4 +171,22 @@ const lessonSeo = buildLessonSeo({
       destroyLessonLayoutTourIfActive()
     })
   </script>
+  <style>
+    .lesson-source-link {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: var(--spacing-2);
+      color: var(--color-gray-11);
+      text-decoration: none;
+      font-size: var(--text-xs);
+      line-height: var(--line-height-xs);
+      font-weight: var(--font-weight-medium);
+    }
+
+    .lesson-source-link:hover {
+      color: var(--color-gray-12);
+      text-decoration: underline;
+    }
+  </style>
 </Layout>

@@ -27,6 +27,7 @@ interface Props {
   terminalDocsHref?: string
   terminalDocsTabLabel?: string
   terminalShellTabLabel?: string
+  feedbackGithubIssueUrl?: string
 }
 
 const {
@@ -45,7 +46,8 @@ const {
   terminalLockBody,
   terminalDocsHref = '',
   terminalDocsTabLabel = 'Docs',
-  terminalShellTabLabel = 'Terminal'
+  terminalShellTabLabel = 'Terminal',
+  feedbackGithubIssueUrl = ''
 } = Astro.props
 
 const t = useTranslations(lang)
@@ -229,7 +231,7 @@ const KUBERNETES_DOCS_IFRAME_SANDBOX =
                             color="cyan"
                             size="sm"
                           >
-                            {terminalLockPrimaryLabel ?? t('lesson_terminalLock_ctaUpgrade')}
+                            {terminalLockPrimaryLabel ?? t('lesson_terminalLock_ctaCreateAccount')}
                           </Button>
                           {terminalLockSecondaryHref && (
                             <Button
@@ -297,9 +299,8 @@ const KUBERNETES_DOCS_IFRAME_SANDBOX =
         submitLabel={t('courseLesson_suggestSubmit')}
         cancelLabel={t('courseLesson_suggestCancel')}
         successToastTitle={t('toast_sendSuccess')}
-        typeSupport={t('lesson_contactTypeSupport')}
-        typeSuggestion={t('lesson_contactTypeSuggestion')}
-        typeOther={t('lesson_contactTypeOther')}
+        githubIssueLabel={t('lesson_openGithubIssue')}
+        githubIssueUrl={feedbackGithubIssueUrl}
         lessonId={supportContextId}
       />
     )

@@ -7,6 +7,7 @@ import {
   useLocalePath
 } from '../i18n/utils'
 import { enabledLanguages } from '../i18n/ui'
+import { Github } from 'simple-icons-astro'
 
 const lang = getLangFromUrl(Astro.url)
 const t = useTranslations(lang)
@@ -22,6 +23,9 @@ const currentPath = getPathWithoutLocale(Astro.url)
     <a href={localePath('/privacy-policy')}>{t('footer_privacyPolicy')}</a>
     <a href={localePath('/changelog')}>{t('footer_changelog')}</a>
     <a href={localePath('/contact')}>{t('footer_contact')}</a>
+    <a href="https://github.com/Antoine-Flo/kube-mastery" target="_blank" rel="noopener noreferrer">
+      <Github size={16} />
+    </a>
   </nav>
   {
     enabledLanguages.length > 1 && (

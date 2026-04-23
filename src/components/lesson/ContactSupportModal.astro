@@ -1,6 +1,7 @@
 ---
 import Dialog from '../ui/Dialog.astro'
 import Button from '../ui/Button.astro'
+import { Github } from 'simple-icons-astro'
 import '../../styles/routes/lesson.css'
 
 const CONTACT_SUPPORT_DIALOG_ID = 'contact-support-dialog'
@@ -11,9 +12,8 @@ interface Props {
   submitLabel: string
   cancelLabel: string
   successToastTitle: string
-  typeSupport: string
-  typeSuggestion: string
-  typeOther: string
+  githubIssueLabel: string
+  githubIssueUrl?: string
   lessonId: string
 }
 const {
@@ -22,9 +22,8 @@ const {
   submitLabel,
   cancelLabel,
   successToastTitle,
-  typeSupport,
-  typeSuggestion,
-  typeOther,
+  githubIssueLabel,
+  githubIssueUrl = '',
   lessonId
 } = Astro.props
 ---
@@ -37,20 +36,6 @@ const {
     method="post"
     action="#"
   >
-    <div class="contact-support-form__types">
-      <label class="contact-support-form__type">
-        <input type="radio" name="contactType" value="support" checked />
-        <span>{typeSupport}</span>
-      </label>
-      <label class="contact-support-form__type">
-        <input type="radio" name="contactType" value="suggestion" />
-        <span>{typeSuggestion}</span>
-      </label>
-      <label class="contact-support-form__type">
-        <input type="radio" name="contactType" value="other" />
-        <span>{typeOther}</span>
-      </label>
-    </div>
     <textarea
       name="message"
       class="lesson__suggest-textarea contact-support-form__message"
@@ -67,6 +52,23 @@ const {
     <footer
       class="dialog__footer lesson-dialog__footer contact-support-form__footer"
     >
+      {
+        githubIssueUrl && (
+          <div class="contact-support-form__footer-start">
+            <Button
+              href={githubIssueUrl}
+              variant="outline"
+              color="gray"
+              class="contact-support-form__github-footer-button"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Github size={14} />
+              {githubIssueLabel}
+            </Button>
+          </div>
+        )
+      }
       <Button type="button" variant="subtle" color="gray" data-dialog-close>
         {cancelLabel}
       </Button>
@@ -99,14 +101,12 @@ const {
   }
 
   function getFormPayload(formEl) {
-    const typeInput = formEl.querySelector("input[name='contactType']:checked")
-    const type = typeInput && 'value' in typeInput ? typeInput.value : 'support'
     const messageEl = formEl.querySelector("textarea[name='message']")
     const message = (
       messageEl && 'value' in messageEl ? messageEl.value : ''
     ).trim()
     const lessonId = formEl.getAttribute('data-lesson-id') ?? ''
-    return { type, message, lessonId: lessonId || undefined }
+    return { type: 'suggestion', message, lessonId: lessonId || undefined }
   }
 
   async function sendContactMessage(payload) {
@@ -199,54 +199,6 @@ const {
   .contact-support-form--in-dialog {
     min-width: 0;
   }
-  .contact-support-form__types {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-3);
-    margin-bottom: var(--spacing-4);
-  }
-  .contact-support-form__type {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-2);
-    cursor: pointer;
-    font-size: var(--text-sm);
-    line-height: var(--line-height-sm);
-    color: var(--color-fg-default);
-  }
-  .contact-support-form__type input[type='radio'] {
-    appearance: none;
-    width: 1rem;
-    height: 1rem;
-    margin: 0;
-    border: 2px solid var(--color-gray-8);
-    border-radius: 50%;
-    background: var(--color-gray-1);
-    cursor: pointer;
-    flex-shrink: 0;
-    transition:
-      border-color var(--duration-fast),
-      background-color var(--duration-fast),
-      box-shadow var(--duration-fast);
-  }
-  .contact-support-form__type input[type='radio']:hover {
-    border-color: var(--color-cyan-8);
-  }
-  .contact-support-form__type input[type='radio']:focus-visible {
-    outline: none;
-    box-shadow:
-      0 0 0 2px var(--color-gray-1),
-      0 0 0 4px var(--color-cyan-9);
-  }
-  .contact-support-form__type input[type='radio']:checked {
-    border-color: var(--color-cyan-9);
-    background-color: var(--color-cyan-3);
-    background-image: radial-gradient(
-      circle at center,
-      var(--color-cyan-9) 35%,
-      transparent 40%
-    );
-  }
   .contact-support-form__message {
     display: block;
     width: 100%;
@@ -255,6 +207,19 @@ const {
   }
   .contact-support-form__error {
     margin-bottom: var(--spacing-2);
+  }
+  .contact-support-form__footer {
+    border-top: none;
+    padding-top: 0;
+  }
+  .contact-support-form__footer-start {
+    margin-right: auto;
+  }
+  :global(.contact-support-form__github-footer-button) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-2);
   }
   :global(#contact-support-dialog .dialog__content) {
     min-height: 28rem;
