@@ -2,11 +2,11 @@ import type { LocalModule } from '../types'
 
 export const module: LocalModule = {
   title: {
-    en: 'Persistent Storage',
-    fr: 'Persistent Storage'
+    en: 'Volumes & Persistent Storage',
+    fr: 'Volumes & Persistent Storage'
   },
   description: {
-    en: 'Persistent Volumes et Claims : stockage découplé du Pod.'
+    en: 'emptyDir, hostPath, PersistentVolumes, PVCs, access modes and reclaim policies.'
   },
   tags: ['ckad', 'cka', 'intermediate']
 }

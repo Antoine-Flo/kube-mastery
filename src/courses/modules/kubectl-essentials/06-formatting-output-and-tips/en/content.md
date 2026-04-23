@@ -135,4 +135,4 @@ Now try this on your own: get the name of the node on which the first Pod of the
 kubectl delete deployment web
 ```
 
-This module covered the essential kubectl operations: creating, reading, editing, deleting, and formatting output. These commands apply to every resource type in Kubernetes. The next module introduces namespaces, which organize all these resources into separate logical spaces and change how names and access are scoped.
+Output formatting turns `kubectl get` from a status viewer into a precise data extraction tool. The next lesson adds a different kind of filter: field selectors, which let you narrow results by Kubernetes-managed fields like status or node assignment, without touching labels at all.

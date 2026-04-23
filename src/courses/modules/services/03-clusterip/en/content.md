@@ -1,13 +1,13 @@
 ---
-seoTitle: 'Kubernetes ClusterIP Services, kube-proxy, DNS, Port Mapping'
-seoDescription: 'Learn how Kubernetes ClusterIP Services work as the default type, how kube-proxy routes traffic via iptables, and how to access Services by DNS.'
+seoTitle: 'Kubernetes ClusterIP Services, kube-proxy, Virtual IP, Port Mapping'
+seoDescription: 'Learn how Kubernetes ClusterIP Services work as the default type, how kube-proxy routes traffic via iptables, and why a virtual IP is better than direct Pod IPs.'
 ---
 
 # ClusterIP
 
-You have a frontend Pod that needs to call a backend API. The frontend doesn't know any backend Pod IPs because they keep changing. You created a Service in the previous lesson. But how does the frontend Pod actually call it? Does it need to know the ClusterIP address? Or is there a stable name it can use instead?
+You have a frontend Pod that needs to call a backend API. The frontend doesn't know any backend Pod IPs because they keep changing. You created a Service in the previous lesson. But how does the frontend Pod actually call it?
 
-The answer is both, and DNS is what connects them.
+Two options exist. You can target the ClusterIP address directly. Or you can use the DNS name Kubernetes automatically creates for every Service. Both reach the same place. This lesson focuses on the ClusterIP itself and how kube-proxy routes traffic through it. The DNS module covers name resolution in full.
 
 ## The Default Service Type
 
@@ -53,33 +53,8 @@ kubectl get service api-svc
 
 Look at the `TYPE` column, which shows `ClusterIP`, and the `CLUSTER-IP` column, which shows the virtual IP Kubernetes assigned. Note that IP. It is stable for the entire lifetime of this Service object.
 
-## DNS Makes It Discoverable
-
-Using a raw ClusterIP address in application code is workable, but fragile: if you ever delete and recreate the Service, the IP could change. The right approach is to use the DNS name instead.
-
-CoreDNS runs inside every Kubernetes cluster and automatically creates an A record for every Service. The full DNS name follows this pattern:
-
-```
-<service-name>.<namespace>.svc.cluster.local
-```
-
-For `api-svc` in the `default` namespace, the full name is `api-svc.default.svc.cluster.local`. From inside the same namespace, the short name `api-svc` also resolves correctly. This is similar to how you can reach a coworker by first name inside the same office, but need their full name to reach them from a different location.
-
-Verify the DNS resolution using the simulator (which runs lookups as if from inside the cluster):
-
-```bash
-nslookup api-svc
-nslookup api-svc.default.svc.cluster.local
-```
-
-Both commands should return the same ClusterIP address. The short name works because the simulator, like real in-cluster Pods, uses the cluster's search domain list, which includes `default.svc.cluster.local`.
-
-:::quiz
-What ClusterIP was assigned to `api-svc`?
-
-**Try it:** `kubectl get service api-svc`
-
-**Answer:** The `CLUSTER-IP` column shows the virtual IP Kubernetes assigned to the Service. The `TYPE` column confirms it is a ClusterIP Service. This IP is stable for the lifetime of the Service object and is reachable from any Pod inside the cluster.
+:::info
+Every Service also gets a DNS name managed by CoreDNS: `<name>.<namespace>.svc.cluster.local`. Using the DNS name is preferable to hardcoding the ClusterIP, because the name stays constant even if the Service is deleted and recreated. The DNS module covers the full naming scheme, search domains, and cross-namespace resolution.
 :::
 
 ## Inspecting ClusterIP Details
@@ -93,7 +68,7 @@ kubectl describe service api-svc
 The output includes the assigned `IP:`, the `Port:` and `TargetPort:`, the `Selector:`, and the `Endpoints:` field showing which Pod IPs are currently behind the Service. This single command gives you the full picture of a Service's configuration and current routing state.
 
 :::info
-The ClusterIP is not routable from outside the cluster. It only exists within the cluster network. If you attempt to reach it from your laptop or from outside the cluster, the request will not arrive. External access requires a different Service type, such as NodePort or LoadBalancer, or an Ingress resource. Those are covered in the following lessons.
+The ClusterIP is not routable from outside the cluster. It only exists within the cluster network. If you attempt to reach it from your laptop or from outside the cluster, the request will not arrive. External access requires a different Service type, such as NodePort or LoadBalancer, or a Gateway API resource. Those are covered in the following lessons.
 :::
 
 ## Why a Virtual IP and Not Direct Pod IPs?

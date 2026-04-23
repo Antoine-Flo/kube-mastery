@@ -77,13 +77,21 @@ try {
                 <span class="cta-hint">{t('home_cta_no_account')}</span>
               </div>
               <Button
+                href={localePath('/pricing')}
+                variant="outline"
+                color="gray"
+                size="xl"
+              >
+                {t('home_cta_explore')}
+              </Button>
+              <!-- <Button
                 href={localePath('/drills')}
                 variant="outline"
                 color="gray"
                 size="xl"
               >
                 {t('home_cta_drills')}
-              </Button>
+              </Button> -->
             </div>
           </div>
         </div>

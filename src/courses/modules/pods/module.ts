@@ -6,7 +6,7 @@ export const module: LocalModule = {
     fr: 'Pods'
   },
   description: {
-    en: 'Le Pod : unité de base de Kubernetes. Créer, inspecter, comprendre le cycle de vie.'
+    en: 'Pod lifecycle, restart policies, and controlling commands with command/args.'
   },
   tags: ['ckad', 'cka', 'beginner']
 }

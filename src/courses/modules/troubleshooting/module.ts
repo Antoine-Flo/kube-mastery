@@ -2,11 +2,11 @@ import type { LocalModule } from '../types'
 
 export const module: LocalModule = {
   title: {
-    en: 'Troubleshooting',
-    fr: 'Troubleshooting'
+    en: 'Observability & Troubleshooting',
+    fr: 'Observability & Troubleshooting'
   },
   description: {
-    en: 'Diagnostiquer et résoudre les pannes application et cluster.'
+    en: 'Logging, monitoring, events, and systematic debugging of applications and cluster.'
   },
   tags: ['cka', 'intermediate']
 }

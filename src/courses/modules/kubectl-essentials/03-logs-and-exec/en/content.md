@@ -1,23 +1,25 @@
 ---
-seoTitle: 'kubectl logs and exec, Debug Kubernetes Pods'
-seoDescription: 'Learn how to use kubectl logs to read container output and kubectl exec to run commands inside a running Pod for live debugging in Kubernetes.'
+seoTitle: 'kubectl exec and logs, Inspect Running Kubernetes Containers'
+seoDescription: 'Learn how to use kubectl exec to run commands inside a running Pod, inspect filesystems and environment variables, and when to reach for kubectl logs.'
 ---
 
-# Logs and Exec
+# Inspecting Running Containers
 
-A Pod is in Running status but the application is not behaving as expected. The STATUS column looks fine. `kubectl describe` shows the container started without errors. But something is still wrong. At this point, the cluster itself has told you everything it knows about scheduling and lifecycle. To go further, you need to read what the application itself is saying. That is what `kubectl logs` is for.
+`kubectl get pods` shows Running. `kubectl describe` shows a clean startup, no image pull errors, no scheduling failures. But the application is still not doing what you expect. Kubernetes has told you everything it knows about the object from the outside. To go further, you need to look inside the container.
 
-Start by creating a Pod to work with:
+Two commands give you that view. `kubectl logs` reads what the container wrote to its output. `kubectl exec` runs a command directly inside the container's environment. This lesson introduces both and focuses on where each one applies.
+
+Create the Pod you will use throughout:
 
 ```bash
-nano log-pod.yaml
+nano inspect-pod.yaml
 ```
 
 ```yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: log-pod
+  name: inspect-pod
 spec:
   containers:
     - name: web
@@ -25,101 +27,119 @@ spec:
 ```
 
 ```bash
-kubectl apply -f log-pod.yaml
+kubectl apply -f inspect-pod.yaml
 ```
 
-## Reading logs with `kubectl logs`
+## A quick look at `kubectl logs`
 
-`kubectl logs` reads the standard output and standard error of a container, which is exactly what the application writes when it runs. Every language runtime, every web server, every database writes its errors and access records there.
+Kubernetes does not manage log files inside containers. It captures what the container writes to standard output and standard error, and makes that stream available through the API. `kubectl logs` reads it:
 
 ```bash
-kubectl logs log-pod
+kubectl logs inspect-pod
 ```
 
-nginx writes an access log line for every HTTP request it receives. If the container just started and has not served any requests yet, the output will be nearly empty. That silence is itself informative: the container is up, but no traffic has reached it yet.
+A freshly started nginx with no incoming traffic produces near-empty output. That silence is informative: the container is alive, but nothing has reached it yet.
 
-To follow logs in real time as new lines appear, add `-f`. This works like `tail -f` in a regular shell. Press Ctrl+C to stop:
+Two flags cover most situations. `--tail` limits output to the last N lines. `-f` follows the stream live:
 
 ```bash
-kubectl logs log-pod -f
+kubectl logs inspect-pod --tail=20
 ```
-
-When you only want the most recent output, use `--tail` with a line count:
-
-```bash
-kubectl logs log-pod --tail=20
-```
-
-For time-based filtering, `--since` accepts a duration like `5m`, `1h`, or `30s`:
-
-```bash
-kubectl logs log-pod --since=5m
-```
-
-:::info
-In a real Kubernetes cluster, container logs are typically collected by dedicated tools like Fluentd, Loki, or an Elasticsearch pipeline. `kubectl logs` reads directly from the kubelet on the node where the Pod is running. This is ideal for live debugging but does not give access to logs from before the Pod was scheduled to the current node. The simulator handles logs the same way: `kubectl logs` reads current container output only.
-:::
-
-## The previous container flag
-
-When a container crashes and restarts, the new process starts fresh. The logs of the crashed instance are stored separately on the node. To read them, use the `-p` flag:
-
-```bash
-kubectl logs log-pod -p
-```
-
-:::warning
-`kubectl logs -p` fails if the container has never restarted. If you try it on a Pod that has been running cleanly since creation, Kubernetes responds with `previous terminated container "web" not found in pod "log-pod"`. The flag only works if there is at least one completed previous container to read from.
-:::
 
 :::quiz
-You want to read the last 20 lines of logs from `log-pod`. Which flag do you need?
-**Try it:** `kubectl logs log-pod --tail=20`
-**Answer:** `--tail=N` limits the output to the last N lines, reading from the end of the log. Without it, `kubectl logs` prints every line since the container started, which on a long-running container can be thousands of lines. Combine `--tail` with `-f` to stream only recent output.
+You run `kubectl logs inspect-pod` and see no output. What does that most likely mean?
+
+- The container is not running
+- The container has not written anything to stdout or stderr yet
+- kubectl logs requires a Deployment, not a bare Pod
+
+**Answer:** The container has not written anything yet. kubectl logs only captures stdout and stderr. An app that logs to a file, or a server waiting for its first request, produces no output here.
 :::
+
+That covers the essentials. `kubectl logs` has more depth, including how to debug `CrashLoopBackOff` with `--previous` and how to target individual containers with `-c`. All of that is in the Logging and Monitoring module, where it belongs.
 
 ## Running commands inside a container with `kubectl exec`
 
-Sometimes reading logs is not enough. You need to look at the filesystem, check environment variables, or verify that a configuration file was mounted correctly. `kubectl exec` runs a command inside a running container, giving you a direct view into its environment.
+Logs show what the application wrote. They cannot tell you whether a configuration file was mounted at the right path, which environment variables were actually injected, or whether a binary the app depends on exists in the image. For those questions, you run a command inside the container directly.
 
-:::warning
-`kubectl exec` in this simulator supports a limited subset of commands. There is no full interactive shell, and pipes are not available. On a real cluster, `kubectl exec -it <pod> -- /bin/bash` gives you a full interactive shell session. For most debugging in this simulator, `kubectl logs` and `kubectl describe` will take you further.
-:::
+@@@
+graph LR
+CLI["Your terminal\nkubectl exec"]
+API["API server"]
+KL["kubelet\non the node"]
+CNT["Container\n(nginx)"]
+CLI --> API --> KL --> CNT
+@@@
 
-A simple read-only command that works well in the simulator:
+`kubectl exec` opens a connection from your terminal to the API server, which forwards it to the kubelet on the node hosting the Pod. The kubelet runs the command inside the container's own process namespace and filesystem. You see the result as if you had typed the command inside the container itself.
+
+The syntax always separates the kubectl arguments from the container command with `--`:
 
 ```bash
-kubectl exec log-pod -- ls
+kubectl exec inspect-pod -- ls
 ```
 
-This lists the files in the root directory of the container. You can verify that configuration files exist, check which binaries are available, or confirm that a volume was mounted at the expected path.
+The `--` is not optional. Without it, kubectl tries to interpret every word after the Pod name as its own flags, which produces confusing errors.
 
-## Debugging as a funnel
+:::quiz
+Why is the `--` required in `kubectl exec inspect-pod -- ls`?
+
+**Answer:** kubectl needs to know where its own arguments end and the container command begins. Without `--`, kubectl tries to parse `ls` as a kubectl flag, which fails. The separator makes the boundary explicit.
+:::
+
+### Checking environment variables
+
+A more useful target than listing files is reading the container's environment. ConfigMaps mounted as env vars, Service discovery variables, and any values from your Pod spec all appear here:
+
+```bash
+kubectl exec inspect-pod -- env
+```
+
+Look at the output. You will see standard variables like `PATH` and `HOSTNAME`. You will also see `KUBERNETES_SERVICE_HOST` and `KUBERNETES_PORT`, which Kubernetes injects into every Pod automatically. This is the actual environment your application runs in, not the one you wrote in the manifest.
+
+:::warning
+Not every container image ships with a shell or common utilities. Minimal images, particularly distroless ones, may not have `ls`, `cat`, or `env`. If `kubectl exec pod -- ls` fails with `executable file not found`, the image does not include that binary. The Observability and Troubleshooting module covers `kubectl debug`, which attaches a separate debug container with a full toolset to those minimal images.
+:::
+
+### Targeting a specific container
+
+A Pod can run more than one container. When it does, `kubectl exec` needs to know which one to target. Use `-c` with the container name:
+
+```bash
+kubectl exec inspect-pod -c web -- env
+```
+
+Without `-c`, kubectl defaults to the first container in the Pod spec. On a single-container Pod this is fine. On a multi-container Pod, always name the container explicitly to avoid reading from the wrong context.
+
+:::quiz
+You have a Pod with two containers named `app` and `sidecar`. You run `kubectl exec my-pod -- ls` and get an unexpected filesystem layout. What is the likely cause?
+
+- The Pod is not running
+- kubectl exec defaulted to the first container, which may not be `app`
+- The `--` separator is missing
+
+**Answer:** kubectl defaulted to the first container in the spec. If `sidecar` is listed first, you inspected `sidecar` rather than `app`. Use `-c app` to be explicit.
+:::
+
+## The debugging funnel
 
 @@@
 graph TB
-L1["kubectl get pods\nGlobal status, READY / STATUS / RESTARTS columns"]
-L2["kubectl describe pod NAME\nConditions, Events, detailed configuration"]
-L3["kubectl logs NAME\nContainer output, application errors"]
-L4["kubectl exec NAME -- command\nDirect inspection inside the container"]
-L1 -->|"something looks wrong"| L2
-L2 -->|"container is failing"| L3
-L3 -->|"need to inspect internals"| L4
+A["kubectl get pods\nStatus, READY, RESTARTS at a glance"]
+B["kubectl describe pod NAME\nEvents, conditions, full spec"]
+C["kubectl logs NAME\nWhat the container printed"]
+D["kubectl exec NAME -- command\nWhat the container contains"]
+A -->|"something is wrong"| B
+B -->|"container is failing"| C
+C -->|"need to inspect internals"| D
 @@@
 
-Why structure debugging as a funnel? Because each level is more expensive than the previous one. `kubectl get` responds in milliseconds and covers every Pod in a namespace. `kubectl logs` requires targeting a specific Pod and reading potentially large streams of data. `kubectl exec` opens a connection to a running process. Starting broad and narrowing down means you spend the minimum effort needed to find the problem.
+Each step in this sequence costs more than the last. `kubectl get` covers every Pod in the namespace in milliseconds. `kubectl exec` opens a live connection to a running process. Starting broad and narrowing down means you spend the minimum effort needed to find the root cause. Save `kubectl exec` for the cases where logs and describe have not given you enough.
 
-A Pod stuck in `CrashLoopBackOff` is a good example of why the sequence matters. Start with `kubectl get pods` to see the restart count climbing. Move to `kubectl describe` to check if the failure is in image pulling or container startup. Then use `kubectl logs -p` to read what the crashed container printed before it exited. That log output almost always tells you exactly what went wrong.
-
-:::quiz
-Why does `kubectl logs -p` read the previous container rather than a historical log stream from the current container?
-**Answer:** When a container restarts, a new process is spawned. Kubernetes treats it as a distinct container instance. The logs from the previous run are stored separately on the node as a rotated file. `-p` instructs kubectl to fetch that archived output rather than the current container's stdout. Without this distinction, you would only ever see logs from the latest restart, which may start clean with no errors even if the crash happened moments before.
-:::
-
-Clean up your work:
+Clean up before the next lesson:
 
 ```bash
-kubectl delete pod log-pod
+kubectl delete pod inspect-pod
 ```
 
-You now have a complete toolkit for observing what is happening in the simulator at every level: from cluster-wide status, to object history, to container output, to filesystem inspection. The next lesson goes in the other direction and covers how to create and edit resources efficiently, including how to modify live objects without deleting them first.
+You now have four levels of observation: cluster-wide status with `get`, object history with `describe`, application output with `logs`, and direct internal inspection with `exec`. The next lesson covers how to create and edit resources efficiently, including how to modify live objects without deleting them.

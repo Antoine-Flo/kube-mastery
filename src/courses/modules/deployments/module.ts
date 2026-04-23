@@ -2,11 +2,11 @@ import type { LocalModule } from '../types'
 
 export const module: LocalModule = {
   title: {
-    en: 'Deployments',
-    fr: 'Deployments'
+    en: 'ReplicaSets & Deployments',
+    fr: 'ReplicaSets & Deployments'
   },
   description: {
-    en: 'Déployer, scaler et mettre à jour des applications de manière déclarative.'
+    en: 'From bare ReplicaSets to Deployments: scaling, rolling updates, rollback.'
   },
   tags: ['ckad', 'cka', 'beginner']
 }

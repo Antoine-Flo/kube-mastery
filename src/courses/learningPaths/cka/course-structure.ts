@@ -9,9 +9,9 @@ export const courseStructure: CourseStructure = {
         'kubernetes-basics',
         'yaml-and-objects',
         'kubectl-essentials',
+        'kubeconfig',
         'pods',
-        'namespaces',
-        'labels-and-annotations'
+        'organizing-resources'
       ]
     },
     {
@@ -24,61 +24,60 @@ export const courseStructure: CourseStructure = {
       ]
     },
     {
-      title: { en: 'Workloads & scheduling' },
+      title: { en: 'Workloads' },
       moduleIds: [
-        'commands-and-args',
+        'deployments',
+        'daemonsets',
+        'jobs',
+        'multi-container-pods',
+        'probes',
+        'statefulsets'
+      ]
+    },
+    {
+      title: { en: 'Configuration & scheduling' },
+      moduleIds: [
         'configmaps',
         'secrets',
         'resource-management',
-        'replicasets',
-        'deployments',
-        'daemonsets',
-        'multi-container-pods',
         'scheduling-basics',
         'advanced-scheduling',
-        'probes',
-        'jobs',
-        'autoscaling',
-        'statefulsets'
+        'autoscaling'
       ]
     },
     {
       title: { en: 'Services & networking' },
       moduleIds: [
+        'networking-fundamentals',
+        'kubernetes-networking',
         'services',
         'dns',
-        'ingress',
         'gateway-api',
-        'network-policies',
-        'networking-fundamentals',
-        'kubernetes-networking'
+        'network-policies'
       ]
     },
     {
       title: { en: 'Storage' },
-      moduleIds: ['volumes', 'persistent-storage', 'storage-classes']
+      moduleIds: ['persistent-storage', 'storage-classes']
     },
     {
       title: { en: 'Security & auth' },
       moduleIds: [
         'authentication',
-        'service-accounts',
-        'kubeconfig',
         'tls-certificates',
         'rbac',
         'security-contexts',
-        'image-security',
-        'admission-controllers',
-        'pod-security'
+        'pod-and-image-security',
+        'admission-controllers'
       ]
     },
     {
       title: { en: 'Observability & troubleshooting' },
-      moduleIds: ['logging-and-monitoring', 'troubleshooting']
+      moduleIds: ['troubleshooting']
     },
     {
       title: { en: 'API & extensibility' },
-      moduleIds: ['api-and-versioning', 'custom-resources', 'helm']
+      moduleIds: ['custom-resources', 'helm']
     }
   ]
 }
