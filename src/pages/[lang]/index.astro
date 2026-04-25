@@ -112,33 +112,6 @@ try {
         </div> */
         }
       </div>
-      <div class="featured-on-backlink">
-        <a
-          href="https://startupfa.me/s/kubemastery?utm_source=kubemastery.com"
-          target="_blank"
-          rel="noopener"
-          ><img
-            src="https://startupfa.me/badges/featured/dark-small.webp"
-            alt="KubeMastery - Featured on Startup Fame"
-            width="224"
-            height="36"
-          /></a
-        >
-        <a
-          class="featured-on-backlink"
-          href="https://earlyhunt.com/project/kubemastery"
-          target="_blank"
-          rel="noopener"
-        >
-          <img
-            src="https://earlyhunt.com/badges/earlyhunt-badge-light.svg"
-            alt="Featured on EarlyHunt"
-            width="265"
-            height="58"
-          />
-        </a>
-      </div>
-
     </section>
 
     <div class="features">
@@ -348,12 +321,33 @@ try {
                 >
                   {t('home_cta_explore')}
                 </Button>
+                <div class="featured-trust-strip" aria-label="Featured on">
+                  <span class="featured-trust-label">{t('home_featured_subtitle')}</span>
+                  <a
+                    class="featured-trust-chip"
+                    href="https://startupfa.me/s/kubemastery?utm_source=kubemastery.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Startup Fame
+                  </a>
+                  <span class="featured-trust-sep" aria-hidden="true">·</span>
+                  <a
+                    class="featured-trust-chip"
+                    href="https://earlyhunt.com/project/kubemastery"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    EarlyHunt
+                  </a>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+
   </main>
 </Layout>
 
@@ -696,43 +690,46 @@ try {
     text-align: center;
   }
 
-  .featured-on {
-    position: relative;
-    width: 100%;
-    max-width: var(--content-max-width);
-    margin-top: 5rem;
-    margin-bottom: 0.5rem;
-    animation: fadeInUp 0.8s ease-out 0.5s both;
+  .featured-trust-strip {
     display: flex;
-    justify-content: center;
     align-items: center;
-    width: 100%;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 2.25rem;
   }
 
-  /* Present for crawlers / directory backlink; not shown on screen */
-  .featured-on-backlink {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-    border: 0;
+  .featured-trust-label {
+    font-size: var(--text-xs);
+    color: var(--color-gray-9);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
   }
 
-  .featured-on-link:focus-visible {
+  .featured-trust-sep {
+    font-size: var(--text-xs);
+    color: var(--color-gray-7);
+    line-height: 1;
+  }
+
+  .featured-trust-chip {
+    font-size: var(--text-xs);
+    color: var(--color-gray-10);
+    border: 1px solid var(--color-gray-6);
+    border-radius: 999px;
+    padding: 0.2rem 0.65rem;
+    text-decoration: none;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .featured-trust-chip:hover {
+    color: var(--color-cyan-9);
+    border-color: var(--color-cyan-7);
+  }
+
+  .featured-trust-chip:focus-visible {
     outline: 2px solid var(--color-cyan-8);
     outline-offset: 3px;
-  }
-
-  .featured-on-badge {
-    display: block;
-    max-width: min(224px, 100%);
-    height: auto;
-    border-radius: 4px;
-    vertical-align: middle;
   }
 
   .cta :global(.btn[data-color='cyan'][data-variant='solid']) {
@@ -1312,12 +1309,30 @@ try {
   }
   .reliability-cta-wrap {
     width: 100%;
-    margin-top: 6rem;
-    margin-bottom: 6rem;
+    margin-top: 4rem;
+    margin-bottom: 4rem;
     border-top: 1px solid var(--color-gray-6);
   }
+
+  .reliability-cta-wrap > .content {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    padding: 2rem 1rem 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  @media (min-width: 768px) {
+    .reliability-cta-wrap > .content {
+      padding: 2.5rem 2rem 0;
+      gap: 2.25rem;
+    }
+  }
+
   .reliability-cta {
-    padding-top: 6rem;
+    padding-top: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
