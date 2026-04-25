@@ -7,6 +7,7 @@ import type { ExecutionResult, Result } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import type { ParsedCommand, Resource } from '../types'
 import {
+  buildDryRunPatchResponse,
   isDryRunRequested,
   isSupportedDryRunValue
 } from './internal/create/dryRunResponse'
@@ -21,6 +22,7 @@ import {
   buildRequiredFlagNotSetMessage,
   buildRequiresResourceNameMessage
 } from '../shared/errorMessages'
+import { parse as parseYaml } from 'yaml'
 
 const PATCHABLE_RESOURCES: Resource[] = [
   'deployments',
@@ -111,11 +113,27 @@ const parsePatchPayload = (payload: string): Result<JsonRecord> => {
       return error('error: invalid JSON patch: patch must be a JSON object')
     }
     return success(parsed)
-  } catch (parseError) {
-    const message =
-      parseError instanceof Error ? parseError.message : 'invalid JSON payload'
-    return error(`error: invalid JSON patch: ${message}`)
+  } catch {
+    try {
+      const parsedYaml = parseYaml(payload) as unknown
+      if (!isJsonRecord(parsedYaml)) {
+        return error(
+          'error: invalid patch payload: patch must be a JSON or YAML object'
+        )
+      }
+      return success(parsedYaml)
+    } catch (parseError) {
+      const message =
+        parseError instanceof Error
+          ? parseError.message
+          : 'invalid JSON or YAML payload'
+      return error(`error: invalid patch payload: ${message}`)
+    }
   }
+}
+
+const hasNoPatchChange = (before: unknown, after: unknown): boolean => {
+  return JSON.stringify(before) === JSON.stringify(after)
 }
 
 const validatePatchType = (
@@ -189,8 +207,17 @@ export const handlePatch = (
   if (immutableError != null) {
     return error(immutableError)
   }
+  const patchOperation = hasNoPatchChange(existingResult.value, patchedResource)
+    ? 'patched (no change)'
+    : 'patched'
   if (isDryRunRequested(parsed)) {
-    return success(`${toKindReference(kindResult.kind)}/${parsed.name} patched (dry run)`)
+    return buildDryRunPatchResponse(
+      patchedResource,
+      parsed,
+      toKindReference(kindResult.kind),
+      parsed.name,
+      patchOperation
+    )
   }
 
   const updateResult = apiServer.updateResource(
@@ -203,5 +230,5 @@ export const handlePatch = (
     return error(updateResult.error)
   }
 
-  return success(`${toKindReference(kindResult.kind)}/${parsed.name} patched`)
+  return success(`${toKindReference(kindResult.kind)}/${parsed.name} ${patchOperation}`)
 }

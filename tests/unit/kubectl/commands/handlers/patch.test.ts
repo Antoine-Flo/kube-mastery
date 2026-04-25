@@ -71,6 +71,29 @@ describe('kubectl patch handler', () => {
     expect(deployment.value.spec.replicas).toBe(4)
   })
 
+  it('should return patched (no change) when merge patch has no effect', () => {
+    apiServer.createResource(
+      'Deployment',
+      createDeployment({
+        name: 'my-app',
+        namespace: 'default',
+        replicas: 2,
+        selector: { matchLabels: { app: 'my-app' } },
+        template: createWorkloadTemplate()
+      })
+    )
+
+    const result = handlePatch(
+      apiServer,
+      createParsed({ patchPayload: '{"spec":{"replicas":2}}' })
+    )
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toBe('deployment.apps/my-app patched (no change)')
+  })
+
   it('should patch daemonset image with merge patch', () => {
     apiServer.createResource(
       'DaemonSet',
@@ -190,8 +213,52 @@ describe('kubectl patch handler', () => {
     )
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.error).toContain('invalid JSON patch')
+      expect(result.error).toContain('invalid patch payload')
     }
+  })
+
+  it('should patch deployment replicas when payload is YAML object', () => {
+    apiServer.createResource(
+      'Deployment',
+      createDeployment({
+        name: 'yaml-payload',
+        namespace: 'default',
+        replicas: 2,
+        selector: { matchLabels: { app: 'yaml-payload' } },
+        template: {
+          metadata: { labels: { app: 'yaml-payload' } },
+          spec: { containers: [{ name: 'app', image: 'nginx:1.28' }] }
+        }
+      })
+    )
+
+    const result = handlePatch(
+      apiServer,
+      createParsed({
+        name: 'yaml-payload',
+        patchPayload: 'spec:\n  replicas: 5',
+        flags: {
+          type: 'merge',
+          patch: 'spec:\n  replicas: 5'
+        }
+      })
+    )
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toBe('deployment.apps/yaml-payload patched')
+
+    const deployment = apiServer.findResource(
+      'Deployment',
+      'yaml-payload',
+      'default'
+    )
+    expect(deployment.ok).toBe(true)
+    if (!deployment.ok) {
+      return
+    }
+    expect(deployment.value.spec.replicas).toBe(5)
   })
 
   it('should return not found when target resource does not exist', () => {
@@ -270,6 +337,135 @@ describe('kubectl patch handler', () => {
       'dry-run-patch',
       'default'
     )
+    expect(deployment.ok).toBe(true)
+    if (!deployment.ok) {
+      return
+    }
+    expect(deployment.value.spec.replicas).toBe(2)
+  })
+
+  it('should return patched (no change) (dry run) for no-op patch with dry-run', () => {
+    apiServer.createResource(
+      'Deployment',
+      createDeployment({
+        name: 'dry-run-no-change',
+        namespace: 'default',
+        replicas: 2,
+        selector: { matchLabels: { app: 'dry-run-no-change' } },
+        template: {
+          metadata: { labels: { app: 'dry-run-no-change' } },
+          spec: { containers: [{ name: 'app', image: 'nginx:1.28' }] }
+        }
+      })
+    )
+
+    const result = handlePatch(
+      apiServer,
+      createParsed({
+        name: 'dry-run-no-change',
+        patchPayload: '{"spec":{"replicas":2}}',
+        flags: {
+          type: 'merge',
+          patch: '{"spec":{"replicas":2}}',
+          'dry-run': 'client'
+        }
+      })
+    )
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toBe(
+      'deployment.apps/dry-run-no-change patched (no change) (dry run)'
+    )
+  })
+
+  it('should render patched resource as yaml on patch --dry-run=client -o yaml', () => {
+    apiServer.createResource(
+      'Deployment',
+      createDeployment({
+        name: 'dry-run-yaml',
+        namespace: 'default',
+        replicas: 2,
+        selector: { matchLabels: { app: 'dry-run-yaml' } },
+        template: {
+          metadata: { labels: { app: 'dry-run-yaml' } },
+          spec: { containers: [{ name: 'app', image: 'nginx:1.28' }] }
+        }
+      })
+    )
+
+    const result = handlePatch(
+      apiServer,
+      createParsed({
+        name: 'dry-run-yaml',
+        patchPayload: '{"spec":{"replicas":7}}',
+        output: 'yaml',
+        flags: {
+          type: 'merge',
+          patch: '{"spec":{"replicas":7}}',
+          output: 'yaml',
+          'dry-run': 'client'
+        }
+      })
+    )
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('kind: Deployment')
+    expect(result.value).toContain('name: dry-run-yaml')
+    expect(result.value).toContain('replicas: 7')
+    expect(result.value).not.toContain('patched (dry run)')
+
+    const deployment = apiServer.findResource('Deployment', 'dry-run-yaml', 'default')
+    expect(deployment.ok).toBe(true)
+    if (!deployment.ok) {
+      return
+    }
+    expect(deployment.value.spec.replicas).toBe(2)
+  })
+
+  it('should render patched resource as json on patch --dry-run=server -o json', () => {
+    apiServer.createResource(
+      'Deployment',
+      createDeployment({
+        name: 'dry-run-json',
+        namespace: 'default',
+        replicas: 2,
+        selector: { matchLabels: { app: 'dry-run-json' } },
+        template: {
+          metadata: { labels: { app: 'dry-run-json' } },
+          spec: { containers: [{ name: 'app', image: 'nginx:1.28' }] }
+        }
+      })
+    )
+
+    const result = handlePatch(
+      apiServer,
+      createParsed({
+        name: 'dry-run-json',
+        patchPayload: '{"spec":{"replicas":9}}',
+        output: 'json',
+        flags: {
+          type: 'merge',
+          patch: '{"spec":{"replicas":9}}',
+          output: 'json',
+          'dry-run': 'server'
+        }
+      })
+    )
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    const payload = JSON.parse(result.value)
+    expect(payload.kind).toBe('Deployment')
+    expect(payload.metadata.name).toBe('dry-run-json')
+    expect(payload.spec.replicas).toBe(9)
+
+    const deployment = apiServer.findResource('Deployment', 'dry-run-json', 'default')
     expect(deployment.ok).toBe(true)
     if (!deployment.ok) {
       return

@@ -57,9 +57,18 @@ const buildDryRunCreatedMessage = (resource: any): string => {
   return `${kind}/${nameRaw} created (dry run)`
 }
 
-export const buildDryRunResponse = (
+const buildDryRunPatchOperationMessage = (
+  kindReference: string,
+  name: string,
+  operation: 'patched' | 'patched (no change)'
+): string => {
+  return `${kindReference}/${name} ${operation} (dry run)`
+}
+
+const buildDryRunStructuredOrMessage = (
   resource: any,
-  parsed: ParsedCommand
+  parsed: ParsedCommand,
+  fallbackMessage: string
 ): ExecutionResult => {
   const metadataNameValidation = validateMetadataNameForResource(resource)
   if (metadataNameValidation != null) {
@@ -94,6 +103,31 @@ export const buildDryRunResponse = (
 
   return {
     ok: true,
-    value: buildDryRunCreatedMessage(resource)
+    value: fallbackMessage
   }
+}
+
+export const buildDryRunResponse = (
+  resource: any,
+  parsed: ParsedCommand
+): ExecutionResult => {
+  return buildDryRunStructuredOrMessage(
+    resource,
+    parsed,
+    buildDryRunCreatedMessage(resource)
+  )
+}
+
+export const buildDryRunPatchResponse = (
+  resource: any,
+  parsed: ParsedCommand,
+  kindReference: string,
+  name: string,
+  operation: 'patched' | 'patched (no change)'
+): ExecutionResult => {
+  return buildDryRunStructuredOrMessage(
+    resource,
+    parsed,
+    buildDryRunPatchOperationMessage(kindReference, name, operation)
+  )
 }
