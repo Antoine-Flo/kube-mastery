@@ -101,6 +101,8 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
   import {
     focusTerminal,
     lockTerminalInput,
+    resumeTerminalInteraction,
+    suspendTerminalInteraction,
     unlockTerminalInput
   } from '../core/terminal/TerminalManager'
   import { mountTerminal } from './terminal-mount'
@@ -150,7 +152,7 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
     overlayEl: HTMLElement,
     editorBoxEl: HTMLElement
   ): EditorModalWithLifecycle {
-    const DEFAULT_STATUS = '^O Write Out  ^X Exit'
+    const DEFAULT_STATUS = '^X Exit ^O Write Out'
     const WRITE_OUT_STATUS = 'Write Out, press Enter to confirm, Esc to cancel'
     const EXIT_CONFIRM_STATUS = 'Save modified buffer? Y Yes, N No, ^C Cancel'
     let currentEditor: CodeMirrorEditor | null = null
@@ -286,6 +288,7 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
       setHeaderModified(false)
       setStatus('')
       overlayEl.hidden = true
+      resumeTerminalInteraction()
       unlockTerminalInput()
       focusTerminal()
       isClosing = false
@@ -317,6 +320,7 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
       overlayEl.dataset.loading = 'true'
       overlayEl.hidden = false
       overlayEl.addEventListener('keydown', handleKeydown, true)
+      suspendTerminalInteraction()
       lockTerminalInput()
       overlayEl.focus({ preventScroll: true })
       queueMicrotask(() => {
@@ -368,16 +372,33 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
           })
           overlayEl.dataset.loading = 'false'
           setStatus(DEFAULT_STATUS)
-          const ensureEditorFocus = () => {
-            if (overlayEl.hidden) {
-              return
-            }
+          const focusEditor = () => {
             lockTerminalInput()
             editor.focus()
           }
-          ensureEditorFocus()
-          requestAnimationFrame(ensureEditorFocus)
-          setTimeout(ensureEditorFocus, 0)
+          const hasEditorFocus = () => {
+            const activeElement = document.activeElement
+            if (activeElement == null) {
+              return false
+            }
+            return editorBoxEl.contains(activeElement)
+          }
+          const ensureEditorFocus = (attemptsLeft: number) => {
+            if (overlayEl.hidden) {
+              return
+            }
+            focusEditor()
+            if (hasEditorFocus()) {
+              return
+            }
+            if (attemptsLeft <= 0) {
+              return
+            }
+            setTimeout(() => {
+              ensureEditorFocus(attemptsLeft - 1)
+            }, 40)
+          }
+          ensureEditorFocus(8)
         } catch (err) {
           console.error('[TerminalWindow] CodeMirror load failed:', err)
           close()

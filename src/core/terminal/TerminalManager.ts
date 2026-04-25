@@ -460,6 +460,17 @@ export const unlockTerminalInput = (): void => {
 
 export const isTerminalInputLocked = (): boolean => state.inputLocked
 
+export const suspendTerminalInteraction = (): void => {
+  state.terminal?.disable()
+}
+
+export const resumeTerminalInteraction = (): void => {
+  state.terminal?.enable()
+  if (!state.inputLocked) {
+    refreshPrompt()
+  }
+}
+
 export const focusTerminal = (): void => {
   if (state.terminal) {
     state.terminal.focus()

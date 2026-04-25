@@ -9,7 +9,7 @@ Welcome to KubeMastery. This first lesson takes two minutes. By the end of it yo
 
 ## How the Platform Works
 
-The terminal is connected to a simulated Kubernetes cluster running entirely in your browser. It is not a real cluster, but the commands, the outputs, and the cluster behavior are designed to match what you would see on a real one. Every `kubectl` command you type reaches that simulation, and changes persist within the session. Pods move through phases like `Pending`, `ContainerCreating`, and `Running` just as they would on a live cluster.
+The terminal is connected to a simulated Kubernetes cluster running entirely in your browser. It is not a real cluster, but the commands, the outputs, and the cluster behavior are designed to match what you would see on a real one. 
 
 Alongside the terminal, a cluster visualizer shows those transitions live. Open it by clicking the telescope icon below the terminal.
 

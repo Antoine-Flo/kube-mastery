@@ -24,86 +24,205 @@ const allModules = overview.content.sections.flatMap((s) => s.modules)
 const currentModuleIndex = allModules.findIndex((m) =>
   m.lessons.some((l) => l.id === currentLessonId)
 )
+const sections = overview.content.sections
+const hasMultipleSections = sections.length > 1
+const currentSectionIndex = sections.findIndex((section) =>
+  section.modules.some((module) =>
+    module.lessons.some((lesson) => lesson.id === currentLessonId)
+  )
+)
+
 let moduleFlatIndex = 0
+const sectionsWithModuleState = sections.map((section) => {
+  const modules = section.modules.map((module) => {
+    const isCurrentModule = moduleFlatIndex === currentModuleIndex
+    moduleFlatIndex += 1
+    return {
+      module,
+      isCurrentModule
+    }
+  })
+
+  return {
+    ...section,
+    modules
+  }
+})
 ---
 
 <div class="course-outline">
   <h2 class="course-outline__title">{overview.title}</h2>
   <div class="course-outline__module-list">
     {
-      overview.content.sections.flatMap((section) =>
-        section.modules.map((module: OverviewModule) => {
-          const isCurrentModule = moduleFlatIndex === currentModuleIndex
-          moduleFlatIndex += 1
-          return (
-            <details
-              class:list={{
-                'course-outline__module': true,
-                'course-outline__module--locked': module.isLocked
-              }}
-              open={!module.isLocked && isCurrentModule}
-            >
-              <summary
-                class="course-outline__module-summary"
-                aria-disabled={module.isLocked ? 'true' : 'false'}
-                tabindex={module.isLocked ? -1 : undefined}
-              >
-                <span class="course-outline__module-title">{module.title}</span>
-                <span class="course-outline__module-chevron" aria-hidden="true">
-                  <ChevronDown size={16} aria-hidden="true" />
-                </span>
-              </summary>
-              <div class="course-outline__module-lessons">
-                {module.lessons.map((lesson: OverviewLesson) =>
-                  module.isLocked ? (
-                    <span class="course-outline__lesson course-outline__lesson--locked">
-                      <span
-                        class="course-outline__lesson-icon course-outline__lesson-icon--pending"
-                        aria-hidden="true"
-                      >
-                        <Circle size={16} />
-                      </span>
-                      <span class="course-outline__lesson-title">
-                        {lesson.title}
-                      </span>
-                    </span>
-                  ) : (
-                    <a
-                      href={`${lessonBaseUrl}/${lesson.id}`}
-                      class:list={{
-                        'course-outline__lesson': true,
-                        'progress-completed': completedLessonIds.has(lesson.id),
-                        'progress-current': lesson.id === currentLessonId
-                      }}
+      sectionsWithModuleState.map((section, sectionIndex) =>
+        hasMultipleSections ? (
+          <details
+            class="course-outline__section"
+            open={sectionIndex === currentSectionIndex}
+          >
+            <summary class="course-outline__section-summary">
+              <span class="course-outline__section-title">{section.title}</span>
+              <span class="course-outline__section-chevron" aria-hidden="true">
+                <ChevronDown size={16} aria-hidden="true" />
+              </span>
+            </summary>
+            <div class="course-outline__section-modules">
+              {section.modules.map(
+                ({
+                  module,
+                  isCurrentModule
+                }: {
+                  module: OverviewModule
+                  isCurrentModule: boolean
+                }) => (
+                  <details
+                    class:list={{
+                      'course-outline__module': true,
+                      'course-outline__module--locked': module.isLocked
+                    }}
+                    open={!module.isLocked && isCurrentModule}
+                  >
+                    <summary
+                      class="course-outline__module-summary"
+                      aria-disabled={module.isLocked ? 'true' : 'false'}
+                      tabindex={module.isLocked ? -1 : undefined}
                     >
-                      <span
-                        class="course-outline__lesson-icon course-outline__lesson-icon--pending"
-                        aria-hidden="true"
+                      <span class="course-outline__module-title">{module.title}</span>
+                      <span class="course-outline__module-chevron" aria-hidden="true">
+                        <ChevronDown size={16} aria-hidden="true" />
+                      </span>
+                    </summary>
+                    <div class="course-outline__module-lessons">
+                      {module.lessons.map((lesson: OverviewLesson) =>
+                        module.isLocked ? (
+                          <span class="course-outline__lesson course-outline__lesson--locked">
+                            <span
+                              class="course-outline__lesson-icon course-outline__lesson-icon--pending"
+                              aria-hidden="true"
+                            >
+                              <Circle size={16} />
+                            </span>
+                            <span class="course-outline__lesson-title">
+                              {lesson.title}
+                            </span>
+                          </span>
+                        ) : (
+                          <a
+                            href={`${lessonBaseUrl}/${lesson.id}`}
+                            class:list={{
+                              'course-outline__lesson': true,
+                              'progress-completed': completedLessonIds.has(lesson.id),
+                              'progress-current': lesson.id === currentLessonId
+                            }}
+                          >
+                            <span
+                              class="course-outline__lesson-icon course-outline__lesson-icon--pending"
+                              aria-hidden="true"
+                            >
+                              <Circle size={16} />
+                            </span>
+                            <span
+                              class="course-outline__lesson-icon course-outline__lesson-icon--current"
+                              aria-hidden="true"
+                            >
+                              <CirclePlay size={16} />
+                            </span>
+                            <span
+                              class="course-outline__lesson-icon course-outline__lesson-icon--completed"
+                              aria-hidden="true"
+                            >
+                              <CircleCheck size={16} />
+                            </span>
+                            <span class="course-outline__lesson-title">
+                              {lesson.title}
+                            </span>
+                          </a>
+                        )
+                      )}
+                    </div>
+                  </details>
+                )
+              )}
+            </div>
+          </details>
+        ) : (
+          section.modules.map(
+            ({
+              module,
+              isCurrentModule
+            }: {
+              module: OverviewModule
+              isCurrentModule: boolean
+            }) => (
+              <details
+                class:list={{
+                  'course-outline__module': true,
+                  'course-outline__module--locked': module.isLocked
+                }}
+                open={!module.isLocked && isCurrentModule}
+              >
+                <summary
+                  class="course-outline__module-summary"
+                  aria-disabled={module.isLocked ? 'true' : 'false'}
+                  tabindex={module.isLocked ? -1 : undefined}
+                >
+                  <span class="course-outline__module-title">{module.title}</span>
+                  <span class="course-outline__module-chevron" aria-hidden="true">
+                    <ChevronDown size={16} aria-hidden="true" />
+                  </span>
+                </summary>
+                <div class="course-outline__module-lessons">
+                  {module.lessons.map((lesson: OverviewLesson) =>
+                    module.isLocked ? (
+                      <span class="course-outline__lesson course-outline__lesson--locked">
+                        <span
+                          class="course-outline__lesson-icon course-outline__lesson-icon--pending"
+                          aria-hidden="true"
+                        >
+                          <Circle size={16} />
+                        </span>
+                        <span class="course-outline__lesson-title">
+                          {lesson.title}
+                        </span>
+                      </span>
+                    ) : (
+                      <a
+                        href={`${lessonBaseUrl}/${lesson.id}`}
+                        class:list={{
+                          'course-outline__lesson': true,
+                          'progress-completed': completedLessonIds.has(lesson.id),
+                          'progress-current': lesson.id === currentLessonId
+                        }}
                       >
-                        <Circle size={16} />
-                      </span>
-                      <span
-                        class="course-outline__lesson-icon course-outline__lesson-icon--current"
-                        aria-hidden="true"
-                      >
-                        <CirclePlay size={16} />
-                      </span>
-                      <span
-                        class="course-outline__lesson-icon course-outline__lesson-icon--completed"
-                        aria-hidden="true"
-                      >
-                        <CircleCheck size={16} />
-                      </span>
-                      <span class="course-outline__lesson-title">
-                        {lesson.title}
-                      </span>
-                    </a>
-                  )
-                )}
-              </div>
-            </details>
+                        <span
+                          class="course-outline__lesson-icon course-outline__lesson-icon--pending"
+                          aria-hidden="true"
+                        >
+                          <Circle size={16} />
+                        </span>
+                        <span
+                          class="course-outline__lesson-icon course-outline__lesson-icon--current"
+                          aria-hidden="true"
+                        >
+                          <CirclePlay size={16} />
+                        </span>
+                        <span
+                          class="course-outline__lesson-icon course-outline__lesson-icon--completed"
+                          aria-hidden="true"
+                        >
+                          <CircleCheck size={16} />
+                        </span>
+                        <span class="course-outline__lesson-title">
+                          {lesson.title}
+                        </span>
+                      </a>
+                    )
+                  )}
+                </div>
+              </details>
+            )
           )
-        })
+        )
       )
     }
   </div>
@@ -129,6 +248,69 @@ let moduleFlatIndex = 0
   .course-outline__module-list {
     width: 100%;
     --course-outline-module-padding: var(--spacing-3);
+  }
+
+  .course-outline__section {
+    interpolate-size: allow-keywords;
+    margin-top: var(--spacing-3);
+  }
+
+  .course-outline__section + .course-outline__section {
+    border-top: 1px solid var(--color-gray-6);
+    padding-top: var(--spacing-2);
+  }
+
+  .course-outline__section::details-content {
+    height: 0;
+    overflow: clip;
+    transition:
+      height var(--duration-slow) ease-out,
+      content-visibility var(--duration-slow) allow-discrete;
+  }
+
+  .course-outline__section[open]::details-content {
+    height: auto;
+  }
+
+  .course-outline__section-summary {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-2) 0;
+    cursor: pointer;
+    list-style: none;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-12);
+    font-size: var(--text-sm);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .course-outline__section-summary::-webkit-details-marker,
+  .course-outline__section-summary::marker {
+    display: none;
+  }
+
+  .course-outline__section-summary:focus-visible {
+    outline: 2px solid var(--color-cyan-9);
+    outline-offset: 2px;
+  }
+
+  .course-outline__section-title {
+    flex: 1;
+  }
+
+  .course-outline__section-chevron {
+    flex-shrink: 0;
+    color: var(--color-gray-9);
+  }
+
+  .course-outline__section[open] .course-outline__section-chevron {
+    transform: rotate(180deg);
+  }
+
+  .course-outline__section-modules {
+    padding-left: var(--spacing-2);
   }
 
   .course-outline__module--locked {
@@ -158,7 +340,6 @@ let moduleFlatIndex = 0
     padding: var(--course-outline-module-padding) 0;
     cursor: pointer;
     list-style: none;
-    font-weight: var(--font-weight-semibold);
     color: var(--color-gray-12);
     background: none;
     border: none;
@@ -166,6 +347,8 @@ let moduleFlatIndex = 0
     text-align: left;
     font-size: var(--text-sm);
     font-family: inherit;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .course-outline__module--locked .course-outline__module-summary {
@@ -319,6 +502,7 @@ let moduleFlatIndex = 0
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .course-outline__section::details-content,
     .course-outline__module::details-content {
       transition: none;
     }

@@ -131,7 +131,8 @@ export class CommandDispatcher {
     // Exécuter la commande via le handler
     const result = handler.execute(command, this.context)
 
-    if (!this.hasActiveStream()) {
+    const isLockedAfterExecution = this.context.isInputLocked?.() === true
+    if (!this.hasActiveStream() && !isLockedAfterExecution) {
       this.context.unlockInput?.()
     }
 
