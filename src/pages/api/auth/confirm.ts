@@ -104,7 +104,7 @@ export const GET: APIRoute = async ({
     readAppEnv('EARLY_ACCESS', locals)?.toLowerCase().trim() === 'true'
   if (isEarlyStage) {
     const count = await getAuthUserCount(locals)
-    if (count != null && count > EARLY_ACCESS_CAP) {
+    if (count != null && count >= EARLY_ACCESS_CAP) {
       const admin = getSupabaseAdmin(locals)
       if (admin != null) {
         await admin.auth.admin.deleteUser(session.user.id)

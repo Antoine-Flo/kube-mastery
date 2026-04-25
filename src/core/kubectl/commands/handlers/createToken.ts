@@ -4,8 +4,17 @@ import { error, success } from '../../../shared/result'
 import type { ParsedCommand } from '../types'
 
 const base64UrlEncode = (value: string): string => {
-  return Buffer.from(value, 'utf8')
-    .toString('base64')
+  const base64Value =
+    typeof Buffer !== 'undefined'
+      ? Buffer.from(value, 'utf8').toString('base64')
+      : (() => {
+          const bytes = new TextEncoder().encode(value)
+          const binaryString = Array.from(bytes, (byte) => {
+            return String.fromCharCode(byte)
+          }).join('')
+          return globalThis.btoa(binaryString)
+        })()
+  return base64Value
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/g, '')
