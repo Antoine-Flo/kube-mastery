@@ -3,6 +3,11 @@ import { deepFreeze } from '../../shared/deepFreeze'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
 import type { NamespacedFactoryConfigBase } from './resourceFactoryConfig'
+import {
+  formatRbacManifestValidationError,
+  isValidRbacName,
+  RBAC_API_GROUP
+} from './rbacValidation'
 
 export interface RoleRef {
   apiGroup: 'rbac.authorization.k8s.io'
@@ -14,7 +19,7 @@ export interface Subject {
   kind: 'ServiceAccount' | 'User' | 'Group'
   name: string
   namespace?: string
-  apiGroup?: 'rbac.authorization.k8s.io'
+  apiGroup?: '' | 'rbac.authorization.k8s.io'
 }
 
 export interface RoleBinding {
@@ -53,17 +58,47 @@ export const createRoleBinding = (config: RoleBindingConfig): RoleBinding => {
   return deepFreeze(roleBinding)
 }
 
-const SubjectSchema = z.object({
-  kind: z.enum(['ServiceAccount', 'User', 'Group']),
+const ServiceAccountSubjectSchema = z.object({
+  kind: z.literal('ServiceAccount'),
   name: z.string().min(1),
   namespace: z.string().optional(),
-  apiGroup: z.literal('rbac.authorization.k8s.io').optional()
+  apiGroup: z.literal('').optional()
+})
+
+const UserSubjectSchema = z.object({
+  kind: z.literal('User'),
+  name: z.string().min(1),
+  namespace: z.string().optional(),
+  apiGroup: z
+    .literal(RBAC_API_GROUP)
+    .optional()
+    .default(RBAC_API_GROUP)
+})
+
+const GroupSubjectSchema = z.object({
+  kind: z.literal('Group'),
+  name: z.string().min(1),
+  namespace: z.string().optional(),
+  apiGroup: z
+    .literal(RBAC_API_GROUP)
+    .optional()
+    .default(RBAC_API_GROUP)
+})
+
+const SubjectSchema = z.discriminatedUnion('kind', [
+  ServiceAccountSubjectSchema,
+  UserSubjectSchema,
+  GroupSubjectSchema
+])
+
+const RoleRefNameSchema = z.string().min(1).refine(isValidRbacName, {
+  message: 'must be a valid RBAC path segment name'
 })
 
 const RoleRefSchema = z.object({
-  apiGroup: z.literal('rbac.authorization.k8s.io'),
+  apiGroup: z.literal(RBAC_API_GROUP).optional().default(RBAC_API_GROUP),
   kind: z.enum(['Role', 'ClusterRole']),
-  name: z.string().min(1)
+  name: RoleRefNameSchema
 })
 
 const RoleBindingManifestSchema = z.object({
@@ -86,9 +121,7 @@ export const parseRoleBindingManifest = (
   const parsed = RoleBindingManifestSchema.safeParse(manifest)
   if (!parsed.success) {
     const firstIssue = parsed.error.issues[0]
-    return error(
-      `Invalid RoleBinding manifest: ${firstIssue.path.join('.')}: ${firstIssue.message}`
-    )
+    return error(formatRbacManifestValidationError('RoleBinding', manifest, firstIssue))
   }
   return success(
     createRoleBinding({

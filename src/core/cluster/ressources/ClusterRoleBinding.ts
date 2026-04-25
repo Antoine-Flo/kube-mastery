@@ -3,7 +3,31 @@ import { deepFreeze } from '../../shared/deepFreeze'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
 import type { ClusterScopedNameFactoryConfigBase } from './resourceFactoryConfig'
-import type { RoleRef, Subject } from './RoleBinding'
+import {
+  formatRbacManifestValidationError,
+  isValidRbacName,
+  RBAC_API_GROUP
+} from './rbacValidation'
+
+export interface ClusterRoleRef {
+  apiGroup: 'rbac.authorization.k8s.io'
+  kind: 'ClusterRole'
+  name: string
+}
+
+export type ClusterRoleBindingSubject =
+  | {
+      kind: 'ServiceAccount'
+      name: string
+      namespace: string
+      apiGroup?: ''
+    }
+  | {
+      kind: 'User' | 'Group'
+      name: string
+      namespace?: string
+      apiGroup?: 'rbac.authorization.k8s.io'
+    }
 
 export interface ClusterRoleBinding {
   apiVersion: 'rbac.authorization.k8s.io/v1'
@@ -15,14 +39,14 @@ export interface ClusterRoleBinding {
     annotations?: Record<string, string>
     creationTimestamp: string
   }
-  roleRef: RoleRef
-  subjects: Subject[]
+  roleRef: ClusterRoleRef
+  subjects: ClusterRoleBindingSubject[]
 }
 
 export interface ClusterRoleBindingConfig
   extends ClusterScopedNameFactoryConfigBase {
-  roleRef: RoleRef
-  subjects: Subject[]
+  roleRef: ClusterRoleRef
+  subjects: ClusterRoleBindingSubject[]
 }
 
 export const createClusterRoleBinding = (
@@ -44,17 +68,47 @@ export const createClusterRoleBinding = (
   return deepFreeze(clusterRoleBinding)
 }
 
-const SubjectSchema = z.object({
-  kind: z.enum(['ServiceAccount', 'User', 'Group']),
+const ServiceAccountSubjectSchema = z.object({
+  kind: z.literal('ServiceAccount'),
+  name: z.string().min(1),
+  namespace: z.string().min(1),
+  apiGroup: z.literal('').optional()
+})
+
+const UserSubjectSchema = z.object({
+  kind: z.literal('User'),
   name: z.string().min(1),
   namespace: z.string().optional(),
-  apiGroup: z.literal('rbac.authorization.k8s.io').optional()
+  apiGroup: z
+    .literal(RBAC_API_GROUP)
+    .optional()
+    .default(RBAC_API_GROUP)
+})
+
+const GroupSubjectSchema = z.object({
+  kind: z.literal('Group'),
+  name: z.string().min(1),
+  namespace: z.string().optional(),
+  apiGroup: z
+    .literal(RBAC_API_GROUP)
+    .optional()
+    .default(RBAC_API_GROUP)
+})
+
+const SubjectSchema = z.discriminatedUnion('kind', [
+  ServiceAccountSubjectSchema,
+  UserSubjectSchema,
+  GroupSubjectSchema
+])
+
+const RoleRefNameSchema = z.string().min(1).refine(isValidRbacName, {
+  message: 'must be a valid RBAC path segment name'
 })
 
 const RoleRefSchema = z.object({
-  apiGroup: z.literal('rbac.authorization.k8s.io'),
-  kind: z.enum(['Role', 'ClusterRole']),
-  name: z.string().min(1)
+  apiGroup: z.literal(RBAC_API_GROUP).optional().default(RBAC_API_GROUP),
+  kind: z.literal('ClusterRole'),
+  name: RoleRefNameSchema
 })
 
 const ClusterRoleBindingManifestSchema = z.object({
@@ -77,7 +131,11 @@ export const parseClusterRoleBindingManifest = (
   if (!parsed.success) {
     const firstIssue = parsed.error.issues[0]
     return error(
-      `Invalid ClusterRoleBinding manifest: ${firstIssue.path.join('.')}: ${firstIssue.message}`
+      formatRbacManifestValidationError(
+        'ClusterRoleBinding',
+        manifest,
+        firstIssue
+      )
     )
   }
   return success(

@@ -9,43 +9,25 @@ import {
   createApiServerFacade,
   type ApiServerFacade
 } from '../../api/ApiServerFacade'
-import type { ConfigMap } from '../ressources/ConfigMap'
-import type { DaemonSet } from '../ressources/DaemonSet'
-import type { Deployment } from '../ressources/Deployment'
-import type { Ingress } from '../ressources/Ingress'
-import type { NetworkPolicy } from '../ressources/NetworkPolicy'
-import type { Node } from '../ressources/Node'
-import type { PersistentVolume } from '../ressources/PersistentVolume'
-import type { PersistentVolumeClaim } from '../ressources/PersistentVolumeClaim'
-import type { Pod } from '../ressources/Pod'
-import type { ReplicaSet } from '../ressources/ReplicaSet'
-import type { Secret } from '../ressources/Secret'
-import type { Service } from '../ressources/Service'
 import { applyResourceWithEvents } from '../../kubectl/commands/resourceCatalog'
-import { parseKubernetesYaml } from '../../kubectl/yamlParser'
+import {
+  MANIFEST_PARSERS,
+  type ParsedYamlResource,
+  YAML_SUPPORTED_RESOURCE_KINDS,
+  type YamlSupportedKind
+} from '../../kubectl/generated/yamlManifestParsers.generated'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
 import { createSimulatorBootstrapConfig } from '../systemBootstrap'
-import { splitYamlDocuments } from './yamlDocuments'
 import { readdirSync, readFileSync } from 'fs'
 import { join } from 'path'
+import { parseAllDocuments } from 'yaml'
 
 /**
  * Parse a single YAML document (supported kinds only)
  */
 type ParsedResource =
-  | Pod
-  | ConfigMap
-  | Secret
-  | Node
-  | PersistentVolume
-  | PersistentVolumeClaim
-  | ReplicaSet
-  | Deployment
-  | DaemonSet
-  | Service
-  | Ingress
-  | NetworkPolicy
+  ParsedYamlResource
 
 /**
  * Parse multi-document YAML, skipping unsupported kinds (e.g. Namespace).
@@ -53,19 +35,43 @@ type ParsedResource =
  */
 const parseMultiDocumentYamlSkipUnsupported = (
   yamlContent: string
-): ParsedResource[] => {
-  const documents = splitYamlDocuments(yamlContent)
-  const resources: ParsedResource[] = []
-
-  for (const doc of documents) {
-    const result = parseKubernetesYaml(doc.trim())
-    if (result.ok) {
-      resources.push(result.value as ParsedResource)
-    }
-    // Skip unsupported kinds (e.g. Namespace) without failing
+): Result<ParsedResource[], string> => {
+  const yamlDocuments = parseAllDocuments(yamlContent)
+  const parseErrorDocument = yamlDocuments.find((document) => {
+    return document.errors.length > 0
+  })
+  if (parseErrorDocument != null) {
+    const parseError = parseErrorDocument.errors[0]
+    return error(`YAML parse error: ${parseError.message}`)
   }
 
-  return resources
+  const documents = yamlDocuments
+    .map((document) => {
+      return document.toJSON()
+    })
+    .filter((document) => {
+      return document != null
+    })
+  const resources: ParsedResource[] = []
+
+  for (const document of documents) {
+    const doc = document as { kind?: unknown }
+    if (typeof doc.kind !== 'string') {
+      return error('Missing or invalid kind')
+    }
+    if (!YAML_SUPPORTED_RESOURCE_KINDS.includes(doc.kind as YamlSupportedKind)) {
+      continue
+    }
+    const parser = MANIFEST_PARSERS[doc.kind as YamlSupportedKind]
+    const result = parser(document)
+    if (result.ok) {
+      resources.push(result.value)
+      continue
+    }
+    return error(result.error)
+  }
+
+  return success(resources)
 }
 
 // ─── Load from YAML content ──────────────────────────────────────────────
@@ -82,9 +88,12 @@ const loadApiServerFromYamlContent = (
     eventBus,
     bootstrap: createSimulatorBootstrapConfig()
   })
-  const resources = parseMultiDocumentYamlSkipUnsupported(yamlContent)
+  const resourcesResult = parseMultiDocumentYamlSkipUnsupported(yamlContent)
+  if (!resourcesResult.ok) {
+    return error(resourcesResult.error)
+  }
 
-  for (const resource of resources) {
+  for (const resource of resourcesResult.value) {
     const applyResult = applyResourceWithEvents(resource, apiServer)
     if (!applyResult.ok) {
       return error(`Failed to apply resource: ${applyResult.error}`)

@@ -8,17 +8,52 @@ import { formatLabels } from '../internal/helpers'
 
 const formatPolicyRuleRows = (
   rules: Array<{
+    apiGroups?: string[]
     verbs: string[]
     resources?: string[]
+    resourceNames?: string[]
+    nonResourceURLs?: string[]
   }>
 ): string[] => {
+  const formatRuleList = (items: string[] | undefined): string => {
+    const values = items ?? []
+    if (values.length === 0) {
+      return '[]'
+    }
+    return `[${values.join(' ')}]`
+  }
+  const combineResourceAndApiGroups = (
+    resources: string[] | undefined,
+    apiGroups: string[] | undefined
+  ): string => {
+    const resourceList = resources ?? []
+    if (resourceList.length === 0) {
+      return '[]'
+    }
+    const groupList = apiGroups ?? []
+    if (groupList.length === 0) {
+      return resourceList.join(' ')
+    }
+    const combined = resourceList.flatMap((resource) => {
+      return groupList.map((apiGroup) => {
+        if (apiGroup === '') {
+          return resource
+        }
+        return `${resource}.${apiGroup}`
+      })
+    })
+    return combined.join(' ')
+  }
+
   if (rules.length === 0) {
     return ['  []         []                 []              []']
   }
   return rules.map((rule) => {
-    const resources = (rule.resources ?? []).join(' ') || '[]'
-    const verbs = `[${rule.verbs.join(' ')}]`
-    return `  ${resources.padEnd(9)}  []                 []              ${verbs}`
+    const resources = combineResourceAndApiGroups(rule.resources, rule.apiGroups)
+    const nonResourceURLs = formatRuleList(rule.nonResourceURLs)
+    const resourceNames = formatRuleList(rule.resourceNames)
+    const verbs = formatRuleList(rule.verbs)
+    return `  ${resources.padEnd(9)}  ${nonResourceURLs.padEnd(17)}  ${resourceNames.padEnd(14)}  ${verbs}`
   })
 }
 

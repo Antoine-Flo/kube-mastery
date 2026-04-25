@@ -84,9 +84,9 @@ describe('kubectl create token handler', () => {
       namespace: 'default'
     })
 
-    const runtimeGlobals = globalThis as typeof globalThis & {
-      Buffer?: typeof Buffer
-      btoa?: (value: string) => string
+    const runtimeGlobals = globalThis as unknown as {
+      Buffer: typeof Buffer | undefined
+      btoa: ((value: string) => string) | undefined
     }
     const originalBuffer = runtimeGlobals.Buffer
     const originalBtoa = runtimeGlobals.btoa

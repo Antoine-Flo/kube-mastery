@@ -756,6 +756,140 @@ spec:
     )
   })
 
+  it('should reject apply update when ClusterRoleBinding roleRef changes', () => {
+    const initialYaml = `apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: demo-crb
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+  - kind: ServiceAccount
+    name: demo
+    namespace: default
+`
+    const updatedYaml = `apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: demo-crb
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: edit
+subjects:
+  - kind: ServiceAccount
+    name: demo
+    namespace: default
+`
+
+    fileSystem.createFile('demo-crb.yaml')
+    fileSystem.writeFile('demo-crb.yaml', initialYaml)
+
+    const parsedFirstApply = parseCommand('kubectl apply -f demo-crb.yaml')
+    expect(parsedFirstApply.ok).toBe(true)
+    if (!parsedFirstApply.ok) {
+      return
+    }
+
+    const firstApplyResult = handleApply(
+      fileSystem,
+      apiServer,
+      parsedFirstApply.value
+    )
+    expect(firstApplyResult.ok).toBe(true)
+    if (!firstApplyResult.ok) {
+      return
+    }
+
+    fileSystem.writeFile('demo-crb.yaml', updatedYaml)
+
+    const parsedSecondApply = parseCommand('kubectl apply -f demo-crb.yaml')
+    expect(parsedSecondApply.ok).toBe(true)
+    if (!parsedSecondApply.ok) {
+      return
+    }
+
+    const secondApplyResult = handleApply(
+      fileSystem,
+      apiServer,
+      parsedSecondApply.value
+    )
+    expect(secondApplyResult.ok).toBe(false)
+    if (!secondApplyResult.ok) {
+      expect(secondApplyResult.error).toContain('cannot change roleRef')
+    }
+  })
+
+  it('should reject apply update when RoleBinding roleRef changes', () => {
+    const initialYaml = `apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: demo-rb
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: viewer
+subjects:
+  - kind: ServiceAccount
+    name: demo
+    namespace: default
+`
+    const updatedYaml = `apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: demo-rb
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+  - kind: ServiceAccount
+    name: demo
+    namespace: default
+`
+
+    fileSystem.createFile('demo-rb.yaml')
+    fileSystem.writeFile('demo-rb.yaml', initialYaml)
+
+    const parsedFirstApply = parseCommand('kubectl apply -f demo-rb.yaml')
+    expect(parsedFirstApply.ok).toBe(true)
+    if (!parsedFirstApply.ok) {
+      return
+    }
+
+    const firstApplyResult = handleApply(
+      fileSystem,
+      apiServer,
+      parsedFirstApply.value
+    )
+    expect(firstApplyResult.ok).toBe(true)
+    if (!firstApplyResult.ok) {
+      return
+    }
+
+    fileSystem.writeFile('demo-rb.yaml', updatedYaml)
+
+    const parsedSecondApply = parseCommand('kubectl apply -f demo-rb.yaml')
+    expect(parsedSecondApply.ok).toBe(true)
+    if (!parsedSecondApply.ok) {
+      return
+    }
+
+    const secondApplyResult = handleApply(
+      fileSystem,
+      apiServer,
+      parsedSecondApply.value
+    )
+    expect(secondApplyResult.ok).toBe(false)
+    if (!secondApplyResult.ok) {
+      expect(secondApplyResult.error).toContain('cannot change roleRef')
+    }
+  })
+
   it('should apply all resources from a multi document yaml file', () => {
     const yaml = `apiVersion: apps/v1
 kind: Deployment

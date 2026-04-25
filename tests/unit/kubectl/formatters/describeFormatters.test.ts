@@ -5,7 +5,12 @@ import { describeLease } from '../../../../src/core/kubectl/describe/describers/
 import { describeNetworkPolicy } from '../../../../src/core/kubectl/describe/describers/describeNetworkPolicy'
 import { describeNode } from '../../../../src/core/kubectl/describe/describers/describeNode'
 import { describePod } from '../../../../src/core/kubectl/describe/describers/describePod'
+import {
+  describeClusterRole,
+  describeRole
+} from '../../../../src/core/kubectl/describe/describers/describeRbac'
 import { describeSecret } from '../../../../src/core/kubectl/describe/describers/describeSecret'
+import { createClusterRole } from '../../../../src/core/cluster/ressources/ClusterRole'
 import {
   createDeployment,
   generateTemplateHash,
@@ -14,6 +19,7 @@ import {
 import { createNode } from '../../../../src/core/cluster/ressources/Node'
 import { createPod } from '../../../../src/core/cluster/ressources/Pod'
 import { createReplicaSet } from '../../../../src/core/cluster/ressources/ReplicaSet'
+import { createRole } from '../../../../src/core/cluster/ressources/Role'
 import { createConfigMap } from '../../../../src/core/cluster/ressources/ConfigMap'
 import { createSecret } from '../../../../src/core/cluster/ressources/Secret'
 import { createLease } from '../../../../src/core/cluster/ressources/Lease'
@@ -1587,6 +1593,59 @@ describe('describeFormatters', () => {
 
       expect(result).toContain('Events:')
       expect(result).toContain('<none>')
+    })
+  })
+
+  describe('describeRbac', () => {
+    it('should render apiGroups, nonResourceURLs and resourceNames for role rules', () => {
+      const role = createRole({
+        name: 'secret-reader',
+        namespace: 'default',
+        rules: [
+          {
+            apiGroups: [''],
+            resources: ['secrets'],
+            verbs: ['get'],
+            resourceNames: ['db-credentials', 'api-key'],
+            nonResourceURLs: ['/healthz', '/readyz']
+          },
+          {
+            apiGroups: ['apps'],
+            resources: ['deployments'],
+            verbs: ['get', 'list']
+          }
+        ]
+      })
+
+      const result = describeRole(role)
+
+      expect(result).toContain('PolicyRule:')
+      expect(result).toContain('Resources  Non-Resource URLs  Resource Names  Verbs')
+      expect(result).toContain('secrets')
+      expect(result).toContain('[/healthz /readyz]')
+      expect(result).toContain('[db-credentials api-key]')
+      expect(result).toContain('[get]')
+      expect(result).toContain('deployments.apps')
+      expect(result).toContain('[get list]')
+    })
+
+    it('should render nonResourceURLs and resourceNames for clusterrole rules', () => {
+      const clusterRole = createClusterRole({
+        name: 'diagnostics-reader',
+        rules: [
+          {
+            verbs: ['get'],
+            nonResourceURLs: ['/metrics'],
+            resourceNames: ['global-metrics']
+          }
+        ]
+      })
+
+      const result = describeClusterRole(clusterRole)
+
+      expect(result).toContain('PolicyRule:')
+      expect(result).toContain('[]         [/metrics]         [global-metrics]')
+      expect(result).toContain('[get]')
     })
   })
 

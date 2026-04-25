@@ -12,12 +12,14 @@ import type { Namespace } from '../cluster/ressources/Namespace'
 import type { PersistentVolume } from '../cluster/ressources/PersistentVolume'
 import type { PersistentVolumeClaim } from '../cluster/ressources/PersistentVolumeClaim'
 import type { Pod } from '../cluster/ressources/Pod'
+import type { RoleBinding } from '../cluster/ressources/RoleBinding'
 import {
   computeContainerImageId,
   hydratePodVolumeRuntime
 } from '../cluster/ressources/Pod'
 import type { Secret } from '../cluster/ressources/Secret'
 import type { StorageClass } from '../cluster/ressources/StorageClass'
+import type { ClusterRoleBinding } from '../cluster/ressources/ClusterRoleBinding'
 import type {
   BootstrapApiLike,
   ClusterBootstrapConfig
@@ -30,7 +32,7 @@ import {
 import { createEtcdLikeStore, type EtcdLikeStore } from '../etcd/EtcdLikeStore'
 import type { AppEvent } from '../events/AppEvent'
 import type { Result } from '../shared/result'
-import { success } from '../shared/result'
+import { error, success } from '../shared/result'
 import {
   createDeploymentLifecycleEventStore,
   type DeploymentLifecycleEventStore
@@ -531,6 +533,30 @@ const resolveResourceNamespace = (
   return namespace ?? resourceNamespace ?? 'default'
 }
 
+const hasImmutableRoleRefChange = (
+  kind: ResourceKind,
+  previousResource: KindToResource<ResourceKind>,
+  nextResource: KindToResource<ResourceKind>
+): boolean => {
+  if (kind === 'RoleBinding') {
+    const previousRoleBinding = previousResource as RoleBinding
+    const nextRoleBinding = nextResource as RoleBinding
+    return (
+      JSON.stringify(previousRoleBinding.roleRef) !==
+      JSON.stringify(nextRoleBinding.roleRef)
+    )
+  }
+  if (kind === 'ClusterRoleBinding') {
+    const previousClusterRoleBinding = previousResource as ClusterRoleBinding
+    const nextClusterRoleBinding = nextResource as ClusterRoleBinding
+    return (
+      JSON.stringify(previousClusterRoleBinding.roleRef) !==
+      JSON.stringify(nextClusterRoleBinding.roleRef)
+    )
+  }
+  return false
+}
+
 export const createApiServerFacade = (
   options: CreateApiServerFacadeOptions = {}
 ): ApiServerFacade => {
@@ -835,6 +861,17 @@ export const createApiServerFacade = (
       const previous = findResourceForMutation(kind, name, effectiveNamespace)
       if (!previous.ok) {
         return previous as Result<KindToResource<typeof kind>>
+      }
+      if (
+        hasImmutableRoleRefChange(
+          kind,
+          previous.value as KindToResource<ResourceKind>,
+          resource as KindToResource<ResourceKind>
+        )
+      ) {
+        return error(
+          `Error from server (Invalid): ${kind} "${name}" is invalid: roleRef: Invalid value: cannot change roleRef`
+        ) as Result<KindToResource<typeof kind>>
       }
       const normalizedResource =
         kind === 'Pod'

@@ -9,8 +9,7 @@ import {
 import { getSeed } from '../../courses/seeds/getSeed'
 import { createFilesystemFromConfig } from '../../core/filesystem/debianFileSystem'
 import { applyResourceWithEvents } from '../../core/kubectl/commands/resourceCatalog'
-import { parseKubernetesYaml } from '../../core/kubectl/yamlParser'
-import { splitYamlDocuments } from '../../core/cluster/seeds/yamlDocuments'
+import { parseKubernetesYamlDocuments } from '../../core/kubectl/yamlParser'
 import type { EmulatedEnvironment } from '../../core/emulatedEnvironment/EmulatedEnvironment'
 import type { FsConfig } from '../../core/filesystem/debianFileSystem'
 
@@ -74,13 +73,16 @@ const applyClusterYamlToEnvironment = (
   environment: EmulatedEnvironment,
   yamlContent: string
 ): void => {
-  const documents = splitYamlDocuments(yamlContent)
-  for (const documentContent of documents) {
-    const parsed = parseKubernetesYaml(documentContent.trim())
-    if (!parsed.ok) {
-      continue
-    }
-    const applyResult = applyResourceWithEvents(parsed.value, environment.apiServer)
+  const parsedDocuments = parseKubernetesYamlDocuments(yamlContent)
+  if (!parsedDocuments.ok) {
+    console.error('[DrillEnv] Failed to parse cluster.yaml', {
+      error: parsedDocuments.error
+    })
+    return
+  }
+
+  for (const parsedResource of parsedDocuments.value) {
+    const applyResult = applyResourceWithEvents(parsedResource, environment.apiServer)
     if (!applyResult.ok) {
       console.error('[DrillEnv] Failed to apply cluster seed resource', {
         error: applyResult.error
