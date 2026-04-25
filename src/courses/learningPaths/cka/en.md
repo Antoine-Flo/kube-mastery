@@ -8,7 +8,7 @@ order: 2
 level: Intermediate
 ---
 
-The path for engineers who want to own and operate Kubernetes clusters at a production level. Built on top of the Common Core, this learning path takes you from cluster installation and architecture to advanced security, networking, and troubleshooting , everything the Certified Kubernetes Administrator exam expects you to master.
+The path for engineers who want to own and operate Kubernetes clusters at a production level. From cluster installation and architecture to advanced security, networking, and troubleshooting, everything the Certified Kubernetes Administrator exam expects you to master.
 
 ## What you'll learn
 
@@ -22,5 +22,3 @@ The path for engineers who want to own and operate Kubernetes clusters at a prod
 **Who is this for?**
 
 Platform engineers, DevOps practitioners, and SREs who deploy and maintain Kubernetes infrastructure. If your job involves keeping clusters healthy, securing workloads, and debugging production issues, this is your path.
-
-**Prerequisites:** Complete the **Common Core** path first , this path builds directly on those foundations.

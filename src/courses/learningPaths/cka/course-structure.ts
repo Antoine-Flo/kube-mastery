@@ -7,6 +7,7 @@ export const courseStructure: CourseStructure = {
       moduleIds: [
         'onboarding',
         'kubernetes-basics',
+        'api-and-versioning',
         'yaml-and-objects',
         'kubectl-essentials',
         'kubeconfig',
@@ -29,6 +30,7 @@ export const courseStructure: CourseStructure = {
         'deployments',
         'daemonsets',
         'jobs',
+        'commands-and-args',
         'multi-container-pods',
         'probes',
         'statefulsets'
@@ -64,6 +66,7 @@ export const courseStructure: CourseStructure = {
       title: { en: 'Security & auth' },
       moduleIds: [
         'authentication',
+        'service-accounts',
         'tls-certificates',
         'rbac',
         'security-contexts',
@@ -73,7 +76,7 @@ export const courseStructure: CourseStructure = {
     },
     {
       title: { en: 'Observability & troubleshooting' },
-      moduleIds: ['troubleshooting']
+      moduleIds: ['logging-and-monitoring', 'troubleshooting']
     },
     {
       title: { en: 'API & extensibility' },

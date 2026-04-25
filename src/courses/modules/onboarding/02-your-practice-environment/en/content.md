@@ -56,4 +56,4 @@ Not every Kubernetes feature is available in the simulator. The full list of sup
 
 For deeper exploration on your own machine, <a href="https://kind.sigs.k8s.io/" target="_blank">kind</a> (Kubernetes in Docker) is the closest equivalent. The simulator outputs are aligned with kind, so what you observe here matches what you would get locally.
 
-In the next lesson, you will see how this course maps to the three main Kubernetes certifications and where the Common Core fits in each path.
+In the next lesson, you will see how this course maps to the three main Kubernetes certifications: KCNA, CKAD, and CKA.

@@ -19,4 +19,4 @@ The fastest way to go from zero to a working understanding of Kubernetes. Each l
 
 ## Who is this for?
 
-Anyone who is new to Kubernetes and wants a practical introduction without spending days reading documentation. Whether you are a developer who wants to understand how your application runs in production, a sysadmin exploring container orchestration, or someone preparing to go deeper with the Common Core or CKAD path, this is the right starting point.
+Anyone who is new to Kubernetes and wants a practical introduction without spending days reading documentation. Whether you are a developer who wants to understand how your application runs in production, a sysadmin exploring container orchestration, or someone preparing to go deeper with the CKA or CKAD path, this is the right starting point.

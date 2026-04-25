@@ -1,3 +1,7 @@
+## 2026-04-25
+
+- Removed the Common Core learning path for simplicity. CKA and CKAD are now standalone, self-contained paths.
+
 ## 2026-04-15
 
 - Added shell pipelines (`|`) with host/exec/init parity.

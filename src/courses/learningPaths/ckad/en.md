@@ -8,7 +8,7 @@ order: 3
 level: Intermediate
 ---
 
-The path for developers who build and ship applications on Kubernetes. Built on top of the Common Core, this learning path takes you from running basic workloads to designing resilient, secure, and observable applications , everything the Certified Kubernetes Application Developer exam expects you to know.
+The path for developers who build and ship applications on Kubernetes. From running basic workloads to designing resilient, secure, and observable applications, everything the Certified Kubernetes Application Developer exam expects you to know.
 
 ## What you'll learn
 
@@ -22,5 +22,3 @@ The path for developers who build and ship applications on Kubernetes. Built on 
 **Who is this for?**
 
 Backend developers, full-stack engineers, and DevOps practitioners who deploy and manage their own applications on Kubernetes. If your job involves writing Deployments, debugging failing Pods, and wiring up Services and Ingress, this is your path.
-
-**Prerequisites:** Complete the **Common Core** path first , this path builds directly on those foundations.

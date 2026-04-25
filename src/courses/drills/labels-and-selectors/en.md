@@ -31,7 +31,7 @@ Verify backend resolution through endpoint slices:
 kubectl get endpointslices -n default -l kubernetes.io/service-name=nginx-svc -o jsonpath='{.items[*].endpoints[*].targetRef.name}'
 ```
 
-Keep the fix narrow, do not recreate the pod or service. Use `--overwrite` so the command succeeds if one label already exists. <a href="https://kubemastery.com/en/courses/common-core/what-is-a-service" target="_blank" rel="noopener noreferrer">What is a Service</a>
+Keep the fix narrow, do not recreate the pod or service. Use `--overwrite` so the command succeeds if one label already exists. <a href="https://kubemastery.com/en/courses/cka/what-is-a-service" target="_blank" rel="noopener noreferrer">What is a Service</a>
 
 ### Validation
 

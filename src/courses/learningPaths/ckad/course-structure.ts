@@ -10,8 +10,7 @@ export const courseStructure: CourseStructure = {
         'yaml-and-objects',
         'kubectl-essentials',
         'pods',
-        'namespaces',
-        'labels-and-annotations'
+        'organizing-resources'
       ]
     },
     {
@@ -25,18 +24,17 @@ export const courseStructure: CourseStructure = {
         'resource-management',
         'probes',
         'security-contexts',
-        'replicasets',
         'deployments',
         'deployment-strategies'
       ]
     },
     {
       title: { en: 'Services & networking' },
-      moduleIds: ['services', 'dns', 'ingress', 'network-policies']
+      moduleIds: ['services', 'dns', 'gateway-api', 'network-policies']
     },
     {
       title: { en: 'Storage' },
-      moduleIds: ['volumes', 'persistent-storage', 'statefulsets']
+      moduleIds: ['persistent-storage', 'statefulsets']
     },
     {
       title: { en: 'Security & auth' },

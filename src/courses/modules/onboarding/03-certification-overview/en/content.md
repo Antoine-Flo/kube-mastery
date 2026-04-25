@@ -1,13 +1,13 @@
 ---
 seoTitle: Kubernetes Certifications, KCNA, CKAD, and CKA Overview
-seoDescription: Understand the KCNA, CKAD, and CKA Kubernetes certifications, their format and focus, and how the Common Core course builds the foundation for all three.
+seoDescription: Understand the KCNA, CKAD, and CKA Kubernetes certifications, their format and focus, and how to choose the right path.
 ---
 
 # Overview of Kubernetes Certifications
 
 Picture two engineers applying for the same platform role. One lists three years of Kubernetes experience on their resume. The other holds a CKA certificate dated last month. The hiring manager can verify the second claim in seconds. Certifications give employers and engineers a shared, verifiable benchmark, and in the Kubernetes ecosystem, the CNCF certifications are the ones that matter.
 
-This lesson introduces the three most relevant: KCNA, CKAD, and CKA, and shows how the Common Core course builds the foundation for all three.
+This lesson introduces the three most relevant: KCNA, CKAD, and CKA, and helps you pick the right one for where you are now.
 
 ## KCNA: Kubernetes and Cloud Native Associate
 
@@ -31,16 +31,15 @@ The CKA is widely considered one of the more demanding certifications in the clo
 CKAD and CKA are open-book: you can access the official Kubernetes documentation during the exam. That helps, but finding the right page under time pressure requires practice. Knowing the documentation layout matters as much as knowing the content.
 :::
 
-## How This Common Core Fits In
+## Which Path Is Right for You?
 
-All three certifications share a foundation. You need to understand what Kubernetes is, how its architecture works, and what problems it solves. That foundation is what this Common Core course covers.
+All three certifications share a foundation. You need to understand what Kubernetes is, how its architecture works, and what problems it solves. The CKA and CKAD paths on KubeMastery are self-contained: they start from the fundamentals and go all the way to exam-level depth.
 
 @@@
 graph TD
-CC["Common Core Course<br/>(this course)"]
-CC --> KCNA["KCNA<br/>Multiple choice, Theory, Entry level"]
-CC --> CKAD["CKAD<br/>Hands-on, 2h, App-focused"]
-CC --> CKA["CKA<br/>Hands-on, 2h, Cluster-focused"]
+KCNA["KCNA<br/>Multiple choice, Theory, Entry level"]
+CKAD["CKAD<br/>Hands-on, 2h, App-focused"]
+CKA["CKA<br/>Hands-on, 2h, Cluster-focused"]
 @@@
 
-Whatever certification you are aiming for, the concepts you build here apply directly. Next, the substance begins: what Kubernetes is and the problem it was built to solve.
+If you are new to Kubernetes, the Crash Course is the fastest way to get your bearings before diving into a certification path. Whatever certification you are aiming for, the concepts you build here apply directly. Next, the substance begins: what Kubernetes is and the problem it was built to solve.

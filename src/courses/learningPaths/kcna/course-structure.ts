@@ -11,21 +11,20 @@ export const courseStructure: CourseStructure = {
         'yaml-and-objects',
         'kubectl-essentials',
         'pods',
-        'namespaces',
-        'labels-and-annotations'
+        'organizing-resources'
       ]
     },
     {
       title: { en: 'Workloads & scheduling' },
-      moduleIds: ['replicasets', 'deployments', 'scheduling-basics']
+      moduleIds: ['deployments', 'scheduling-basics']
     },
     {
       title: { en: 'Services & networking' },
-      moduleIds: ['services', 'dns', 'ingress', 'network-policies']
+      moduleIds: ['services', 'dns', 'gateway-api', 'network-policies']
     },
     {
       title: { en: 'Storage' },
-      moduleIds: ['volumes', 'persistent-storage']
+      moduleIds: ['persistent-storage']
     },
     {
       title: { en: 'Cloud native & ecosystem' },

@@ -86,4 +86,4 @@ What is the key structural difference between a Kubernetes user and a ServiceAcc
 **Answer:** A user has no Kubernetes object. It is a name inside a credential, verified at request time and then discarded. A ServiceAccount is a namespaced Kubernetes object stored in etcd. You can create, describe, delete, and reference it in manifests. One is ephemeral and external, the other is persistent and internal.
 :::
 
-You now understand the two identity models Kubernetes uses and why they are separate. The next lessons go deep on ServiceAccounts: how tokens are projected into Pods, how automounting works, and how to design per-application identities with minimal permissions.
+You now understand the two identity models Kubernetes uses and why they are separate. The next module goes deep on ServiceAccounts: how tokens are projected into Pods, how automounting works, and how to design per-application identities with minimal permissions.

@@ -2,11 +2,11 @@ import type { LocalModule } from '../types'
 
 export const module: LocalModule = {
   title: {
-    en: 'Authentication & Service Accounts',
-    fr: 'Authentication & Service Accounts'
+    en: 'Authentication',
+    fr: 'Authentication'
   },
   description: {
-    en: 'User authentication methods, service accounts, token projection and automount.'
+    en: 'Security primitives, authentication methods, and user vs service account identity.'
   },
   tags: ['ckad', 'cka', 'intermediate']
 }

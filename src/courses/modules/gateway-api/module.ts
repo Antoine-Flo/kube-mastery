@@ -2,11 +2,11 @@ import type { LocalModule } from '../types'
 
 export const module: LocalModule = {
   title: {
-    en: 'Gateway Api',
-    fr: 'Gateway Api'
+    en: 'Gateway API',
+    fr: 'Gateway API'
   },
   description: {
-    en: "La nouvelle API de Gateway : remplacement moderne d'Ingress."
+    en: 'Route external traffic with Gateway API: GatewayClass, Gateway, HTTPRoute, TLS, and filters.'
   },
   tags: ['cka', 'intermediate']
 }

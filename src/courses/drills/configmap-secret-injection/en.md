@@ -14,7 +14,7 @@ ckaTargetMinutes: 8
 k create namespace my-db
 ```
 
-All resources in this drill must be created in the same namespace. <a href="https://kubemastery.com/en/courses/common-core/what-are-namespaces" target="_blank" rel="noopener noreferrer">What are namespaces</a>
+All resources in this drill must be created in the same namespace. <a href="https://kubemastery.com/en/courses/cka/what-are-namespaces" target="_blank" rel="noopener noreferrer">What are namespaces</a>
 
 ### Validation
 
@@ -131,7 +131,7 @@ k exec app -n my-db -- ls /etc/config
 k exec app -n my-db -- cat /etc/config/APP_MODE
 ```
 
-The last three commands are support checks, they confirm env injection and mounted config files. <a href="https://kubemastery.com/en/courses/common-core/creating-your-first-pod" target="_blank" rel="noopener noreferrer">Creating your first pod</a>
+The last three commands are support checks, they confirm env injection and mounted config files. <a href="https://kubemastery.com/en/courses/cka/creating-your-first-pod" target="_blank" rel="noopener noreferrer">Creating your first pod</a>
 
 ### Validation
 

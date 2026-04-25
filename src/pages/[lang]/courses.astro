@@ -19,20 +19,13 @@ const auth = await getLayoutAuthContext(
 )
 const emphasizePaidLearningPath = auth.hasPaidSubscription
 
-type CourseVisualVariant = 'fundamentals' | 'developer' | 'operator' | 'crash'
+type CourseVisualVariant = 'developer' | 'operator' | 'crash'
 
 const visualVariantByCourseId: Partial<Record<string, CourseVisualVariant>> = {
-  'common-core': 'fundamentals',
   ckad: 'developer',
   cka: 'operator',
   'crash-course': 'crash'
 }
-
-const courseById = new Map(courses.map((course) => [course.id, course]))
-const crashCourse = courseById.get('crash-course')
-const commonCore = courseById.get('common-core')
-const cka = courseById.get('cka')
-const ckad = courseById.get('ckad')
 
 const coursesListSeo = {
   title: `${t('courses_title')} | KubeMastery`,
@@ -40,6 +33,13 @@ const coursesListSeo = {
   canonical: new URL(localePath('/courses'), Astro.site ?? Astro.url).href,
   openGraphType: 'website' as const
 }
+
+const displayedCourseIds = ['crash-course', 'cka', 'ckad']
+const courseById = new Map(courses.map((course) => [course.id, course]))
+const displayedCourses = displayedCourseIds.flatMap((id) => {
+  const course = courseById.get(id)
+  return course ? [course] : []
+})
 ---
 
 <Layout seo={coursesListSeo}>
@@ -49,112 +49,32 @@ const coursesListSeo = {
       <h1>{t('courses_title')}</h1>
       <p>{t('courses_subtitle')}</p>
 
-      <section class="roadmap">
-        <div class="roadmap__top">
-          <div class="roadmap__side">
-            {
-              crashCourse && (
-                <CourseCard
-                  title={crashCourse.title}
-                  description={
-                    crashCourse.shortDescription ?? crashCourse.description
-                  }
-                  totalLessons={crashCourse.totalLessons}
-                  href={localePath(`/courses/${crashCourse.id}`)}
-                  comingSoon={crashCourse.comingSoon}
-                  inProgress={crashCourse.inProgress}
-                  startHere={!emphasizePaidLearningPath}
-                  level={crashCourse.level}
-                  lessonsLabel={`${crashCourse.totalLessons} ${t('courses_lessons')}`}
-                  freeLabel={t('pricing_free')}
-                  comingSoonLabel={t('courses_comingSoon')}
-                  inProgressLabel={t('courses_inProgress')}
-                  startHereLabel={t('courses_startHere')}
-                  isFree={crashCourse.isFree}
-                  visualVariant={visualVariantByCourseId[crashCourse.id]}
-                />
-              )
-            }
-          </div>
-
-          <div class="roadmap__main">
-            {
-              commonCore && (
-                <CourseCard
-                  title={commonCore.title}
-                  description={
-                    commonCore.shortDescription ?? commonCore.description
-                  }
-                  totalLessons={commonCore.totalLessons}
-                  href={localePath(`/courses/${commonCore.id}`)}
-                  comingSoon={commonCore.comingSoon}
-                  inProgress={commonCore.inProgress}
-                  startHere={emphasizePaidLearningPath && commonCore.startHere}
-                  level={commonCore.level}
-                  lessonsLabel={`${commonCore.totalLessons} ${t('courses_lessons')}`}
-                  freeLabel={t('pricing_free')}
-                  comingSoonLabel={t('courses_comingSoon')}
-                  inProgressLabel={t('courses_inProgress')}
-                  startHereLabel={t('courses_startHere')}
-                  isFree={commonCore.isFree}
-                  visualVariant={visualVariantByCourseId[commonCore.id]}
-                />
-              )
-            }
-          </div>
-          <div class="roadmap__spacer" aria-hidden="true"></div>
-        </div>
-
-        <div class="roadmap__down-link" aria-hidden="true"></div>
-
-        <div class="roadmap__branches">
-          <div class="roadmap__branch roadmap__branch--left">
-            {
-              cka && (
-                <CourseCard
-                  title={cka.title}
-                  description={cka.shortDescription ?? cka.description}
-                  totalLessons={cka.totalLessons}
-                  href={localePath(`/courses/${cka.id}`)}
-                  comingSoon={cka.comingSoon}
-                  inProgress={cka.inProgress}
-                  startHere={cka.startHere}
-                  level={cka.level}
-                  lessonsLabel={`${cka.totalLessons} ${t('courses_lessons')}`}
-                  freeLabel={t('pricing_free')}
-                  comingSoonLabel={t('courses_comingSoon')}
-                  inProgressLabel={t('courses_inProgress')}
-                  startHereLabel={t('courses_startHere')}
-                  isFree={cka.isFree}
-                  visualVariant={visualVariantByCourseId[cka.id]}
-                />
-              )
-            }
-          </div>
-          <div class="roadmap__branch roadmap__branch--right">
-            {
-              ckad && (
-                <CourseCard
-                  title={ckad.title}
-                  description={ckad.shortDescription ?? ckad.description}
-                  totalLessons={ckad.totalLessons}
-                  href={localePath(`/courses/${ckad.id}`)}
-                  comingSoon={ckad.comingSoon}
-                  inProgress={ckad.inProgress}
-                  startHere={ckad.startHere}
-                  level={ckad.level}
-                  lessonsLabel={`${ckad.totalLessons} ${t('courses_lessons')}`}
-                  freeLabel={t('pricing_free')}
-                  comingSoonLabel={t('courses_comingSoon')}
-                  inProgressLabel={t('courses_inProgress')}
-                  startHereLabel={t('courses_startHere')}
-                  isFree={ckad.isFree}
-                  visualVariant={visualVariantByCourseId[ckad.id]}
-                />
-              )
-            }
-          </div>
-        </div>
+      <section class="courses">
+        {
+          displayedCourses.map((course) => (
+            <CourseCard
+              title={course.title}
+              description={course.shortDescription ?? course.description}
+              totalLessons={course.totalLessons}
+              href={localePath(`/courses/${course.id}`)}
+              comingSoon={course.comingSoon}
+              inProgress={course.inProgress}
+              startHere={
+                course.id === 'crash-course'
+                  ? !emphasizePaidLearningPath
+                  : emphasizePaidLearningPath && course.startHere
+              }
+              level={course.level}
+              lessonsLabel={`${course.totalLessons} ${t('courses_lessons')}`}
+              freeLabel={t('pricing_free')}
+              comingSoonLabel={t('courses_comingSoon')}
+              inProgressLabel={t('courses_inProgress')}
+              startHereLabel={t('courses_startHere')}
+              isFree={course.isFree}
+              visualVariant={visualVariantByCourseId[course.id]}
+            />
+          ))
+        }
       </section>
 
       <p class="modules-link">
@@ -171,8 +91,7 @@ const coursesListSeo = {
     padding: 4rem 0;
   }
 
-  main h1,
-  main h2 {
+  main h1 {
     font-size: 1.875rem;
     font-weight: var(--font-weight-bold);
     color: var(--color-gray-12);
@@ -187,88 +106,15 @@ const coursesListSeo = {
     font-size: var(--text-lg);
   }
 
-  .roadmap {
-    --top-side-width: 270px;
-    --top-main-width: 340px;
-    --top-gap: 2.25rem;
-    --branch-card-width: 340px;
-    --branch-gap: 1.25rem;
-    display: grid;
-    gap: 0;
-    justify-items: center;
-  }
-
-  .roadmap__top {
-    display: grid;
-    grid-template-columns: var(--top-side-width) var(--top-main-width) var(
-        --top-side-width
-      );
-    gap: var(--top-gap);
-    align-items: start;
-    width: calc(
-      var(--top-side-width) + var(--top-main-width) + var(--top-side-width) +
-        var(--top-gap) * 2
-    );
-    max-width: 100%;
+  .courses {
+    display: flex;
+    gap: 1.25rem;
     justify-content: center;
-    position: relative;
   }
 
-  .roadmap__side {
-    width: var(--top-side-width);
-    justify-self: end;
-  }
-
-  .roadmap__main {
-    grid-column: 2;
-    width: var(--top-main-width);
-    justify-self: center;
-  }
-
-  .roadmap__spacer {
-    grid-column: 3;
-  }
-
-  .roadmap__down-link {
-    justify-self: center;
-    width: 1px;
-    height: 1.4rem;
-    background-color: var(--color-border);
-  }
-
-  .roadmap__branches {
-    display: grid;
-    grid-template-columns: repeat(2, var(--branch-card-width));
-    gap: var(--branch-gap);
-    position: relative;
-    padding-top: 1.4rem;
-    justify-items: center;
-  }
-
-  .roadmap__branches::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 50%;
-    width: calc(var(--branch-card-width) + var(--branch-gap));
-    transform: translateX(-50%);
-    border-top: 1px solid var(--color-border);
-  }
-
-  .roadmap__branch {
-    position: relative;
-    width: var(--branch-card-width);
-  }
-
-  .roadmap__branch::before {
-    content: '';
-    position: absolute;
-    top: -1.4rem;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 1px;
-    height: 1.4rem;
-    background-color: var(--color-border);
+  .courses > :global(*) {
+    width: 320px;
+    flex-shrink: 0;
   }
 
   .modules-link {
@@ -294,54 +140,13 @@ const coursesListSeo = {
       padding: 4rem 0.5rem;
     }
 
-    .roadmap {
-      gap: 0.9rem;
-    }
-
-    .roadmap__top {
-      display: flex;
+    .courses {
       flex-direction: column;
-      gap: 1rem;
+      align-items: stretch;
+    }
+
+    .courses > :global(*) {
       width: 100%;
-    }
-
-    .roadmap__top::after,
-    .roadmap__branches::after,
-    .roadmap__spacer {
-      display: none;
-    }
-
-    .roadmap__side,
-    .roadmap__main {
-      width: 100%;
-      justify-self: stretch;
-    }
-
-    .roadmap__side {
-      order: 1;
-    }
-
-    .roadmap__main {
-      order: 2;
-    }
-
-    .roadmap__down-link {
-      display: none;
-    }
-
-    .roadmap__branches {
-      grid-template-columns: 1fr;
-      gap: 1rem;
-      padding-top: 0;
-      width: 100%;
-    }
-
-    .roadmap__branch {
-      width: 100%;
-    }
-
-    .roadmap__branch::before {
-      display: none;
     }
   }
 </style>

@@ -117,4 +117,4 @@ Why does the Kubernetes project recommend a prefix like `app.kubernetes.io/` ins
 kubectl delete deployment wordpress
 ```
 
-Labels and annotations together form the metadata layer that makes Kubernetes resources discoverable, manageable, and composable. Labels drive selection and grouping; annotations carry rich metadata for tools. The next module builds directly on this foundation: ReplicaSets use label selectors to claim and manage their Pods, and understanding selectors is what makes the rest of the workload layer readable.
+Labels and annotations together form the metadata layer that makes Kubernetes resources discoverable, manageable, and composable. Labels drive selection and grouping; annotations carry rich metadata for tools. Everything in the workload layer builds directly on this foundation: Deployments, Services, and NetworkPolicies all use label selectors to target the right Pods.

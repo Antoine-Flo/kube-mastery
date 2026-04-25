@@ -28,7 +28,7 @@ export const courseStructure: CourseStructure = {
     },
     {
       title: { en: 'Security' },
-      moduleIds: ['tls-certificates', 'image-security', 'pod-security']
+      moduleIds: ['tls-certificates', 'pod-and-image-security']
     },
     {
       title: { en: 'Troubleshooting' },

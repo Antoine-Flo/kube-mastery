@@ -6,7 +6,7 @@ export const module: LocalModule = {
     fr: 'Pods'
   },
   description: {
-    en: 'Pod lifecycle, restart policies, and controlling commands with command/args.'
+    en: 'Pod structure, lifecycle phases, restart policies, and in-place editing.'
   },
   tags: ['ckad', 'cka', 'beginner']
 }

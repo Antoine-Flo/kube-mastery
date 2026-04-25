@@ -1,4 +1,4 @@
-# Common Core - Suivi de Génération du Contenu
+# Suivi de Génération du Contenu
 
 Mis à jour au fil des batches. Statuts : `pending` / `in-progress` / `done` / `skip`.
 
