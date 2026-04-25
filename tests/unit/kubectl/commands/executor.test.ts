@@ -2239,6 +2239,51 @@ spec:
         expect(tokenParts.length).toBe(3)
       })
 
+      it('should authorize users through Group subjects in RoleBinding', () => {
+        fileSystem.createFile('group-rolebinding.yaml')
+        fileSystem.writeFile(
+          'group-rolebinding.yaml',
+          `apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-reader-group
+  namespace: default
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pod-reader-group-binding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pod-reader-group
+subjects:
+  - kind: Group
+    name: system:authenticated
+    apiGroup: rbac.authorization.k8s.io
+`
+        )
+
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+        const applyResult = executor.execute('kubectl apply -f group-rolebinding.yaml')
+        expect(applyResult.ok).toBe(true)
+        if (!applyResult.ok) {
+          return
+        }
+
+        const canIResult = executor.execute('kubectl auth can-i get pods')
+        expect(canIResult.ok).toBe(true)
+        if (!canIResult.ok) {
+          return
+        }
+        expect(canIResult.value).toBe('yes')
+      })
+
       it('should render kubernetes-admin identity for auth whoami by default', () => {
         seedConfigCommandKubeconfig()
         const executor = createKubectlExecutor(apiServer, fileSystem, logger)

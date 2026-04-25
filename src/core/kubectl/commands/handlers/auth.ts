@@ -16,11 +16,13 @@ type SubjectIdentity =
       namespace: string
       name: string
       raw: string
+      groups: string[]
     }
   | {
       kind: 'User'
       name: string
       raw: string
+      groups: string[]
     }
 
 type RbacRule = {
@@ -187,38 +189,87 @@ const resolveDefaultUserIdentity = (
   }
 }
 
+const buildServiceAccountGroups = (namespace: string): string[] => {
+  return [
+    'system:serviceaccounts',
+    `system:serviceaccounts:${namespace}`,
+    'system:authenticated'
+  ]
+}
+
 const normalizeSubject = (
   parsed: ParsedCommand,
   fileSystem: FileSystem
 ): SubjectIdentity => {
   const explicitSubject = parsed.authSubject
-  if (explicitSubject != null && explicitSubject.length > 0) {
-    if (explicitSubject.startsWith('system:serviceaccount:')) {
-      const parts = explicitSubject.split(':')
-      const namespace = parts[2]
-      const name = parts[3]
-      if (namespace != null && name != null) {
-        return {
-          kind: 'ServiceAccount',
-          namespace,
-          name,
-          raw: explicitSubject
-        }
-      }
-    }
+  if (explicitSubject == null || explicitSubject.length === 0) {
+    const defaultIdentity = resolveDefaultUserIdentity(fileSystem)
     return {
       kind: 'User',
-      name: explicitSubject,
-      raw: explicitSubject
+      name: defaultIdentity.username,
+      raw: defaultIdentity.username,
+      groups: defaultIdentity.groups
     }
   }
 
-  const defaultIdentity = resolveDefaultUserIdentity(fileSystem)
-  return {
-    kind: 'User',
-    name: defaultIdentity.username,
-    raw: defaultIdentity.username
+  if (!explicitSubject.startsWith('system:serviceaccount:')) {
+    return {
+      kind: 'User',
+      name: explicitSubject,
+      raw: explicitSubject,
+      groups: ['system:authenticated']
+    }
   }
+
+  const parts = explicitSubject.split(':')
+  const namespace = parts[2]
+  const name = parts[3]
+  if (namespace == null || name == null) {
+    return {
+      kind: 'User',
+      name: explicitSubject,
+      raw: explicitSubject,
+      groups: ['system:authenticated']
+    }
+  }
+
+  return {
+    kind: 'ServiceAccount',
+    namespace,
+    name,
+    raw: explicitSubject,
+    groups: buildServiceAccountGroups(namespace)
+  }
+}
+
+const subjectMatchesIdentity = (
+  subject: {
+    kind: 'ServiceAccount' | 'User' | 'Group'
+    name: string
+    namespace?: string
+  },
+  identity: SubjectIdentity,
+  namespace: string
+): boolean => {
+  if (subject.kind === 'Group') {
+    return identity.groups.includes(subject.name)
+  }
+
+  if (identity.kind !== 'ServiceAccount') {
+    if (subject.kind !== 'User') {
+      return false
+    }
+    return subject.name === identity.name
+  }
+
+  if (subject.kind !== 'ServiceAccount') {
+    return false
+  }
+
+  return (
+    subject.name === identity.name &&
+    (subject.namespace ?? namespace) === identity.namespace
+  )
 }
 
 const includesWithWildcard = (
@@ -244,37 +295,30 @@ const collectRoleRules = (
     roleBindings,
     flatMap((roleBinding) => {
       const hasMatchingSubject = (roleBinding.subjects ?? []).some((subject) => {
-        if (identity.kind === 'ServiceAccount') {
-          return (
-            subject.kind === 'ServiceAccount' &&
-            subject.name === identity.name &&
-            (subject.namespace ?? namespace) === identity.namespace
-          )
-        }
-        return subject.kind === 'User' && subject.name === identity.name
+        return subjectMatchesIdentity(subject, identity, namespace)
       })
       if (!hasMatchingSubject) {
         return []
       }
-      if (roleBinding.roleRef.kind === 'Role') {
-        const roleResult = apiServer.findResource(
-          'Role',
-          roleBinding.roleRef.name,
-          namespace
+      if (roleBinding.roleRef.kind !== 'Role') {
+        const clusterRoleResult = apiServer.findResource(
+          'ClusterRole',
+          roleBinding.roleRef.name
         )
-        if (!roleResult.ok) {
+        if (!clusterRoleResult.ok) {
           return []
         }
-        return roleResult.value.rules ?? []
+        return clusterRoleResult.value.rules ?? []
       }
-      const clusterRoleResult = apiServer.findResource(
-        'ClusterRole',
-        roleBinding.roleRef.name
+      const roleResult = apiServer.findResource(
+        'Role',
+        roleBinding.roleRef.name,
+        namespace
       )
-      if (!clusterRoleResult.ok) {
+      if (!roleResult.ok) {
         return []
       }
-      return clusterRoleResult.value.rules ?? []
+      return roleResult.value.rules ?? []
     })
   )
 }
@@ -289,14 +333,7 @@ const collectClusterRoleRules = (
     flatMap((clusterRoleBinding) => {
       const hasMatchingSubject = (clusterRoleBinding.subjects ?? []).some(
         (subject) => {
-          if (identity.kind === 'ServiceAccount') {
-            return (
-              subject.kind === 'ServiceAccount' &&
-              subject.name === identity.name &&
-              subject.namespace === identity.namespace
-            )
-          }
-          return subject.kind === 'User' && subject.name === identity.name
+          return subjectMatchesIdentity(subject, identity, '')
         }
       )
       if (!hasMatchingSubject) {
@@ -388,10 +425,7 @@ const handleAuthWhoAmI = (
   }
 
   const identity = normalizeSubject(parsed, fileSystem)
-  const groups =
-    identity.kind === 'ServiceAccount'
-      ? `[system:serviceaccounts system:serviceaccounts:${identity.namespace} system:authenticated]`
-      : '[system:authenticated]'
+  const groups = `[${identity.groups.join(' ')}]`
   const output = [
     'ATTRIBUTE   VALUE',
     `Username    ${identity.raw}`,
