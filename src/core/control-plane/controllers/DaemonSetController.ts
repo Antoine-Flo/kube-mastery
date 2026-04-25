@@ -85,6 +85,19 @@ const createPodFromTemplate = (
     },
     nodeSelector: daemonSet.spec.template.spec.nodeSelector,
     tolerations: daemonSet.spec.template.spec.tolerations,
+    affinity: daemonSet.spec.template.spec.affinity,
+    dnsPolicy: daemonSet.spec.template.spec.dnsPolicy,
+    enableServiceLinks: daemonSet.spec.template.spec.enableServiceLinks,
+    preemptionPolicy: daemonSet.spec.template.spec.preemptionPolicy,
+    priority: daemonSet.spec.template.spec.priority,
+    priorityClassName: daemonSet.spec.template.spec.priorityClassName,
+    restartPolicy: daemonSet.spec.template.spec.restartPolicy,
+    schedulerName: daemonSet.spec.template.spec.schedulerName,
+    securityContext: daemonSet.spec.template.spec.securityContext,
+    serviceAccount: daemonSet.spec.template.spec.serviceAccount,
+    serviceAccountName: daemonSet.spec.template.spec.serviceAccountName,
+    terminationGracePeriodSeconds:
+      daemonSet.spec.template.spec.terminationGracePeriodSeconds,
     ...(initContainers && { initContainers }),
     containers: convertTemplateContainers(
       daemonSet.spec.template.spec.containers

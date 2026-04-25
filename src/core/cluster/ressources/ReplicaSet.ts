@@ -42,6 +42,9 @@ export interface PodTemplateSpec {
     tolerations?: PodToleration[]
     affinity?: PodAffinity
     dnsPolicy?: 'ClusterFirst' | 'Default'
+    enableServiceLinks?: boolean
+    preemptionPolicy?: 'PreemptLowerPriority' | 'Never'
+    priority?: number
     priorityClassName?: string
     restartPolicy?: 'Always' | 'OnFailure' | 'Never'
     schedulerName?: string

@@ -90,6 +90,117 @@ describe('kubectl get handler - structured output parity', () => {
     expect(result).not.toContain('kind: List')
   })
 
+  it('keeps pod template fields in YAML pod output', () => {
+    const richPod = createPod({
+      name: 'coredns-006512c628-12r8f',
+      namespace: 'kube-system',
+      labels: {
+        'k8s-app': 'kube-dns',
+        'pod-template-hash': '006512c628'
+      },
+      ownerReferences: [
+        {
+          apiVersion: 'apps/v1',
+          kind: 'ReplicaSet',
+          name: 'coredns-006512c628',
+          uid: 'kube-system-coredns-006512c628',
+          controller: true
+        }
+      ],
+      nodeName: 'sim-control-plane',
+      nodeSelector: {
+        'kubernetes.io/os': 'linux'
+      },
+      dnsPolicy: 'Default',
+      serviceAccount: 'coredns',
+      serviceAccountName: 'coredns',
+      priorityClassName: 'system-cluster-critical',
+      tolerations: [
+        {
+          key: 'CriticalAddonsOnly',
+          operator: 'Exists'
+        }
+      ],
+      containers: [
+        {
+          name: 'coredns',
+          image: 'registry.k8s.io/coredns/coredns:v1.13.1',
+          imagePullPolicy: 'IfNotPresent',
+          args: ['-conf', '/etc/coredns/Corefile'],
+          ports: [
+            {
+              containerPort: 8080,
+              name: 'liveness-probe',
+              protocol: 'TCP'
+            }
+          ],
+          livenessProbe: {
+            type: 'httpGet',
+            path: '/health',
+            port: 'liveness-probe',
+            initialDelaySeconds: 60,
+            periodSeconds: 10,
+            successThreshold: 1,
+            timeoutSeconds: 5,
+            failureThreshold: 5
+          },
+          resources: {
+            requests: {
+              cpu: '100m',
+              memory: '70Mi'
+            },
+            limits: {
+              memory: '170Mi'
+            }
+          },
+          securityContext: {
+            allowPrivilegeEscalation: false
+          },
+          volumeMounts: [
+            {
+              name: 'config-volume',
+              mountPath: '/etc/coredns',
+              readOnly: true
+            }
+          ]
+        }
+      ],
+      volumes: [
+        {
+          name: 'config-volume',
+          source: {
+            type: 'configMap',
+            name: 'coredns'
+          }
+        }
+      ],
+      phase: 'Running'
+    })
+    const state = createClusterStateData({ pods: [richPod] })
+    const parsed = createParsedGetCommand({
+      name: richPod.metadata.name,
+      namespace: 'kube-system',
+      flags: { output: 'yaml' }
+    })
+
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
+
+    expect(result).toContain('generateName: coredns-006512c628-')
+    expect(result).toContain('blockOwnerDeletion: true')
+    expect(result).toContain('name: liveness-probe')
+    expect(result).toContain('livenessProbe:')
+    expect(result).toContain('serviceAccountName: coredns')
+    expect(result).toContain('priorityClassName: system-cluster-critical')
+    expect(result).toContain('priority: 2000000000')
+    expect(result).toContain('dnsPolicy: Default')
+    expect(result).toContain('nodeSelector:')
+    expect(result).toContain('kubernetes.io/os: linux')
+    expect(result).toContain('configMap:')
+    expect(result).toContain('allocatedResources:')
+    expect(result).toContain('uid: 65532')
+  })
+
   it('returns Pod object JSON when querying by name', () => {
     const webPod = createPod({
       name: 'web',

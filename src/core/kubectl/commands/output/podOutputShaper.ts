@@ -28,6 +28,24 @@ const DEFAULT_SERVICE_ACCOUNT_VOLUME_MOUNT = {
   readOnly: true
 }
 
+const PRIORITY_BY_CLASS_NAME: Record<string, number> = {
+  'system-node-critical': 2000001000,
+  'system-cluster-critical': 2000000000
+}
+
+const normalizeTimestampForOutput = (
+  value: string | undefined
+): string | undefined => {
+  if (value == null) {
+    return undefined
+  }
+  const parsedMs = Date.parse(value)
+  if (Number.isNaN(parsedMs)) {
+    return value
+  }
+  return new Date(parsedMs).toISOString().replace('.000Z', 'Z')
+}
+
 const stableHash = (value: string): string => {
   let hash = 0
   for (let index = 0; index < value.length; index++) {
@@ -71,6 +89,241 @@ const buildKubeApiAccessVolumeName = (pod: Pod): string => {
   return `kube-api-access-${token}`
 }
 
+const resolvePodPriority = (pod: Pod): number => {
+  if (pod.spec.priority != null) {
+    return pod.spec.priority
+  }
+  const priorityClassName = pod.spec.priorityClassName
+  if (priorityClassName == null) {
+    return 0
+  }
+  const knownPriority = PRIORITY_BY_CLASS_NAME[priorityClassName]
+  if (knownPriority == null) {
+    return 0
+  }
+  return knownPriority
+}
+
+const toProbeForOutput = (
+  probe: Pod['spec']['containers'][number]['livenessProbe'] | undefined
+): Record<string, unknown> | undefined => {
+  if (probe == null) {
+    return undefined
+  }
+  if (probe.type === 'httpGet') {
+    return {
+      failureThreshold: probe.failureThreshold ?? 3,
+      httpGet: {
+        path: probe.path,
+        port: probe.port,
+        scheme: 'HTTP'
+      },
+      ...(probe.initialDelaySeconds != null && {
+        initialDelaySeconds: probe.initialDelaySeconds
+      }),
+      ...(probe.periodSeconds != null ? { periodSeconds: probe.periodSeconds } : {}),
+      ...(probe.successThreshold != null && {
+        successThreshold: probe.successThreshold
+      }),
+      ...(probe.timeoutSeconds != null && { timeoutSeconds: probe.timeoutSeconds })
+    }
+  }
+  if (probe.type === 'exec') {
+    return {
+      failureThreshold: probe.failureThreshold ?? 3,
+      exec: {
+        command: probe.command
+      },
+      ...(probe.initialDelaySeconds != null && {
+        initialDelaySeconds: probe.initialDelaySeconds
+      }),
+      ...(probe.periodSeconds != null ? { periodSeconds: probe.periodSeconds } : {}),
+      ...(probe.successThreshold != null && {
+        successThreshold: probe.successThreshold
+      }),
+      ...(probe.timeoutSeconds != null && { timeoutSeconds: probe.timeoutSeconds })
+    }
+  }
+  return {
+    failureThreshold: probe.failureThreshold ?? 3,
+    tcpSocket: {
+      port: probe.port
+    },
+    ...(probe.initialDelaySeconds != null && {
+      initialDelaySeconds: probe.initialDelaySeconds
+    }),
+    ...(probe.periodSeconds != null ? { periodSeconds: probe.periodSeconds } : {}),
+    ...(probe.successThreshold != null && {
+      successThreshold: probe.successThreshold
+    }),
+    ...(probe.timeoutSeconds != null && { timeoutSeconds: probe.timeoutSeconds })
+  }
+}
+
+const mapVolumeSourceForOutput = (
+  volume: NonNullable<Pod['spec']['volumes']>[number]
+): Record<string, unknown> => {
+  if (volume.source.type === 'emptyDir') {
+    return {
+      emptyDir: {
+        ...(volume.source.medium != null ? { medium: volume.source.medium } : {}),
+        ...(volume.source.sizeLimit != null
+          ? { sizeLimit: volume.source.sizeLimit }
+          : {})
+      }
+    }
+  }
+  if (volume.source.type === 'hostPath') {
+    return {
+      hostPath: {
+        path: volume.source.path,
+        ...(volume.source.hostPathType != null
+          ? { type: volume.source.hostPathType }
+          : {})
+      }
+    }
+  }
+  if (volume.source.type === 'persistentVolumeClaim') {
+    return {
+      persistentVolumeClaim: {
+        claimName: volume.source.claimName,
+        ...(volume.source.readOnly != null
+          ? { readOnly: volume.source.readOnly }
+          : {})
+      }
+    }
+  }
+  if (volume.source.type === 'configMap') {
+    return {
+      configMap: {
+        name: volume.source.name,
+        ...(volume.source.defaultMode != null
+          ? { defaultMode: volume.source.defaultMode }
+          : {}),
+        ...(volume.source.items != null ? { items: volume.source.items } : {})
+      }
+    }
+  }
+  return {
+    secret: {
+      secretName: volume.source.secretName
+    }
+  }
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === 'object' && value != null
+}
+
+const resolveContainerSecurityContextValue = (
+  container: Pod['spec']['containers'][number] | undefined,
+  key: string
+): unknown => {
+  if (container == null || !isRecord(container.securityContext)) {
+    return undefined
+  }
+  return container.securityContext[key]
+}
+
+const resolveContainerUser = (
+  container: Pod['spec']['containers'][number] | undefined
+): { linux: { uid: number; gid: number; supplementalGroups: number[] } } => {
+  const runAsUser = resolveContainerSecurityContextValue(container, 'runAsUser')
+  const runAsGroup = resolveContainerSecurityContextValue(container, 'runAsGroup')
+  const supplementalGroupsValue = resolveContainerSecurityContextValue(
+    container,
+    'supplementalGroups'
+  )
+  if (typeof runAsUser === 'number' || typeof runAsGroup === 'number') {
+    const resolvedUid = typeof runAsUser === 'number' ? runAsUser : 0
+    const resolvedGid = typeof runAsGroup === 'number' ? runAsGroup : resolvedUid
+    const supplementalGroups = Array.isArray(supplementalGroupsValue)
+      ? supplementalGroupsValue.filter((group) => typeof group === 'number')
+      : [resolvedGid]
+    return {
+      linux: {
+        gid: resolvedGid,
+        supplementalGroups:
+          supplementalGroups.length > 0 ? supplementalGroups : [resolvedGid],
+        uid: resolvedUid
+      }
+    }
+  }
+  const image = container?.image ?? ''
+  if (image.includes('/coredns/coredns:')) {
+    return {
+      linux: {
+        gid: 65532,
+        supplementalGroups: [65532],
+        uid: 65532
+      }
+    }
+  }
+  return {
+    linux: {
+      gid: 0,
+      supplementalGroups: [0],
+      uid: 0
+    }
+  }
+}
+
+const mapContainerVolumeMountsForOutput = (
+  container: Pod['spec']['containers'][number] | undefined,
+  kubeApiAccessVolumeName: string
+): Array<Record<string, unknown>> => {
+  const declaredVolumeMounts = (container?.volumeMounts ?? []).map((mount) => {
+    return {
+      mountPath: mount.mountPath,
+      name: mount.name,
+      ...(mount.readOnly != null ? { readOnly: mount.readOnly } : {})
+    }
+  })
+  const hasServiceAccountMount = declaredVolumeMounts.some((mount) => {
+    return mount.mountPath === DEFAULT_SERVICE_ACCOUNT_VOLUME_MOUNT.mountPath
+  })
+  const baseMounts = hasServiceAccountMount
+    ? declaredVolumeMounts
+    : [
+        ...declaredVolumeMounts,
+        {
+          mountPath: DEFAULT_SERVICE_ACCOUNT_VOLUME_MOUNT.mountPath,
+          name: kubeApiAccessVolumeName,
+          readOnly: DEFAULT_SERVICE_ACCOUNT_VOLUME_MOUNT.readOnly
+        }
+      ]
+  return baseMounts.map((mount) => {
+    return {
+      ...mount,
+      recursiveReadOnly: 'Disabled'
+    }
+  })
+}
+
+const mapContainerResourcesForStatus = (
+  container: Pod['spec']['containers'][number] | undefined
+): Record<string, unknown> => {
+  const requests = container?.resources?.requests
+  const limits = container?.resources?.limits
+  if (requests == null && limits == null) {
+    return {}
+  }
+  return {
+    ...(limits != null ? { limits } : {}),
+    ...(requests != null ? { requests } : {})
+  }
+}
+
+const mapAllocatedResourcesForStatus = (
+  container: Pod['spec']['containers'][number] | undefined
+): Record<string, unknown> | undefined => {
+  const requests = container?.resources?.requests
+  if (requests == null) {
+    return undefined
+  }
+  return requests
+}
+
 const mapContainerEnvForOutput = (
   container: Pod['spec']['containers'][number]
 ): Array<Record<string, unknown>> => {
@@ -111,15 +364,32 @@ const mapContainerEnvForOutput = (
 
 const ensureTransitionTimeString = (value: string | undefined): string => {
   if (value == null) {
-    return new Date().toISOString()
+    return normalizeTimestampForOutput(new Date().toISOString())!
   }
-  return typeof value === 'string' ? value : new Date(value).toISOString()
+  return normalizeTimestampForOutput(value) ?? value
 }
 
 const ensurePodConditions = (pod: Pod): PodCondition[] => {
-  const transitionTime = ensureTransitionTimeString(
+  const fallbackTransitionTime = ensureTransitionTimeString(
     pod.status.startTime ?? pod.metadata.creationTimestamp
   )
+  const latestExistingTransitionMs = (pod.status.conditions ?? []).reduce(
+    (latest, condition) => {
+      const normalized = normalizeTimestampForOutput(condition.lastTransitionTime)
+      if (normalized == null) {
+        return latest
+      }
+      const parsedMs = Date.parse(normalized)
+      if (Number.isNaN(parsedMs)) {
+        return latest
+      }
+      return parsedMs > latest ? parsedMs : latest
+    },
+    Number.NaN
+  )
+  const transitionTime = Number.isNaN(latestExistingTransitionMs)
+    ? fallbackTransitionTime
+    : normalizeTimestampForOutput(new Date(latestExistingTransitionMs).toISOString())!
   const regularNames = new Set(
     pod.spec.containers.map((container) => container.name)
   )
@@ -211,7 +481,9 @@ const toContainerState = (
   if (status.stateDetails?.state === 'Running') {
     return {
       running: {
-        startedAt: status.stateDetails.startedAt ?? new Date().toISOString()
+        startedAt: normalizeTimestampForOutput(
+          status.stateDetails.startedAt ?? new Date().toISOString()
+        )
       }
     }
   }
@@ -221,10 +493,18 @@ const toContainerState = (
         reason: status.stateDetails.reason ?? 'Completed',
         exitCode: status.stateDetails.exitCode ?? 0,
         ...(status.stateDetails.startedAt != null
-          ? { startedAt: status.stateDetails.startedAt }
+          ? {
+              startedAt: normalizeTimestampForOutput(
+                status.stateDetails.startedAt
+              )
+            }
           : {}),
         ...(status.stateDetails.finishedAt != null
-          ? { finishedAt: status.stateDetails.finishedAt }
+          ? {
+              finishedAt: normalizeTimestampForOutput(
+                status.stateDetails.finishedAt
+              )
+            }
           : {})
       }
     }
@@ -250,7 +530,11 @@ const toLastContainerState = (
     return {
       running: {
         ...(status.lastStateDetails.startedAt != null
-          ? { startedAt: status.lastStateDetails.startedAt }
+          ? {
+              startedAt: normalizeTimestampForOutput(
+                status.lastStateDetails.startedAt
+              )
+            }
           : {})
       }
     }
@@ -261,10 +545,18 @@ const toLastContainerState = (
         reason: status.lastStateDetails.reason ?? 'Completed',
         exitCode: status.lastStateDetails.exitCode ?? 0,
         ...(status.lastStateDetails.startedAt != null
-          ? { startedAt: status.lastStateDetails.startedAt }
+          ? {
+              startedAt: normalizeTimestampForOutput(
+                status.lastStateDetails.startedAt
+              )
+            }
           : {}),
         ...(status.lastStateDetails.finishedAt != null
-          ? { finishedAt: status.lastStateDetails.finishedAt }
+          ? {
+              finishedAt: normalizeTimestampForOutput(
+                status.lastStateDetails.finishedAt
+              )
+            }
           : {})
       }
     }
@@ -279,18 +571,60 @@ const toLastContainerState = (
   return {}
 }
 
+const shouldOmitSyntheticLastState = (
+  status: NonNullable<Pod['status']['containerStatuses']>[number],
+  lastState: Record<string, unknown>
+): boolean => {
+  if (status.restartCount > 0) {
+    return false
+  }
+  const waiting = isRecord(lastState.waiting) ? lastState.waiting : undefined
+  if (waiting == null) {
+    return false
+  }
+  const reason = waiting.reason
+  return reason === 'ContainerCreating'
+}
+
+const toStatusImageIdForOutput = (
+  imageId: string | undefined,
+  containerId: string | undefined,
+  phase: Pod['status']['phase']
+): string | undefined => {
+  if (imageId == null) {
+    return undefined
+  }
+  if (phase !== 'Running') {
+    return imageId
+  }
+  if (containerId == null || !containerId.startsWith('containerd://')) {
+    return imageId
+  }
+  const digestToken = '@sha256:'
+  const digestIndex = imageId.indexOf(digestToken)
+  if (digestIndex === -1) {
+    return imageId
+  }
+  return imageId.slice(digestIndex + 1)
+}
+
 export const shapePodForStructuredOutput = (
   pod: Pod
 ): Record<string, unknown> => {
   const podIP = buildPodIp(pod)
   const hostIP = pod.status.hostIP
-  const startTime = pod.status.startTime ?? pod.metadata.creationTimestamp
+  const startTime = normalizeTimestampForOutput(
+    pod.status.startTime ?? pod.metadata.creationTimestamp
+  )
   const observedGeneration =
     pod.status.observedGeneration ?? pod.metadata.generation ?? 1
   const kubeApiAccessVolumeName = buildKubeApiAccessVolumeName(pod)
   const metadataAnnotations = pod.metadata.annotations ?? {}
   const specInitContainers = (pod.spec.initContainers ?? []).map(
     (container) => {
+      const livenessProbe = toProbeForOutput(container.livenessProbe)
+      const readinessProbe = toProbeForOutput(container.readinessProbe)
+      const startupProbe = toProbeForOutput(container.startupProbe)
       return {
         ...(container.command != null && container.command.length > 0
           ? { command: container.command }
@@ -301,20 +635,51 @@ export const shapePodForStructuredOutput = (
         image: container.image,
         imagePullPolicy: container.imagePullPolicy ?? 'IfNotPresent',
         name: container.name,
+        ...(livenessProbe != null ? { livenessProbe } : {}),
+        ...(readinessProbe != null ? { readinessProbe } : {}),
+        ...(startupProbe != null ? { startupProbe } : {}),
+        ...(container.securityContext != null
+          ? { securityContext: container.securityContext }
+          : {}),
         resources: container.resources ?? {},
-        terminationMessagePath: '/dev/termination-log',
-        terminationMessagePolicy: 'File'
+        terminationMessagePath:
+          container.terminationMessagePath ?? '/dev/termination-log',
+        terminationMessagePolicy: container.terminationMessagePolicy ?? 'File'
       }
     }
   )
   const specContainers = pod.spec.containers.map((container) => {
+    const livenessProbe = toProbeForOutput(container.livenessProbe)
+    const readinessProbe = toProbeForOutput(container.readinessProbe)
+    const startupProbe = toProbeForOutput(container.startupProbe)
     const ports = (container.ports ?? []).map((port) => {
       return {
         containerPort: port.containerPort,
+        ...(port.name != null ? { name: port.name } : {}),
         protocol: port.protocol ?? 'TCP'
       }
     })
     const env = mapContainerEnvForOutput(container)
+    const declaredVolumeMounts = (container.volumeMounts ?? []).map((mount) => {
+      return {
+        mountPath: mount.mountPath,
+        name: mount.name,
+        ...(mount.readOnly != null ? { readOnly: mount.readOnly } : {})
+      }
+    })
+    const hasServiceAccountMount = declaredVolumeMounts.some((mount) => {
+      return mount.mountPath === DEFAULT_SERVICE_ACCOUNT_VOLUME_MOUNT.mountPath
+    })
+    const volumeMounts = hasServiceAccountMount
+      ? declaredVolumeMounts
+      : [
+          ...declaredVolumeMounts,
+          {
+            mountPath: DEFAULT_SERVICE_ACCOUNT_VOLUME_MOUNT.mountPath,
+            name: kubeApiAccessVolumeName,
+            readOnly: DEFAULT_SERVICE_ACCOUNT_VOLUME_MOUNT.readOnly
+          }
+        ]
     return {
       ...(container.command != null && container.command.length > 0
         ? { command: container.command }
@@ -327,50 +692,59 @@ export const shapePodForStructuredOutput = (
       name: container.name,
       ...(env.length > 0 ? { env } : {}),
       ...(ports.length > 0 ? { ports } : {}),
+      ...(livenessProbe != null ? { livenessProbe } : {}),
+      ...(readinessProbe != null ? { readinessProbe } : {}),
+      ...(startupProbe != null ? { startupProbe } : {}),
+      ...(container.securityContext != null
+        ? { securityContext: container.securityContext }
+        : {}),
       resources: container.resources ?? {},
-      terminationMessagePath: '/dev/termination-log',
-      terminationMessagePolicy: 'File',
-      volumeMounts: [
-        {
-          mountPath: DEFAULT_SERVICE_ACCOUNT_VOLUME_MOUNT.mountPath,
-          name: kubeApiAccessVolumeName,
-          readOnly: DEFAULT_SERVICE_ACCOUNT_VOLUME_MOUNT.readOnly
-        }
-      ]
+      terminationMessagePath:
+        container.terminationMessagePath ?? '/dev/termination-log',
+      terminationMessagePolicy: container.terminationMessagePolicy ?? 'File',
+      volumeMounts
     }
   })
   const allContainerStatuses = (pod.status.containerStatuses ?? []).map(
     (status) => {
+      const containerSpec = [
+        ...(pod.spec.initContainers ?? []),
+        ...pod.spec.containers
+      ].find((container) => {
+        return container.name === status.name
+      })
+      const allocatedResources = mapAllocatedResourcesForStatus(containerSpec)
+      const lastState = toLastContainerState(status)
+      const lastStateForOutput = shouldOmitSyntheticLastState(status, lastState)
+        ? {}
+        : lastState
+      const defaultImageId = `${status.image}@sha256:${stableHash(status.image).repeat(8).slice(0, 64)}`
+      const imageIdForOutput = toStatusImageIdForOutput(
+        status.imageID ?? defaultImageId,
+        status.containerID,
+        pod.status.phase
+      )
       return {
+        ...(allocatedResources != null ? { allocatedResources } : {}),
         containerID:
           status.containerID ??
           `containerd://${stableHash(`${pod.metadata.namespace}/${pod.metadata.name}/${status.name}`).repeat(8).slice(0, 64)}`,
         image: status.image,
-        imageID:
-          status.imageID ??
-          `${status.image}@sha256:${stableHash(status.image).repeat(8).slice(0, 64)}`,
-        lastState: toLastContainerState(status),
+        ...(imageIdForOutput != null ? { imageID: imageIdForOutput } : {}),
+        ...(Object.keys(lastStateForOutput).length > 0
+          ? { lastState: lastStateForOutput }
+          : {}),
         name: status.name,
         ready: status.ready,
-        resources: {},
+        resources: mapContainerResourcesForStatus(containerSpec),
         restartCount: status.restartCount,
         started: status.started ?? status.stateDetails?.state === 'Running',
         state: toContainerState(status),
-        user: {
-          linux: {
-            gid: 0,
-            supplementalGroups: [0],
-            uid: 0
-          }
-        },
-        volumeMounts: [
-          {
-            mountPath: DEFAULT_SERVICE_ACCOUNT_VOLUME_MOUNT.mountPath,
-            name: kubeApiAccessVolumeName,
-            readOnly: DEFAULT_SERVICE_ACCOUNT_VOLUME_MOUNT.readOnly,
-            recursiveReadOnly: 'Disabled'
-          }
-        ]
+        user: resolveContainerUser(containerSpec),
+        volumeMounts: mapContainerVolumeMountsForOutput(
+          containerSpec,
+          kubeApiAccessVolumeName
+        )
       }
     }
   )
@@ -383,8 +757,35 @@ export const shapePodForStructuredOutput = (
   const containerStatuses = allContainerStatuses.filter((status) => {
     return initContainerNames.has(status.name) === false
   })
+  const controllerOwnerReference = pod.metadata.ownerReferences?.find((ownerRef) => {
+    return ownerRef.controller === true
+  })
+  const generateName =
+    controllerOwnerReference != null &&
+    pod.metadata.name.startsWith(`${controllerOwnerReference.name}-`)
+      ? `${controllerOwnerReference.name}-`
+      : undefined
+  const normalizedOwnerReferences = (pod.metadata.ownerReferences ?? []).map(
+    (ownerReference) => {
+      return {
+        apiVersion: ownerReference.apiVersion,
+        ...(ownerReference.blockOwnerDeletion != null
+          ? { blockOwnerDeletion: ownerReference.blockOwnerDeletion }
+          : ownerReference.controller === true
+            ? { blockOwnerDeletion: true }
+            : {}),
+        ...(ownerReference.controller != null
+          ? { controller: ownerReference.controller }
+          : {}),
+        kind: ownerReference.kind,
+        name: ownerReference.name,
+        uid: ownerReference.uid
+      }
+    }
+  )
   const metadataKeysOrder: Record<string, unknown> = {
-    creationTimestamp: pod.metadata.creationTimestamp,
+    creationTimestamp: normalizeTimestampForOutput(pod.metadata.creationTimestamp),
+    ...(generateName != null ? { generateName } : {}),
     generation: pod.metadata.generation ?? 1,
     ...(pod.metadata.labels != null &&
     Object.keys(pod.metadata.labels).length > 0
@@ -398,47 +799,23 @@ export const shapePodForStructuredOutput = (
   if (Object.keys(metadataAnnotations).length > 0) {
     metadataKeysOrder.annotations = metadataAnnotations
   }
-  if (pod.metadata.ownerReferences != null) {
-    metadataKeysOrder.ownerReferences = pod.metadata.ownerReferences
+  if (normalizedOwnerReferences.length > 0) {
+    metadataKeysOrder.ownerReferences = normalizedOwnerReferences
   }
 
-  return {
-    apiVersion: pod.apiVersion,
-    kind: pod.kind,
-    metadata: metadataKeysOrder,
-    spec: {
-      containers: specContainers,
-      ...(specInitContainers.length > 0
-        ? { initContainers: specInitContainers }
-        : {}),
-      dnsPolicy: 'ClusterFirst',
-      enableServiceLinks: true,
-      ...(pod.spec.nodeName != null ? { nodeName: pod.spec.nodeName } : {}),
-      preemptionPolicy: 'PreemptLowerPriority',
-      priority: 0,
-      restartPolicy: pod.spec.restartPolicy ?? 'Always',
-      schedulerName: 'default-scheduler',
-      securityContext: {},
-      serviceAccount: 'default',
-      serviceAccountName: 'default',
-      terminationGracePeriodSeconds: 30,
-      tolerations: (pod.spec.tolerations ?? DEFAULT_NO_EXECUTE_TOLERATIONS).map(
-        (toleration) => {
-          const tolerationWithSeconds = toleration as PodTolerationWithSeconds
-          return {
-            ...(toleration.effect != null ? { effect: toleration.effect } : {}),
-            ...(toleration.key != null ? { key: toleration.key } : {}),
-            ...(toleration.operator != null
-              ? { operator: toleration.operator }
-              : {}),
-            ...(toleration.value != null ? { value: toleration.value } : {}),
-            ...(tolerationWithSeconds.tolerationSeconds != null
-              ? { tolerationSeconds: tolerationWithSeconds.tolerationSeconds }
-              : {})
-          }
-        }
-      ),
-      volumes: [
+  const declaredVolumes = (pod.spec.volumes ?? []).map((volume) => {
+    return {
+      name: volume.name,
+      ...mapVolumeSourceForOutput(volume)
+    }
+  })
+  const hasServiceAccountVolume = declaredVolumes.some((volume) => {
+    return volume.name === kubeApiAccessVolumeName
+  })
+  const volumes = hasServiceAccountVolume
+    ? declaredVolumes
+    : [
+        ...declaredVolumes,
         {
           name: kubeApiAccessVolumeName,
           projected: {
@@ -473,6 +850,53 @@ export const shapePodForStructuredOutput = (
           }
         }
       ]
+  const serviceAccountName =
+    pod.spec.serviceAccountName ?? pod.spec.serviceAccount ?? 'default'
+  const serviceAccount = pod.spec.serviceAccount ?? serviceAccountName
+
+  return {
+    apiVersion: pod.apiVersion,
+    kind: pod.kind,
+    metadata: metadataKeysOrder,
+    spec: {
+      containers: specContainers,
+      ...(specInitContainers.length > 0
+        ? { initContainers: specInitContainers }
+        : {}),
+      ...(pod.spec.affinity != null ? { affinity: pod.spec.affinity } : {}),
+      dnsPolicy: pod.spec.dnsPolicy ?? 'ClusterFirst',
+      enableServiceLinks: pod.spec.enableServiceLinks ?? true,
+      ...(pod.spec.nodeName != null ? { nodeName: pod.spec.nodeName } : {}),
+      ...(pod.spec.nodeSelector != null ? { nodeSelector: pod.spec.nodeSelector } : {}),
+      preemptionPolicy: pod.spec.preemptionPolicy ?? 'PreemptLowerPriority',
+      priority: resolvePodPriority(pod),
+      ...(pod.spec.priorityClassName != null
+        ? { priorityClassName: pod.spec.priorityClassName }
+        : {}),
+      restartPolicy: pod.spec.restartPolicy ?? 'Always',
+      schedulerName: pod.spec.schedulerName ?? 'default-scheduler',
+      securityContext: pod.spec.securityContext ?? {},
+      serviceAccount,
+      serviceAccountName,
+      terminationGracePeriodSeconds:
+        pod.spec.terminationGracePeriodSeconds ?? 30,
+      tolerations: (pod.spec.tolerations ?? DEFAULT_NO_EXECUTE_TOLERATIONS).map(
+        (toleration) => {
+          const tolerationWithSeconds = toleration as PodTolerationWithSeconds
+          return {
+            ...(toleration.effect != null ? { effect: toleration.effect } : {}),
+            ...(toleration.key != null ? { key: toleration.key } : {}),
+            ...(toleration.operator != null
+              ? { operator: toleration.operator }
+              : {}),
+            ...(toleration.value != null ? { value: toleration.value } : {}),
+            ...(tolerationWithSeconds.tolerationSeconds != null
+              ? { tolerationSeconds: tolerationWithSeconds.tolerationSeconds }
+              : {})
+          }
+        }
+      ),
+      volumes
     },
     status: {
       conditions: ensurePodConditions(pod),
@@ -485,7 +909,7 @@ export const shapePodForStructuredOutput = (
       podIP,
       podIPs: [{ ip: podIP }],
       qosClass: pod.status.qosClass ?? 'BestEffort',
-      startTime
+      ...(startTime != null ? { startTime } : {})
     }
   }
 }

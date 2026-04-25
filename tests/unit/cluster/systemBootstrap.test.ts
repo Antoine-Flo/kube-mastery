@@ -155,7 +155,7 @@ describe('systemBootstrap', () => {
       }
     })
     expect(corednsDeployment?.spec.template.spec.nodeSelector).toEqual({
-      'node-role.kubernetes.io/control-plane': ''
+      'kubernetes.io/os': 'linux'
     })
     expect(corednsDeployment?.spec.template.spec.priorityClassName).toBe(
       'system-cluster-critical'

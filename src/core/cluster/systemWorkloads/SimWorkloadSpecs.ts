@@ -487,13 +487,50 @@ const createDeploymentSpecs = (
       selectorLabels: { 'k8s-app': 'kube-dns' },
       replicas: 2,
       nodeSelector: {
-        'node-role.kubernetes.io/control-plane': ''
+        'kubernetes.io/os': 'linux'
+      },
+      affinity: {
+        podAntiAffinity: {
+          preferredDuringSchedulingIgnoredDuringExecution: [
+            {
+              weight: 100,
+              podAffinityTerm: {
+                labelSelector: {
+                  matchExpressions: [
+                    {
+                      key: 'k8s-app',
+                      operator: 'In',
+                      values: ['kube-dns']
+                    }
+                  ]
+                },
+                topologyKey: 'kubernetes.io/hostname'
+              }
+            }
+          ]
+        }
       },
       tolerations: [
+        {
+          key: 'CriticalAddonsOnly',
+          operator: 'Exists'
+        },
         {
           key: 'node-role.kubernetes.io/control-plane',
           operator: 'Exists',
           effect: 'NoSchedule'
+        },
+        {
+          key: 'node.kubernetes.io/not-ready',
+          operator: 'Exists',
+          effect: 'NoExecute',
+          tolerationSeconds: 300
+        },
+        {
+          key: 'node.kubernetes.io/unreachable',
+          operator: 'Exists',
+          effect: 'NoExecute',
+          tolerationSeconds: 300
         }
       ],
       strategy: {
@@ -521,15 +558,21 @@ const createDeploymentSpecs = (
           livenessProbe: {
             type: 'httpGet',
             path: '/health',
-            port: 8080,
+            port: 'liveness-probe',
             initialDelaySeconds: 60,
-            periodSeconds: 10
+            periodSeconds: 10,
+            successThreshold: 1,
+            timeoutSeconds: 5,
+            failureThreshold: 5
           },
           readinessProbe: {
             type: 'httpGet',
             path: '/ready',
-            port: 8181,
-            periodSeconds: 10
+            port: 'readiness-probe',
+            periodSeconds: 10,
+            successThreshold: 1,
+            timeoutSeconds: 1,
+            failureThreshold: 3
           },
           resources: {
             requests: {

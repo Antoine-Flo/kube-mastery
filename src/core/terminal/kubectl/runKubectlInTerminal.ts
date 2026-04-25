@@ -11,6 +11,12 @@ import {
 import { parseCommand } from '../../kubectl/commands/parser'
 import type { ExecutionResult } from '../../shared/result'
 import { error, success } from '../../shared/result'
+import {
+  getShellRegistryCommandNames,
+  parseSequentialShellScript,
+  parseShellCommand
+} from '../../shell/commands'
+import { createShellExecutorFromContext } from '../../shell/commands/executionContext'
 import type { CommandContext } from '../core/CommandContext'
 import { executeKubectlDirective } from './directives'
 import {
@@ -43,6 +49,54 @@ import {
   isWatchOnly
 } from './watch/watchEventTypes'
 
+type ParsedKubectlPipeline = {
+  sourceCommand: string
+  shellCommands: string[]
+}
+
+const parseKubectlPipeline = (
+  command: string
+): ExecutionResult & { parsed?: ParsedKubectlPipeline } => {
+  const parsedScriptResult = parseSequentialShellScript(command)
+  if (!parsedScriptResult.ok) {
+    return error(parsedScriptResult.error)
+  }
+  const steps = parsedScriptResult.steps ?? []
+  if (steps.length !== 1) {
+    return success('')
+  }
+  const firstStep = steps[0]
+  if (firstStep.kind !== 'pipeline' || firstStep.commands.length < 2) {
+    return success('')
+  }
+  const sourceCommand = firstStep.commands[0]?.trim() ?? ''
+  const firstToken = sourceCommand.split(/\s+/)[0] ?? ''
+  if (firstToken !== 'kubectl' && firstToken !== 'k') {
+    return success('')
+  }
+  const shellCommands = firstStep.commands.slice(1)
+  for (const shellCommand of shellCommands) {
+    const shellParseResult = parseShellCommand(
+      shellCommand,
+      getShellRegistryCommandNames()
+    )
+    if (!shellParseResult.ok) {
+      return error(shellParseResult.error)
+    }
+    if (shellParseResult.value.command === 'sleep') {
+      return error('sleep is not supported in pipeline commands')
+    }
+  }
+  return {
+    ok: true,
+    value: '',
+    parsed: {
+      sourceCommand,
+      shellCommands
+    }
+  }
+}
+
 export const runKubectlInTerminal = (
   command: string,
   context: CommandContext
@@ -60,6 +114,12 @@ export const runKubectlInTerminal = (
   }
 
   const parsedRedirection = parseRedirectionResult.parsed
+  const parsedPipelineResult = parseKubectlPipeline(parsedRedirection.command)
+  if (!parsedPipelineResult.ok) {
+    context.output.writeOutput(parsedPipelineResult.error)
+    return error(parsedPipelineResult.error)
+  }
+  const parsedPipeline = parsedPipelineResult.parsed
 
   const executor = createKubectlExecutor(
     context.apiServer,
@@ -69,6 +129,56 @@ export const runKubectlInTerminal = (
     undefined,
     buildKubectlExecutorTerminalOptions(context)
   )
+  if (parsedPipeline != null) {
+    const sourceResult = executor.execute(parsedPipeline.sourceCommand)
+    if (!sourceResult.ok) {
+      context.output.writeOutput(sourceResult.error)
+      return sourceResult
+    }
+
+    const sourceEnvelope = parseKubectlOutputEnvelope(sourceResult.value)
+    if (
+      sourceEnvelope.stderrNotice != null &&
+      sourceEnvelope.stderrNotice.length > 0
+    ) {
+      context.output.writeOutput(sourceEnvelope.stderrNotice)
+    }
+    const directiveResult = executeKubectlDirective(context, sourceEnvelope.payload)
+    if (directiveResult != null && !directiveResult.ok) {
+      context.output.writeOutput(directiveResult.error)
+      return directiveResult
+    }
+    let pipedInput =
+      directiveResult != null ? directiveResult.value : sourceEnvelope.payload
+    const shellExecutor = createShellExecutorFromContext({
+      fileSystem: context.fileSystem,
+      editorModal: context.editorModal
+    })
+    for (const shellCommand of parsedPipeline.shellCommands) {
+      const shellResult = shellExecutor.execute(shellCommand, { stdin: pipedInput })
+      if (!shellResult.ok) {
+        context.output.writeOutput(shellResult.error)
+        return shellResult
+      }
+      pipedInput = shellResult.value
+    }
+
+    if (parsedRedirection.outputFile != null) {
+      const writeResult = context.fileSystem.writeFile(
+        parsedRedirection.outputFile,
+        pipedInput
+      )
+      if (!writeResult.ok) {
+        context.output.writeOutput(writeResult.error)
+        return error(writeResult.error)
+      }
+      return success('')
+    }
+    if (pipedInput.length > 0) {
+      context.output.writeOutput(pipedInput)
+    }
+    return success(pipedInput)
+  }
 
   if (isKubectlHelpRequest(parsedRedirection.command)) {
     const helpResult = executor.execute(parsedRedirection.command)

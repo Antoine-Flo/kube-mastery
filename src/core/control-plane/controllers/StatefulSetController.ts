@@ -99,6 +99,19 @@ const createPodForOrdinal = (
     },
     nodeSelector: statefulSet.spec.template.spec.nodeSelector,
     tolerations: statefulSet.spec.template.spec.tolerations,
+    affinity: statefulSet.spec.template.spec.affinity,
+    dnsPolicy: statefulSet.spec.template.spec.dnsPolicy,
+    enableServiceLinks: statefulSet.spec.template.spec.enableServiceLinks,
+    preemptionPolicy: statefulSet.spec.template.spec.preemptionPolicy,
+    priority: statefulSet.spec.template.spec.priority,
+    priorityClassName: statefulSet.spec.template.spec.priorityClassName,
+    restartPolicy: statefulSet.spec.template.spec.restartPolicy,
+    schedulerName: statefulSet.spec.template.spec.schedulerName,
+    securityContext: statefulSet.spec.template.spec.securityContext,
+    serviceAccount: statefulSet.spec.template.spec.serviceAccount,
+    serviceAccountName: statefulSet.spec.template.spec.serviceAccountName,
+    terminationGracePeriodSeconds:
+      statefulSet.spec.template.spec.terminationGracePeriodSeconds,
     ...(initContainers != null && { initContainers }),
     containers: convertTemplateContainers(
       statefulSet.spec.template.spec.containers

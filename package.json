@@ -32,7 +32,7 @@
     "codegen:generate": "npm run cluster:resources:generate && npm run openapi:types:generate"
   },
   "dependencies": {
-    "@astrojs/check": "^0.9.8",
+    "@astrojs/check": "^0.9.8", 
     "@astrojs/cloudflare": "^13.1.8",
     "@codemirror/commands": "^6.10.1",
     "@codemirror/lang-yaml": "^6.1.2",

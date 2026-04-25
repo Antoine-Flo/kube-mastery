@@ -268,6 +268,15 @@ describe('CommandDispatcher', () => {
       expect(fileResult.value).toContain('name: regcred')
       expect(fileResult.value).toContain('type: kubernetes.io/dockerconfigjson')
     })
+
+    it('should support piping kubectl output to grep with ignore-case flag', () => {
+      const result = dispatcher.execute(
+        'kubectl api-resources | grep -i deployment'
+      )
+      expect(result.ok).toBe(true)
+      expect(renderer.getOutput()).toContain('deployments')
+      expect(renderer.getOutput()).toContain('Deployment')
+    })
   })
 
   describe('Error handling', () => {

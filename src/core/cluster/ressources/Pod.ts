@@ -163,6 +163,7 @@ export interface OwnerReference {
   name: string
   uid: string
   controller?: boolean
+  blockOwnerDeletion?: boolean
 }
 
 type PodMetadata = Pick<
@@ -204,6 +205,7 @@ export interface PodAffinity {
   nodeAffinity?: {
     requiredDuringSchedulingIgnoredDuringExecution?: PodNodeAffinityRequired
   }
+  podAntiAffinity?: Record<string, unknown>
 }
 
 type PodSpec = Omit<
@@ -213,7 +215,17 @@ type PodSpec = Omit<
     | 'nodeSelector'
     | 'tolerations'
     | 'affinity'
+    | 'dnsPolicy'
+    | 'enableServiceLinks'
+    | 'preemptionPolicy'
+    | 'priority'
+    | 'priorityClassName'
     | 'restartPolicy'
+    | 'schedulerName'
+    | 'securityContext'
+    | 'serviceAccount'
+    | 'serviceAccountName'
+    | 'terminationGracePeriodSeconds'
     | 'initContainers'
     | 'containers'
     | 'volumes'
@@ -222,7 +234,17 @@ type PodSpec = Omit<
 > & {
   tolerations?: PodToleration[]
   affinity?: PodAffinity
+  dnsPolicy?: 'ClusterFirst' | 'Default'
+  enableServiceLinks?: boolean
+  preemptionPolicy?: 'PreemptLowerPriority' | 'Never'
+  priority?: number
+  priorityClassName?: string
   initContainers?: readonly Container[]
+  schedulerName?: string
+  securityContext?: Record<string, unknown>
+  serviceAccount?: string
+  serviceAccountName?: string
+  terminationGracePeriodSeconds?: number
   containers: readonly Container[]
   volumes?: Volume[]
 }
@@ -334,6 +356,16 @@ interface PodConfig extends NamespacedFactoryConfigBase {
   tolerations?: PodToleration[]
   affinity?: PodAffinity
   restartPolicy?: 'Always' | 'OnFailure' | 'Never'
+  dnsPolicy?: 'ClusterFirst' | 'Default'
+  enableServiceLinks?: boolean
+  preemptionPolicy?: 'PreemptLowerPriority' | 'Never'
+  priority?: number
+  priorityClassName?: string
+  schedulerName?: string
+  securityContext?: Record<string, unknown>
+  serviceAccount?: string
+  serviceAccountName?: string
+  terminationGracePeriodSeconds?: number
   initContainers?: Container[]
   containers: Container[]
   volumes?: Volume[]
@@ -772,7 +804,27 @@ export const createPod = (config: PodConfig): Pod => {
       ...(config.nodeSelector && { nodeSelector: config.nodeSelector }),
       ...(config.tolerations && { tolerations: config.tolerations }),
       ...(config.affinity && { affinity: config.affinity }),
+      ...(config.dnsPolicy && { dnsPolicy: config.dnsPolicy }),
+      ...(config.enableServiceLinks != null && {
+        enableServiceLinks: config.enableServiceLinks
+      }),
+      ...(config.preemptionPolicy && {
+        preemptionPolicy: config.preemptionPolicy
+      }),
+      ...(config.priority != null && { priority: config.priority }),
+      ...(config.priorityClassName && {
+        priorityClassName: config.priorityClassName
+      }),
       ...(config.restartPolicy && { restartPolicy: config.restartPolicy }),
+      ...(config.schedulerName && { schedulerName: config.schedulerName }),
+      ...(config.securityContext && { securityContext: config.securityContext }),
+      ...(config.serviceAccount && { serviceAccount: config.serviceAccount }),
+      ...(config.serviceAccountName && {
+        serviceAccountName: config.serviceAccountName
+      }),
+      ...(config.terminationGracePeriodSeconds != null && {
+        terminationGracePeriodSeconds: config.terminationGracePeriodSeconds
+      }),
       ...(config.initContainers && { initContainers: config.initContainers }),
       containers: config.containers,
       ...(config.volumes && { volumes: config.volumes })
