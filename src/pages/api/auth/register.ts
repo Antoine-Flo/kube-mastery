@@ -7,6 +7,7 @@ import {
   getAuthUserCount,
   ensureEarlyAccessSubscription
 } from '../../../lib/auth/early-access-cap'
+import { addContactToBrevo } from '../../../lib/mail/brevo'
 
 const json = (body: Record<string, unknown>, status: number) =>
   new Response(JSON.stringify(body), {
@@ -61,6 +62,10 @@ export const POST: APIRoute = async ({
 
   if (isEarlyStage(locals) && data?.user?.id != null) {
     await ensureEarlyAccessSubscription(locals, data.user.id)
+  }
+
+  if (data?.user?.email != null) {
+    await addContactToBrevo(locals, { email: data.user.email })
   }
 
   return redirect(`/${lang}/auth`)

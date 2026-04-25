@@ -15,6 +15,9 @@ import {
   getDurationMs,
   startTimer
 } from '../../../lib/api-log'
+import { addContactToBrevo } from '../../../lib/mail/brevo'
+
+const NEW_USER_SIGNIN_DELTA_MS = 5_000
 
 const json = (body: Record<string, unknown>, status: number) =>
   new Response(JSON.stringify(body), {
@@ -184,6 +187,21 @@ export const GET: APIRoute = async ({
       )
     }
     await ensureEarlyAccessSubscription(locals, session.user.id)
+  }
+
+  const createdAt = data?.user?.created_at
+  const lastSignInAt = data?.user?.last_sign_in_at
+  const isNewUser =
+    createdAt != null &&
+    lastSignInAt != null &&
+    Math.abs(new Date(lastSignInAt).getTime() - new Date(createdAt).getTime()) <
+      NEW_USER_SIGNIN_DELTA_MS
+
+  if (isNewUser && data?.user?.email != null) {
+    await addContactToBrevo(locals, {
+      email: data.user.email,
+      name: data.user.user_metadata?.full_name as string | undefined
+    })
   }
 
   await reconcileBillingForAuthenticatedUser(locals, data?.user)
