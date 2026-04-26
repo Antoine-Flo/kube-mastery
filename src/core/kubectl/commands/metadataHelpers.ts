@@ -16,7 +16,10 @@ import type { ExecutionResult, Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
 import type { ParsedCommand } from './types'
 import { RESOURCE_KIND_BY_RESOURCE } from './resourceCatalog'
+import { toKindReference } from './resourceCatalog'
 import {
+  appendDryRunSuffix,
+  getDryRunStrategy,
   isDryRunRequested,
   isSupportedDryRunValue
 } from './handlers/internal/create/dryRunResponse'
@@ -212,6 +215,7 @@ export const handleMetadataChange = (
 
   const overwrite = isFlagEnabled(parsed.flags['overwrite'])
   const dryRunRequested = isDryRunRequested(parsed)
+  const dryRunStrategy = getDryRunStrategy(parsed)
 
   return handleMetadataChangeWithEvents(
     parsed.resource,
@@ -220,6 +224,7 @@ export const handleMetadataChange = (
     changes,
     overwrite,
     dryRunRequested,
+    dryRunStrategy,
     config,
     apiServer
   )
@@ -246,6 +251,7 @@ const handleMetadataChangeWithEvents = (
   changes: Record<string, string | null>,
   overwrite: boolean,
   dryRunRequested: boolean,
+  dryRunStrategy: 'client' | 'server' | undefined,
   config: MetadataOperationConfig,
   apiServer: ApiServerFacade
 ): ExecutionResult => {
@@ -282,12 +288,18 @@ const handleMetadataChangeWithEvents = (
     typeof accessor.kind
   >
   if (dryRunRequested) {
+    const kindReference = toKindReference(accessor.kind)
     const allRemovals = Object.values(changes).every((value) => value === null)
     const pastTense =
       allRemovals && config.metadataType === 'labels'
         ? 'unlabeled'
         : config.actionPastTense
-    return success(`${accessor.singularName}/${name} ${pastTense} (dry run)`)
+    return success(
+      appendDryRunSuffix(
+        `${kindReference}/${name} ${pastTense}`,
+        dryRunStrategy
+      )
+    )
   }
   const metadataKey = config.metadataType
   const metadataForEvents =
@@ -387,6 +399,7 @@ const handleMetadataChangeWithEvents = (
   }
 
   const allRemovals = Object.values(changes).every((value) => value === null)
+  const kindReference = toKindReference(accessor.kind)
   const pastTense =
     allRemovals && config.metadataType === 'labels'
       ? 'unlabeled'
@@ -394,7 +407,7 @@ const handleMetadataChangeWithEvents = (
 
   return {
     ok: true,
-    value: `${accessor.singularName}/${name} ${pastTense}`
+    value: `${kindReference}/${name} ${pastTense}`
   }
 }
 

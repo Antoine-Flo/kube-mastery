@@ -413,7 +413,18 @@ const apiResourcesCommand = createLeafCommand({
   path: ['api-resources'],
   use: 'api-resources',
   short: 'Print the supported API resources on the server',
-  handlerId: 'api-resources'
+  handlerId: 'api-resources',
+  flags: [
+    { kind: 'string', name: 'api-group', description: 'Limit to API group' },
+    { kind: 'string', name: 'output', short: 'o', description: 'Output format' },
+    { kind: 'bool', name: 'no-headers', description: 'Hide headers' },
+    { kind: 'string', name: 'sort-by', description: 'Sort by field' },
+    {
+      kind: 'string',
+      name: 'namespaced',
+      description: 'If false, non-namespaced resources are returned'
+    }
+  ]
 })
 
 const optionsCommand = createLeafCommand({

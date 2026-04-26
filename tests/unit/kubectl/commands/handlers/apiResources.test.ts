@@ -288,6 +288,56 @@ describe('kubectl api-resources handler', () => {
     })
   })
 
+  describe('--api-group filter', () => {
+    it('should keep only apps resources when --api-group=apps', () => {
+      const parsed = createParsedCommand({
+        flags: { 'api-group': 'apps' }
+      })
+
+      const result = handleAPIResources(parsed)
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value).toContain('deployments')
+        expect(result.value).toContain('daemonsets')
+        expect(result.value).not.toContain('pods')
+        expect(result.value).not.toContain('cronjobs')
+      }
+    })
+
+    it('should keep only batch resources when --api-group=batch', () => {
+      const parsed = createParsedCommand({
+        flags: { 'api-group': 'batch' }
+      })
+
+      const result = handleAPIResources(parsed)
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value).toContain('cronjobs')
+        expect(result.value).toContain('jobs')
+        expect(result.value).not.toContain('deployments')
+        expect(result.value).not.toContain('pods')
+      }
+    })
+
+    it('should keep only core resources when --api-group=', () => {
+      const parsed = createParsedCommand({
+        flags: { 'api-group': '' }
+      })
+
+      const result = handleAPIResources(parsed)
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value).toContain('pods')
+        expect(result.value).toContain('services')
+        expect(result.value).not.toContain('deployments')
+        expect(result.value).not.toContain('cronjobs')
+      }
+    })
+  })
+
   describe('integration with parser --namespaced=true format', () => {
     it('should filter namespaced resources when parsing --namespaced=true from command line', () => {
       // This test simulates the real command: kubectl api-resources --namespaced=true

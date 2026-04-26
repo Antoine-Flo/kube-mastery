@@ -330,7 +330,7 @@ describe('kubectl patch handler', () => {
     if (!result.ok) {
       return
     }
-    expect(result.value).toContain('(dry run)')
+    expect(result.value).toBe('deployment.apps/dry-run-patch patched')
 
     const deployment = apiServer.findResource(
       'Deployment',
@@ -344,7 +344,7 @@ describe('kubectl patch handler', () => {
     expect(deployment.value.spec.replicas).toBe(2)
   })
 
-  it('should return patched (no change) (dry run) for no-op patch with dry-run', () => {
+  it('should return patched (no change) for no-op patch with dry-run', () => {
     apiServer.createResource(
       'Deployment',
       createDeployment({
@@ -375,9 +375,7 @@ describe('kubectl patch handler', () => {
     if (!result.ok) {
       return
     }
-    expect(result.value).toBe(
-      'deployment.apps/dry-run-no-change patched (no change) (dry run)'
-    )
+    expect(result.value).toBe('deployment.apps/dry-run-no-change patched (no change)')
   })
 
   it('should render patched resource as yaml on patch --dry-run=client -o yaml', () => {

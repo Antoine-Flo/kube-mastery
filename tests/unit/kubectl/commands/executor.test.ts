@@ -737,6 +737,25 @@ data:
         expect(service.ok).toBe(false)
       })
 
+      it('should return server dry-run message for create service clusterip', () => {
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+        const result = executor.execute(
+          'kubectl create service clusterip my-service-v2 --tcp=80:80 --dry-run=server'
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain(
+          'service/my-service-v2 created (server dry run)'
+        )
+
+        const service = apiServer.findResource('Service', 'my-service-v2', 'default')
+        expect(service.ok).toBe(false)
+      })
+
       it('should create service externalname with external-name flag', () => {
         const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
@@ -893,7 +912,7 @@ data:
         if (!labeled.ok) {
           return
         }
-        expect(labeled.value).toBe('deployment/label-demo labeled')
+        expect(labeled.value).toBe('deployment.apps/label-demo labeled')
 
         const labels = executor.execute(
           "kubectl get deployment label-demo -o jsonpath='{.metadata.labels}'"

@@ -10,6 +10,8 @@ import { error, success } from '../../../shared/result'
 import { validateMetadataNameByKind } from '../resourceCatalog'
 import type { ParsedCommand } from '../types'
 import {
+  appendDryRunSuffix,
+  getDryRunStrategy,
   isDryRunRequested,
   isSupportedDryRunValue
 } from './internal/create/dryRunResponse'
@@ -283,6 +285,7 @@ export const handleEdit = (
     )
   }
   const dryRunRequested = isDryRunRequested(parsed)
+  const dryRunStrategy = getDryRunStrategy(parsed)
   if (options.editorModal == null) {
     return error(
       'error: interactive editor is not available in this environment'
@@ -396,7 +399,10 @@ export const handleEdit = (
           options,
           success(
             dryRunRequested
-              ? `${toKindReference(target.kind)}/${target.name} edited (dry run)`
+              ? appendDryRunSuffix(
+                  `${toKindReference(target.kind)}/${target.name} edited`,
+                  dryRunStrategy
+                )
               : `${toKindReference(target.kind)}/${target.name} edited`
           )
         )

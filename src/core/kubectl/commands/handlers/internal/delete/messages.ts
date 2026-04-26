@@ -1,7 +1,7 @@
 import type { ExecutionResult } from '../../../../../shared/result'
 import { error } from '../../../../../shared/result'
 import type { ParsedCommand } from '../../../types'
-import { isDryRunRequested } from '../create/dryRunResponse'
+import { getDryRunStrategy, isDryRunRequested } from '../create/dryRunResponse'
 import type { PodDeleteOptions } from './types'
 
 export const formatDeletedMessage = (
@@ -37,6 +37,10 @@ export const getPodDeleteOptions = (
   }
   if (isDryRunRequested(parsed)) {
     options.dryRun = true
+    const dryRunStrategy = getDryRunStrategy(parsed)
+    if (dryRunStrategy != null) {
+      options.dryRunStrategy = dryRunStrategy
+    }
   }
   return options
 }

@@ -84,7 +84,7 @@ describe('kubectl label handler', () => {
 
     expect(result.ok).toBe(true)
     if (result.ok) {
-      expect(result.value).toContain('deployment/label-demo labeled')
+      expect(result.value).toContain('deployment.apps/label-demo labeled')
     }
   })
 

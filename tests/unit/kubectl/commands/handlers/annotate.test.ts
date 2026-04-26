@@ -110,7 +110,7 @@ describe('kubectl annotate handler', () => {
     if (!result.ok) {
       return
     }
-    expect(result.value).toContain('(dry run)')
+    expect(result.value).toContain('(server dry run)')
 
     const updatedPod = apiServer.findResource('Pod', 'dry-run-pod', 'default')
     expect(updatedPod.ok).toBe(true)

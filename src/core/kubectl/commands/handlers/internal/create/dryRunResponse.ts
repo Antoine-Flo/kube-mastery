@@ -1,12 +1,44 @@
 import type { ExecutionResult } from '../../../../../shared/result'
 import { error } from '../../../../../shared/result'
 import { validateMetadataNameForResource } from '../../../resourceCatalog'
+import { isSupportedResourceKind, toKindReference } from '../../../resourceCatalog'
 import {
   renderStructuredPayload,
   resolveOutputDirective,
   validateOutputDirective
 } from '../../../output/outputHelpers'
 import type { ParsedCommand } from '../../../types'
+
+export type DryRunStrategy = 'client' | 'server'
+
+export const getDryRunStrategy = (
+  parsed: ParsedCommand
+): DryRunStrategy | undefined => {
+  const dryRunValue = parsed.flags['dry-run']
+  if (dryRunValue === 'client' || dryRunValue === 'server') {
+    return dryRunValue
+  }
+  return undefined
+}
+
+export const getDryRunSuffix = (
+  strategy: DryRunStrategy | undefined
+): string => {
+  if (strategy === 'server') {
+    return ' (server dry run)'
+  }
+  if (strategy === 'client') {
+    return ' (dry run)'
+  }
+  return ''
+}
+
+export const appendDryRunSuffix = (
+  message: string,
+  strategy: DryRunStrategy | undefined
+): string => {
+  return `${message}${getDryRunSuffix(strategy)}`
+}
 
 export const isDryRunClient = (parsed: ParsedCommand): boolean => {
   return parsed.flags['dry-run'] === 'client'
@@ -47,14 +79,21 @@ const sanitizeForDryRunOutput = (value: unknown): unknown => {
   return Object.fromEntries(sanitizedEntries)
 }
 
-const buildDryRunCreatedMessage = (resource: any): string => {
+const buildDryRunCreatedMessage = (
+  resource: any,
+  strategy: DryRunStrategy | undefined
+): string => {
   const kindRaw = resource?.kind
   const nameRaw = resource?.metadata?.name
   if (typeof kindRaw !== 'string' || typeof nameRaw !== 'string') {
-    return 'resource created (dry run)'
+    return appendDryRunSuffix('resource created', strategy)
   }
-  const kind = kindRaw.toLowerCase()
-  return `${kind}/${nameRaw} created (dry run)`
+  if (isSupportedResourceKind(kindRaw)) {
+    const kindReference = toKindReference(kindRaw)
+    return appendDryRunSuffix(`${kindReference}/${nameRaw} created`, strategy)
+  }
+  const lowerCaseKind = kindRaw.toLowerCase()
+  return appendDryRunSuffix(`${lowerCaseKind}/${nameRaw} created`, strategy)
 }
 
 const buildDryRunPatchOperationMessage = (
@@ -62,7 +101,7 @@ const buildDryRunPatchOperationMessage = (
   name: string,
   operation: 'patched' | 'patched (no change)'
 ): string => {
-  return `${kindReference}/${name} ${operation} (dry run)`
+  return `${kindReference}/${name} ${operation}`
 }
 
 const buildDryRunStructuredOrMessage = (
@@ -111,10 +150,11 @@ export const buildDryRunResponse = (
   resource: any,
   parsed: ParsedCommand
 ): ExecutionResult => {
+  const strategy = getDryRunStrategy(parsed)
   return buildDryRunStructuredOrMessage(
     resource,
     parsed,
-    buildDryRunCreatedMessage(resource)
+    buildDryRunCreatedMessage(resource, strategy)
   )
 }
 

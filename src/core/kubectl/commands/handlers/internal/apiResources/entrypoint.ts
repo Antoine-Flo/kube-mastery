@@ -36,6 +36,19 @@ const filterByNamespaced = (
   return resources.filter((resource) => resource.namespaced === namespaced)
 }
 
+const filterByApiGroup = (
+  resources: APIResourceDiscovery[],
+  apiGroup?: string
+): APIResourceDiscovery[] => {
+  if (apiGroup === undefined) {
+    return resources
+  }
+
+  return resources.filter((resource) => {
+    return extractAPIGroup(resource.groupVersion) === apiGroup
+  })
+}
+
 const sortResources = (
   resources: APIResourceDiscovery[],
   sortBy?: string
@@ -183,6 +196,14 @@ const formatYamlOutput = (resources: APIResourceDiscovery[]): string => {
 
 export const handleAPIResources = (parsed: ParsedCommand): Result<string> => {
   const sortBy = parsed.flags['sort-by'] || parsed.flags.sortBy
+  const hasApiGroupFlag = Object.prototype.hasOwnProperty.call(
+    parsed.flags,
+    'api-group'
+  )
+  const apiGroupFlag = hasApiGroupFlag
+    ? parsed.flags['api-group']
+    : parsed.flags.apiGroup
+  const apiGroup = typeof apiGroupFlag === 'string' ? apiGroupFlag : undefined
   if (sortBy && sortBy !== 'name' && sortBy !== 'kind') {
     return error('--sort-by accepts only name or kind')
   }
@@ -211,6 +232,7 @@ export const handleAPIResources = (parsed: ParsedCommand): Result<string> => {
     API_DISCOVERY_CATALOG,
     namespacedFilter
   )
+  filteredResources = filterByApiGroup(filteredResources, apiGroup)
 
   filteredResources = sortResources(filteredResources, sortBy as string)
 

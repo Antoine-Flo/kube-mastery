@@ -10,6 +10,7 @@ import { stripMatchingQuotes } from '../../../shared/parsing'
 import type { ParsedCommand } from '../types'
 import { createResourceWithEvents } from '../resourceCatalog'
 import { buildDryRunResponse } from './create'
+import { isDryRunRequested } from './internal/create/dryRunResponse'
 
 type ExposeServiceType = NonNullable<ServiceSpec['type']>
 type ExposeTargetResource = 'deployments' | 'pods'
@@ -385,7 +386,7 @@ export const handleExpose = (
     ]
   })
 
-  if (dryRunFlag === 'client') {
+  if (isDryRunRequested(parsed)) {
     return buildDryRunResponse(service, parsed)
   }
 

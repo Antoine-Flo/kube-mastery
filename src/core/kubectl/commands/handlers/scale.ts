@@ -9,6 +9,8 @@ import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import type { ParsedCommand } from '../types'
 import {
+  appendDryRunSuffix,
+  getDryRunStrategy,
   isDryRunRequested,
   isSupportedDryRunValue
 } from './internal/create/dryRunResponse'
@@ -70,23 +72,27 @@ export const handleScale = (
 
   // Scale deployment
   if (resource === 'deployments') {
+    const dryRunStrategy = getDryRunStrategy(parsed)
     return scaleDeployment(
       apiServer,
       name,
       namespace,
       replicas,
-      isDryRunRequested(parsed)
+      isDryRunRequested(parsed),
+      dryRunStrategy
     )
   }
 
   // Scale replicaset
   if (resource === 'replicasets') {
+    const dryRunStrategy = getDryRunStrategy(parsed)
     return scaleReplicaSet(
       apiServer,
       name,
       namespace,
       replicas,
-      isDryRunRequested(parsed)
+      isDryRunRequested(parsed),
+      dryRunStrategy
     )
   }
 
@@ -101,7 +107,8 @@ const scaleDeployment = (
   name: string,
   namespace: string,
   replicas: number,
-  dryRunRequested: boolean
+  dryRunRequested: boolean,
+  dryRunStrategy: 'client' | 'server' | undefined
 ): ExecutionResult => {
   const findResult = apiServer.findResource('Deployment', name, namespace)
   if (!findResult.ok) {
@@ -120,7 +127,7 @@ const scaleDeployment = (
     }
   }
   if (dryRunRequested) {
-    return success(`deployment.apps/${name} scaled (dry run)`)
+    return success(appendDryRunSuffix(`deployment.apps/${name} scaled`, dryRunStrategy))
   }
 
   // Emit update event - DeploymentController will handle ReplicaSet/Pod reconciliation
@@ -145,7 +152,8 @@ const scaleReplicaSet = (
   name: string,
   namespace: string,
   replicas: number,
-  dryRunRequested: boolean
+  dryRunRequested: boolean,
+  dryRunStrategy: 'client' | 'server' | undefined
 ): ExecutionResult => {
   const findResult = apiServer.findResource('ReplicaSet', name, namespace)
   if (!findResult.ok) {
@@ -164,7 +172,7 @@ const scaleReplicaSet = (
     }
   }
   if (dryRunRequested) {
-    return success(`replicaset.apps/${name} scaled (dry run)`)
+    return success(appendDryRunSuffix(`replicaset.apps/${name} scaled`, dryRunStrategy))
   }
 
   // Emit update event - ReplicaSetController will handle Pod reconciliation

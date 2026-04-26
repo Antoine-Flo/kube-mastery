@@ -1344,6 +1344,21 @@ describe('kubectl parser - api versions', () => {
   })
 })
 
+describe('kubectl parser - api resources', () => {
+  it('should parse api-resources with --api-group=apps', () => {
+    const result = parseCommand('kubectl api-resources --api-group=apps')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('api-resources')
+    expect(result.value.resource).toBeUndefined()
+    expect(result.value.flags['api-group']).toBe('apps')
+  })
+})
+
 describe('kubectl parser - get all', () => {
   it('should parse get all as a valid resource', () => {
     const result = parseCommand('kubectl get all')

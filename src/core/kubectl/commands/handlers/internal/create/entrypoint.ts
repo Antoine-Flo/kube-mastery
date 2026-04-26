@@ -26,7 +26,6 @@ import {
 } from './deployment'
 import {
   buildDryRunResponse,
-  isDryRunClient,
   isDryRunRequested,
   isSupportedDryRunValue
 } from './dryRunResponse'
@@ -121,7 +120,7 @@ export const handleCreate = (
   }
 
   if (isCreateDeploymentImperative(parsed)) {
-    if (isDryRunClient(parsed)) {
+    if (isDryRunRequested(parsed)) {
       const dryRunManifest = buildCreateDeploymentDryRunManifest(parsed)
       return buildDryRunResponse(dryRunManifest, parsed)
     }
@@ -129,7 +128,7 @@ export const handleCreate = (
   }
 
   if (isCreateNamespaceImperative(parsed)) {
-    if (isDryRunClient(parsed)) {
+    if (isDryRunRequested(parsed)) {
       const dryRunManifest = buildCreateNamespaceDryRunManifest(parsed)
       return buildDryRunResponse(dryRunManifest, parsed)
     }
@@ -141,14 +140,14 @@ export const handleCreate = (
     if (!('kind' in serviceConfig)) {
       return serviceConfig
     }
-    if (isDryRunClient(parsed)) {
+    if (isDryRunRequested(parsed)) {
       return buildDryRunResponse(serviceConfig, parsed)
     }
     return createServiceFromFlags(parsed, apiServer)
   }
 
   if (isCreateIngressImperative(parsed)) {
-    if (isDryRunClient(parsed)) {
+    if (isDryRunRequested(parsed)) {
       const dryRunManifest = buildCreateIngressDryRunManifest(parsed)
       if (isExecutionErrorResult(dryRunManifest)) {
         return dryRunManifest
@@ -159,7 +158,7 @@ export const handleCreate = (
   }
 
   if (isCreateConfigMapImperative(parsed)) {
-    if (isDryRunClient(parsed)) {
+    if (isDryRunRequested(parsed)) {
       const dryRunManifest = buildCreateConfigMapDryRunManifest(parsed)
       if (isExecutionErrorResult(dryRunManifest)) {
         return dryRunManifest
@@ -170,7 +169,7 @@ export const handleCreate = (
   }
 
   if (isCreateSecretImperative(parsed)) {
-    if (isDryRunClient(parsed)) {
+    if (isDryRunRequested(parsed)) {
       const dryRunManifest = buildCreateSecretDryRunManifest(fileSystem, parsed)
       if (isExecutionErrorResult(dryRunManifest)) {
         return dryRunManifest
@@ -302,7 +301,7 @@ export const handleCreate = (
     return loadResult
   }
 
-  if (isDryRunClient(parsed)) {
+  if (isDryRunRequested(parsed)) {
     return buildDryRunResponse(loadResult.resource, parsed)
   }
 

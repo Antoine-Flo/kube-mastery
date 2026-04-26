@@ -1,3 +1,9 @@
+## 2026-04-26
+
+- Improved kubectl dry-run parity
+- Added `kubectl api-resources --api-group=` support
+- Fixed RBAC Group subject matching in `kubectl auth can-i`
+
 ## 2026-04-25
 
 - Removed the Common Core learning path for simplicity

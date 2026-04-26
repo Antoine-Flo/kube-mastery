@@ -19,6 +19,7 @@ export type PodDeleteOptions = {
   gracePeriodSeconds?: number
   force?: boolean
   dryRun?: boolean
+  dryRunStrategy?: 'client' | 'server'
 }
 
 export type DeletableResource = Exclude<Resource, 'all'>

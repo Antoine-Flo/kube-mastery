@@ -273,6 +273,33 @@ data:
     }
   })
 
+  it('should not mutate cluster state on create deployment --dry-run=server', () => {
+    const parsed = parseCommand(
+      'kubectl create deployment dry-run-server --image=nginx --dry-run=server'
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value).toContain(
+      'deployment.apps/dry-run-server created (server dry run)'
+    )
+    const deployment = apiServer.findResource(
+      'Deployment',
+      'dry-run-server',
+      'default'
+    )
+    expect(deployment.ok).toBe(false)
+  })
+
   it('should fail when deployment namespace does not exist', () => {
     const parsed = parseCommand(
       'kubectl create deployment my-dep --image=busybox -n staging'

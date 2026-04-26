@@ -6,6 +6,7 @@ import {
   type LabelSelectorLike
 } from '../../../../../shared/labelSelector'
 import type { Resource } from '../../../types'
+import { appendDryRunSuffix } from '../create/dryRunResponse'
 import {
   DELETE_ALL_RESOURCE_ORDER,
   DELETE_TARGET_BY_RESOURCE,
@@ -14,8 +15,11 @@ import {
 import { formatDeletedMessage, formatNotFoundMessage } from './messages'
 import type { DeleteManifestTargetConfig, PodDeleteOptions } from './types'
 
-const toDryRunDeleteMessage = (message: string): string => {
-  return `${message} (dry run)`
+const toDryRunDeleteMessage = (
+  message: string,
+  strategy: 'client' | 'server' | undefined
+): string => {
+  return appendDryRunSuffix(message, strategy)
 }
 
 export const deleteNamespacedResourcesForNamespace = (
@@ -185,6 +189,7 @@ export const deleteSingleResource = (
   podDeleteOptions: PodDeleteOptions
 ): ExecutionResult => {
   const dryRunRequested = podDeleteOptions.dryRun === true
+  const dryRunStrategy = podDeleteOptions.dryRunStrategy
   if (config.kind === 'Namespace') {
     const existingNamespace = apiServer.findResource('Namespace', name)
     if (!existingNamespace.ok) {
@@ -193,7 +198,8 @@ export const deleteSingleResource = (
     if (dryRunRequested) {
       return success(
         toDryRunDeleteMessage(
-          formatDeletedMessage(config.kindRef, name, namespace, false)
+          formatDeletedMessage(config.kindRef, name, namespace, false),
+          dryRunStrategy
         )
       )
     }
@@ -216,7 +222,8 @@ export const deleteSingleResource = (
       }
       return success(
         toDryRunDeleteMessage(
-          formatDeletedMessage(config.kindRef, name, namespace, true)
+          formatDeletedMessage(config.kindRef, name, namespace, true),
+          dryRunStrategy
         )
       )
     }
@@ -242,7 +249,8 @@ export const deleteSingleResource = (
     }
     return success(
       toDryRunDeleteMessage(
-        formatDeletedMessage(config.kindRef, name, namespace, false)
+        formatDeletedMessage(config.kindRef, name, namespace, false),
+        dryRunStrategy
       )
     )
   }
@@ -335,6 +343,7 @@ const deleteWithNotFoundMessage = (
   podDeleteOptions: PodDeleteOptions
 ): ExecutionResult => {
   const dryRunRequested = podDeleteOptions.dryRun === true
+  const dryRunStrategy = podDeleteOptions.dryRunStrategy
   if (dryRunRequested) {
     const findResult = namespaced
       ? apiServer.findResource(kind, name, namespace)
@@ -344,7 +353,8 @@ const deleteWithNotFoundMessage = (
     }
     return success(
       toDryRunDeleteMessage(
-        formatDeletedMessage(kindRef, name, namespace, namespaced)
+        formatDeletedMessage(kindRef, name, namespace, namespaced),
+        dryRunStrategy
       )
     )
   }
@@ -365,6 +375,7 @@ export const deleteNamedResources = (
   podDeleteOptions: PodDeleteOptions
 ): ExecutionResult => {
   const dryRunRequested = podDeleteOptions.dryRun === true
+  const dryRunStrategy = podDeleteOptions.dryRunStrategy
   if (
     resource === 'pods' ||
     resource === 'configmaps' ||
@@ -393,7 +404,8 @@ export const deleteNamedResources = (
         }
         messages.push(
           toDryRunDeleteMessage(
-            formatDeletedMessage(kindRef, name, namespace, true)
+            formatDeletedMessage(kindRef, name, namespace, true),
+            dryRunStrategy
           )
         )
         continue
@@ -485,7 +497,8 @@ export const deleteNamedResources = (
         }
         messages.push(
           toDryRunDeleteMessage(
-            formatDeletedMessage('service', name, namespace, true)
+            formatDeletedMessage('service', name, namespace, true),
+            dryRunStrategy
           )
         )
         continue
@@ -572,7 +585,8 @@ export const deleteNamedResources = (
       if (dryRunRequested) {
         messages.push(
           toDryRunDeleteMessage(
-            formatDeletedMessage('namespace', name, namespace, false)
+            formatDeletedMessage('namespace', name, namespace, false),
+            dryRunStrategy
           )
         )
         continue
