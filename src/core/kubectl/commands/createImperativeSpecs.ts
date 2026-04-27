@@ -23,6 +23,7 @@ export type CreateResourceSpec = CreateLeafSpec & {
     | 'rolebindings'
     | 'clusterrolebindings'
     | 'configmaps'
+    | 'serviceaccounts'
   >
   pluralToken: string
 }
@@ -173,6 +174,17 @@ export const CREATE_RESOURCE_SPECS: readonly CreateResourceSpec[] = [
       },
       ...OUTPUT_AND_DRY_RUN_FLAGS
     ]
+  },
+  {
+    token: 'serviceaccount',
+    pathTail: ['serviceaccount'],
+    resource: 'serviceaccounts',
+    pluralToken: 'serviceaccounts',
+    use: 'create serviceaccount NAME [--dry-run=none|server|client] [-o output]',
+    short: 'Create a service account',
+    action: 'create',
+    aliases: ['sa'],
+    flags: [...OUTPUT_AND_DRY_RUN_FLAGS]
   },
   {
     token: 'configmap',

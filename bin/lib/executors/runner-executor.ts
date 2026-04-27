@@ -232,12 +232,26 @@ const executionFromOutput = (
   stdout: string,
   stderr: string
 ): CommandExecutionResult => {
-  const combined = stdout && stderr ? `${stdout}\n${stderr}` : stdout || stderr
+  const ensureTrailingNewline = (value: string): string => {
+    if (value.length === 0) {
+      return value
+    }
+    if (value.endsWith('\n')) {
+      return value
+    }
+    return `${value}\n`
+  }
+  const normalizedStdout = ensureTrailingNewline(stdout)
+  const normalizedStderr = ensureTrailingNewline(stderr)
+  const combined =
+    normalizedStdout && normalizedStderr
+      ? `${normalizedStdout}\n${normalizedStderr}`
+      : normalizedStdout || normalizedStderr
   return {
     command,
     exitCode,
-    stdout,
-    stderr,
+    stdout: normalizedStdout,
+    stderr: normalizedStderr,
     combined
   }
 }

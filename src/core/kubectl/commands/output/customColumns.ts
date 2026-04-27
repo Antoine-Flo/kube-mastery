@@ -72,7 +72,10 @@ export const parseCustomColumnsSpec = (
  */
 export const renderCustomColumnsTable = (
   spec: string,
-  items: unknown[]
+  items: unknown[],
+  options: {
+    noHeaders?: boolean
+  } = {}
 ): Result<string> => {
   const columnsResult = parseCustomColumnsSpec(spec)
   if (!columnsResult.ok) {
@@ -110,7 +113,8 @@ export const renderCustomColumnsTable = (
 
   const tableOutput = formatKubectlTable(headers, rows, {
     spacing: KUBECTL_TABLE_SPACING,
-    align: headers.map(() => 'left' as const)
+    align: headers.map(() => 'left' as const),
+    noHeaders: options.noHeaders === true
   })
   return success(tableOutput)
 }

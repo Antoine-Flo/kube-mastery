@@ -2228,6 +2228,50 @@ spec:
         expect(canIResult.value).toBe('yes')
       })
 
+      it('should support auth can-i --list with optional headers', () => {
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+        const createServiceAccountResult = executor.execute(
+          'kubectl create serviceaccount robot'
+        )
+        expect(createServiceAccountResult.ok).toBe(true)
+
+        const createRoleResult = executor.execute(
+          'kubectl create role pod-reader --verb=get,list --resource=pods'
+        )
+        expect(createRoleResult.ok).toBe(true)
+
+        const createRoleBindingResult = executor.execute(
+          'kubectl create rolebinding pod-reader-binding --role=pod-reader --serviceaccount=default:robot'
+        )
+        expect(createRoleBindingResult.ok).toBe(true)
+
+        const withHeaders = executor.execute(
+          'kubectl auth can-i --list --as=system:serviceaccount:default:robot'
+        )
+        expect(withHeaders.ok).toBe(true)
+        if (!withHeaders.ok) {
+          return
+        }
+        expect(withHeaders.value).toContain('Resources')
+        expect(withHeaders.value).toContain('Verbs')
+        expect(withHeaders.value).toContain('pods')
+        expect(withHeaders.value).toContain('[get list]')
+        expect(withHeaders.value).toContain(
+          'selfsubjectreviews.authentication.k8s.io'
+        )
+
+        const withoutHeaders = executor.execute(
+          'kubectl auth can-i --list --no-headers --as=system:serviceaccount:default:robot'
+        )
+        expect(withoutHeaders.ok).toBe(true)
+        if (!withoutHeaders.ok) {
+          return
+        }
+        expect(withoutHeaders.value).not.toContain('Resources')
+        expect(withoutHeaders.value).toContain('pods')
+        expect(withoutHeaders.value).toContain('[get list]')
+      })
+
       it('should support auth whoami and create token', () => {
         apiServer.createResource(
           'ServiceAccount',

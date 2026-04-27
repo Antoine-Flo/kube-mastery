@@ -52,7 +52,8 @@ const sortResourcesByName = (
 const renderPodsAllNamespacesTable = (
   filtered: ResourceWithMetadata[],
   isWide: boolean,
-  showLabels: boolean
+  showLabels: boolean,
+  noHeaders: boolean
 ): string => {
   const sorted = [...filtered].sort(sortPodsByNamespaceAndName)
   const headersAllNamespaces = isWide
@@ -111,7 +112,8 @@ const renderPodsAllNamespacesTable = (
     headersAllNamespaces,
     rowsAllNamespaces,
     withKubectlTableSpacing({
-      align: buildLeftAlign(headersAllNamespaces.length)
+      align: buildLeftAlign(headersAllNamespaces.length),
+      noHeaders
     })
   )
 }
@@ -119,7 +121,8 @@ const renderPodsAllNamespacesTable = (
 const renderAllNamespacesTable = (
   filtered: ResourceWithMetadata[],
   handler: ResourceHandler<ResourceWithMetadata>,
-  showLabels: boolean
+  showLabels: boolean,
+  noHeaders: boolean
 ): string => {
   const rowsSource = [...filtered].sort(sortPodsByNamespaceAndName)
   const rows = (rowsSource.map(handler.formatRow) as string[][]).map(
@@ -141,14 +144,15 @@ const renderAllNamespacesTable = (
   return formatKubectlTable(
     headers,
     rows,
-    withKubectlTableSpacing({ align: buildLeftAlign(headers.length) })
+    withKubectlTableSpacing({ align: buildLeftAlign(headers.length), noHeaders })
   )
 }
 
 const renderWideTable = (
   filtered: ResourceWithMetadata[],
   handler: ResourceHandler<ResourceWithMetadata>,
-  showLabels: boolean
+  showLabels: boolean,
+  noHeaders: boolean
 ): string => {
   const headers = [...(handler.headersWide ?? [])]
   const ordered = [...filtered].sort(sortResourcesByName)
@@ -169,7 +173,7 @@ const renderWideTable = (
   return formatKubectlTable(
     headers,
     rows,
-    withKubectlTableSpacing({ align: buildLeftAlign(headers.length) })
+    withKubectlTableSpacing({ align: buildLeftAlign(headers.length), noHeaders })
   )
 }
 
@@ -177,7 +181,8 @@ const renderDefaultTable = (
   resourceType: Resource,
   filtered: ResourceWithMetadata[],
   handler: ResourceHandler<ResourceWithMetadata>,
-  showLabels: boolean
+  showLabels: boolean,
+  noHeaders: boolean
 ): string => {
   const rowsSource =
     resourceType === ('deployments' as Resource)
@@ -197,7 +202,8 @@ const renderDefaultTable = (
     headers.push('labels')
   }
   const tableOptions = withKubectlTableSpacing({
-    align: buildLeftAlign(headers.length)
+    align: buildLeftAlign(headers.length),
+    noHeaders
   })
   return formatKubectlTable(headers, rows, tableOptions)
 }
@@ -207,7 +213,8 @@ export const renderCustomColumnsOutput = (
   outputDirective: OutputDirective,
   allNamespacesFlag: boolean,
   filtered: ResourceWithMetadata[],
-  missingNameErrors: string[]
+  missingNameErrors: string[],
+  noHeaders: boolean
 ): string => {
   const spec = outputDirective.customColumnsSpec ?? ''
   let ordered = filtered
@@ -219,7 +226,9 @@ export const renderCustomColumnsOutput = (
   const sanitizedForColumns = ordered.map((resource) => {
     return sanitizeForOutput(resource as unknown as Record<string, unknown>)
   })
-  const tableResult = renderCustomColumnsTable(spec, sanitizedForColumns)
+  const tableResult = renderCustomColumnsTable(spec, sanitizedForColumns, {
+    noHeaders
+  })
   if (!tableResult.ok) {
     return tableResult.error
   }
@@ -235,6 +244,7 @@ export const renderTableOutput = (options: {
   handler: ResourceHandler<ResourceWithMetadata>
   missingNameErrors: string[]
   showLabels: boolean
+  noHeaders: boolean
 }): string => {
   const isWide =
     options.outputDirective.kind === 'wide' || options.parsedWideFlag === true
@@ -242,7 +252,8 @@ export const renderTableOutput = (options: {
     const tableOutput = renderPodsAllNamespacesTable(
       options.filtered,
       isWide,
-      options.showLabels
+      options.showLabels,
+      options.noHeaders
     )
     return appendTrailingErrors(tableOutput, options.missingNameErrors)
   }
@@ -250,7 +261,8 @@ export const renderTableOutput = (options: {
     const tableOutput = renderAllNamespacesTable(
       options.filtered,
       options.handler,
-      options.showLabels
+      options.showLabels,
+      options.noHeaders
     )
     return appendTrailingErrors(tableOutput, options.missingNameErrors)
   }
@@ -258,7 +270,8 @@ export const renderTableOutput = (options: {
     const tableOutput = renderWideTable(
       options.filtered,
       options.handler,
-      options.showLabels
+      options.showLabels,
+      options.noHeaders
     )
     return appendTrailingErrors(tableOutput, options.missingNameErrors)
   }
@@ -266,7 +279,8 @@ export const renderTableOutput = (options: {
     options.resourceType,
     options.filtered,
     options.handler,
-    options.showLabels
+    options.showLabels,
+    options.noHeaders
   )
   return appendTrailingErrors(tableOutput, options.missingNameErrors)
 }

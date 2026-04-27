@@ -92,6 +92,10 @@ const isAllNamespaces = (parsed: ParsedCommand): boolean => {
   return parsed.flags['all-namespaces'] === true || parsed.flags['A'] === true
 }
 
+const shouldHideHeaders = (parsed: ParsedCommand): boolean => {
+  return parsed.flags['no-headers'] === true
+}
+
 const renderNoResourcesFound = (
   namespace: string | undefined,
   allNamespaces: boolean
@@ -185,7 +189,10 @@ const renderTopPods = (
     return [pod.metadata.name, formatCpu(metric[0]), formatMemory(metric[1])]
   })
 
-  return formatKubectlTable(headers, rows, { uppercase: false })
+  return formatKubectlTable(headers, rows, {
+    uppercase: false,
+    noHeaders: shouldHideHeaders(parsed)
+  })
 }
 
 const getNodeMetric = (
@@ -238,7 +245,10 @@ const renderTopNodes = (
     ]
   })
 
-  return formatKubectlTable(headers, rows, { uppercase: false })
+  return formatKubectlTable(headers, rows, {
+    uppercase: false,
+    noHeaders: shouldHideHeaders(parsed)
+  })
 }
 
 export const handleTop = (

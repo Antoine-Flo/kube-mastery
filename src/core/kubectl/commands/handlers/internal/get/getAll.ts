@@ -42,6 +42,7 @@ interface GetAllContext {
   allNamespacesFlag: boolean
   effectiveNamespace: string
   filterNamespace: string | undefined
+  noHeaders: boolean
 }
 
 const buildGetAllContext = (parsed: ParsedCommand): GetAllContext => {
@@ -52,7 +53,9 @@ const buildGetAllContext = (parsed: ParsedCommand): GetAllContext => {
   return {
     allNamespacesFlag,
     effectiveNamespace,
-    filterNamespace
+    filterNamespace,
+    noHeaders:
+      parsed.flags['no-headers'] === true || parsed.flags.noHeaders === true
   }
 }
 
@@ -118,7 +121,8 @@ const buildGetAllHeaders = (
 const buildGetAllTableOptions = (
   allNamespacesFlag: boolean,
   handler: ResourceHandler<ResourceWithMetadata>,
-  showLabels: boolean
+  showLabels: boolean,
+  noHeaders: boolean
 ): { spacing: number; align?: ('left' | 'right')[] } => {
   const namespaceColumns = allNamespacesFlag ? 1 : 0
   const labelsColumns = showLabels ? 1 : 0
@@ -127,7 +131,7 @@ const buildGetAllTableOptions = (
     { length: totalColumns },
     () => 'left'
   )
-  return withKubectlTableSpacing({ align })
+  return withKubectlTableSpacing({ align, noHeaders })
 }
 
 const buildGetAllSection = (
@@ -167,7 +171,8 @@ const buildGetAllSection = (
   const tableOptions = buildGetAllTableOptions(
     context.allNamespacesFlag,
     handler,
-    showLabels
+    showLabels,
+    context.noHeaders
   )
   return formatKubectlTable(headers, rows, tableOptions)
 }
@@ -277,7 +282,9 @@ export const handleGetAll = (
       if (sanitized.length === 0) {
         continue
       }
-      const tableResult = renderCustomColumnsTable(spec, sanitized)
+      const tableResult = renderCustomColumnsTable(spec, sanitized, {
+        noHeaders: context.noHeaders
+      })
       if (!tableResult.ok) {
         return tableResult.error
       }

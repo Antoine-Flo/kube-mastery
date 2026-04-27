@@ -221,6 +221,36 @@ describe('kubectl get handler - all', () => {
     expect(result).toContain('service/web-svc')
   })
 
+  it('should hide headers with get all --no-headers', () => {
+    const webPod = createPod({
+      name: 'web-no-header',
+      namespace: 'default',
+      containers: [{ name: 'nginx', image: 'nginx:latest' }]
+    })
+    const webService = createService({
+      name: 'web-svc-no-header',
+      namespace: 'default',
+      clusterIP: '10.96.10.10',
+      ports: [{ port: 80, protocol: 'TCP' }]
+    })
+    const state = createClusterStateData({
+      pods: [webPod],
+      services: [webService]
+    })
+    const parsed = createParsedGetAll({
+      flags: { 'no-headers': true }
+    })
+
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
+
+    expect(result).toContain('pod/web-no-header')
+    expect(result).toContain('service/web-svc-no-header')
+    expect(result).not.toContain('NAME')
+    expect(result).not.toContain('READY')
+    expect(result).not.toContain('TYPE')
+  })
+
   it('should render deployment READY from status readyReplicas', () => {
     const deploymentZero = createDeployment({
       name: 'deploy-zero',
@@ -392,6 +422,29 @@ describe('kubectl get handler - all', () => {
     expect(result).toContain('KIND')
     expect(result).toContain('web')
     expect(result).toContain('Pod')
+  })
+
+  it('should hide headers for get all custom-columns with --no-headers', () => {
+    const webPod = createPod({
+      name: 'web-no-header',
+      namespace: 'default',
+      containers: [{ name: 'nginx', image: 'nginx:latest' }]
+    })
+    const state = createClusterStateData({ pods: [webPod] })
+    const parsed = createParsedGetAll({
+      flags: {
+        output: 'custom-columns=NAME:.metadata.name,KIND:.kind',
+        'no-headers': true
+      }
+    })
+
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
+
+    expect(result).toContain('web-no-header')
+    expect(result).toContain('Pod')
+    expect(result).not.toContain('NAME')
+    expect(result).not.toContain('KIND')
   })
 
   it('should return no resources message for empty get all custom-columns', () => {

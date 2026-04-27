@@ -738,7 +738,8 @@ const topPodsCommand = createLeafCommand({
     resourceNames: { mode: 'pods' }
   },
   flags: [
-    { kind: 'string', name: 'selector', short: 'l', description: 'Selector' }
+    { kind: 'string', name: 'selector', short: 'l', description: 'Selector' },
+    { kind: 'bool', name: 'no-headers', description: 'Hide headers' }
   ]
 })
 
@@ -752,7 +753,8 @@ const topPodCommand = createLeafCommand({
     resourceNames: { mode: 'pods' }
   },
   flags: [
-    { kind: 'string', name: 'selector', short: 'l', description: 'Selector' }
+    { kind: 'string', name: 'selector', short: 'l', description: 'Selector' },
+    { kind: 'bool', name: 'no-headers', description: 'Hide headers' }
   ]
 })
 
@@ -766,7 +768,8 @@ const topNodesCommand = createLeafCommand({
     resourceNames: { mode: 'nodes' }
   },
   flags: [
-    { kind: 'string', name: 'selector', short: 'l', description: 'Selector' }
+    { kind: 'string', name: 'selector', short: 'l', description: 'Selector' },
+    { kind: 'bool', name: 'no-headers', description: 'Hide headers' }
   ]
 })
 
@@ -780,7 +783,8 @@ const topNodeCommand = createLeafCommand({
     resourceNames: { mode: 'nodes' }
   },
   flags: [
-    { kind: 'string', name: 'selector', short: 'l', description: 'Selector' }
+    { kind: 'string', name: 'selector', short: 'l', description: 'Selector' },
+    { kind: 'bool', name: 'no-headers', description: 'Hide headers' }
   ]
 })
 

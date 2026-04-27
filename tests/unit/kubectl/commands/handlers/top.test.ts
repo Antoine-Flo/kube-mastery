@@ -236,6 +236,81 @@ describe('kubectl top handler', () => {
     expect(result.value).toBe('No resources found')
   })
 
+  it('hides headers for top pods with --no-headers', () => {
+    const apiServer = createApiServerFacade()
+    apiServer.createResource(
+      'Pod',
+      createPod({
+        name: 'web-no-header',
+        namespace: 'default',
+        nodeName: 'sim-worker',
+        phase: 'Running',
+        containers: [{ name: 'web', image: 'nginx:1.28' }]
+      })
+    )
+
+    const result = handleTop(
+      apiServer,
+      createMetricsProvider(apiServer),
+      createTopParsedCommand('top-pods', {
+        namespace: 'default',
+        flags: { 'no-headers': true }
+      })
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value).toContain('web-no-header')
+    expect(result.value).not.toContain('NAME')
+    expect(result.value).not.toContain('CPU(cores)')
+    expect(result.value).not.toContain('MEMORY(bytes)')
+  })
+
+  it('hides headers for top nodes with --no-headers', () => {
+    const apiServer = createApiServerFacade()
+    apiServer.createResource(
+      'Node',
+      createNode({
+        name: 'node-no-header',
+        status: {
+          nodeInfo: {
+            architecture: 'amd64',
+            containerRuntimeVersion: 'containerd://2.2.0',
+            kernelVersion: '6.6.87.2',
+            kubeletVersion: 'v1.35.0',
+            operatingSystem: 'linux',
+            osImage: 'Debian GNU/Linux 12'
+          },
+          allocatable: {
+            cpu: '1000m',
+            memory: '2Gi'
+          }
+        }
+      })
+    )
+
+    const result = handleTop(
+      apiServer,
+      createMetricsProvider(apiServer),
+      createTopParsedCommand('top-nodes', {
+        flags: { 'no-headers': true }
+      })
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value).toContain('node-no-header')
+    expect(result.value).not.toContain('NAME')
+    expect(result.value).not.toContain('CPU(%)')
+    expect(result.value).not.toContain('MEMORY(%)')
+  })
+
   it('renders zero allocatable percentages as 0%', () => {
     const apiServer = createApiServerFacade()
     apiServer.createResource(

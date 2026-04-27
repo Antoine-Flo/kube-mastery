@@ -232,6 +232,8 @@ export const handleGet = (
 
   const allNamespacesFlag =
     parsed.flags['all-namespaces'] === true || parsed.flags['A'] === true
+  const noHeaders =
+    parsed.flags['no-headers'] === true || parsed.flags.noHeaders === true
   const effectiveNamespace = parsed.namespace ?? 'default'
   const filterNamespace = allNamespacesFlag ? undefined : effectiveNamespace
   const printSink = resolveGetPrintSink(outputDirective)
@@ -340,7 +342,8 @@ export const handleGet = (
       filtered,
       handler: resolved.handler,
       missingNameErrors,
-      showLabels: parsed.flags['show-labels'] === true
+      showLabels: parsed.flags['show-labels'] === true,
+      noHeaders
     })
   }
 
@@ -350,7 +353,8 @@ export const handleGet = (
       outputDirective,
       allNamespacesFlag,
       filtered,
-      missingNameErrors
+      missingNameErrors,
+      noHeaders
     )
   }
 

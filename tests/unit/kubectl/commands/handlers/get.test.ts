@@ -54,6 +54,40 @@ describe('kubectl get handler - multi resource list', () => {
     expect(output).toContain('app-config')
     expect(output).toContain('app-secret')
   })
+
+  it('hides headers for comma-separated resources with --no-headers', () => {
+    const apiServer = createApiServerFacade()
+    apiServer.createResource(
+      'Pod',
+      createPod({
+        name: 'web-no-header',
+        namespace: 'default',
+        containers: [{ name: 'web', image: 'nginx:1.28' }]
+      })
+    )
+    apiServer.createResource(
+      'ConfigMap',
+      createConfigMap({
+        name: 'app-config-no-header',
+        namespace: 'default',
+        data: { MODE: 'dev' }
+      })
+    )
+
+    const parsed: ParsedCommand = {
+      action: 'get',
+      resource: 'pods',
+      resourceList: ['pods', 'configmaps'],
+      flags: { 'no-headers': true },
+      namespace: 'default'
+    }
+    const output = handleGet(apiServer, parsed)
+
+    expect(output).toContain('web-no-header')
+    expect(output).toContain('app-config-no-header')
+    expect(output).not.toContain('NAME')
+    expect(output).not.toContain('READY')
+  })
 })
 
 describe('kubectl get handler - nodes', () => {
@@ -181,6 +215,22 @@ describe('kubectl get handler - nodes', () => {
       const result = handleGet(apiServer, parsed)
 
       expect(result).toBe('No resources found')
+    })
+
+    it('should hide headers when --no-headers is set', () => {
+      const state = createState()
+      const parsed = createParsedCommand({
+        flags: { 'no-headers': true }
+      })
+
+      apiServer.etcd.restore(state)
+      const result = handleGet(apiServer, parsed)
+
+      expect(result).toContain('control-plane')
+      expect(result).toContain('worker-node-1')
+      expect(result).not.toContain('NAME')
+      expect(result).not.toContain('STATUS')
+      expect(result).not.toContain('ROLES')
     })
   })
 

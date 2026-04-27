@@ -3,6 +3,7 @@ import { createClusterRole } from '../../../../../cluster/ressources/ClusterRole
 import { createClusterRoleBinding } from '../../../../../cluster/ressources/ClusterRoleBinding'
 import { createRole } from '../../../../../cluster/ressources/Role'
 import { createRoleBinding } from '../../../../../cluster/ressources/RoleBinding'
+import { createServiceAccount } from '../../../../../cluster/ressources/ServiceAccount'
 import type { FileSystem } from '../../../../../filesystem/FileSystem'
 import type { ExecutionResult } from '../../../../../shared/result'
 import { error } from '../../../../../shared/result'
@@ -133,6 +134,17 @@ export const handleCreate = (
       return buildDryRunResponse(dryRunManifest, parsed)
     }
     return createNamespaceFromFlags(parsed, apiServer)
+  }
+
+  if (parsed.resource === 'serviceaccounts' && parsed.name != null) {
+    const serviceAccount = createServiceAccount({
+      name: parsed.name,
+      namespace: parsed.namespace ?? 'default'
+    })
+    if (isDryRunRequested(parsed)) {
+      return buildDryRunResponse(serviceAccount, parsed)
+    }
+    return createResourceWithEvents(serviceAccount, apiServer)
   }
 
   if (isCreateServiceImperative(parsed)) {

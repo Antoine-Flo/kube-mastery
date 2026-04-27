@@ -72,6 +72,20 @@ describe('kubectl parser - create deployment', () => {
     expect(result.value.name).toBe('my-team')
   })
 
+  it('should parse imperative serviceaccount creation', () => {
+    const result = parseCommand('kubectl create serviceaccount robot -n staging')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('create')
+    expect(result.value.resource).toBe('serviceaccounts')
+    expect(result.value.name).toBe('robot')
+    expect(result.value.namespace).toBe('staging')
+  })
+
   it('should reject plural resource token for imperative create deployment', () => {
     const result = parseCommand(
       'kubectl create deployments my-dep --dry-run=client -o json'
@@ -859,6 +873,18 @@ describe('kubectl parser - get and delete flag positions', () => {
 
     expect(result.value.resource).toBe('pods')
     expect(result.value.flags['show-labels']).toBe(true)
+  })
+
+  it('should parse get no-headers flag', () => {
+    const result = parseCommand('kubectl get pods --no-headers')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.flags['no-headers']).toBe(true)
   })
 
   it('should parse get with comma-separated resources', () => {
@@ -1817,6 +1843,28 @@ describe('kubectl parser - auth and token', () => {
     )
   })
 
+  it('should parse auth can-i --list --no-headers', () => {
+    const result = parseCommand('kubectl auth can-i --list --no-headers')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('auth-can-i')
+    expect(result.value.flags.list).toBe(true)
+    expect(result.value.flags['no-headers']).toBe(true)
+  })
+
+  it('should reject auth can-i --no-headers without --list', () => {
+    const result = parseCommand('kubectl auth can-i get pods --no-headers')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toBe('--no-headers cannot be set without --list specified')
+    }
+  })
+
   it('should parse auth whoami command with --as', () => {
     const result = parseCommand('kubectl auth whoami --as=e2e-user')
 
@@ -2021,6 +2069,17 @@ describe('kubectl parser - unknown flags', () => {
         }
       ]
     })
+  })
+
+  it('should parse top pods no-headers flag', () => {
+    const result = parseCommand('kubectl top pods --no-headers')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value.action).toBe('top-pods')
+    expect(result.value.flags['no-headers']).toBe(true)
   })
 
   it('should parse top pod alias with explicit name', () => {

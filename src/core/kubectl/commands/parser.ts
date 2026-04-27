@@ -1148,7 +1148,18 @@ const validateConfigRenameContextSemantics: ActionSemanticValidator = (
 }
 
 const validateAuthCanISemantics: ActionSemanticValidator = (context) => {
+  const listFlagEnabled = context.flags.list === true
+  const noHeadersFlagEnabled = context.flags['no-headers'] === true
+  if (noHeadersFlagEnabled && !listFlagEnabled) {
+    return '--no-headers cannot be set without --list specified'
+  }
   const positionalTokens = getPositionalTokensAfterIndex(context.tokens, 3)
+  if (listFlagEnabled) {
+    if (positionalTokens.length > 0) {
+      return 'list option must be specified with no arguments'
+    }
+    return undefined
+  }
   if (positionalTokens.length < 2) {
     return 'auth can-i requires <verb> <resource>'
   }

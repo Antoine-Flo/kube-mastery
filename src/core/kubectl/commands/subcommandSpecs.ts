@@ -152,7 +152,19 @@ export const AUTH_SUBCOMMAND_SPECS: readonly AuthSubcommandSpec[] = [
     use: 'auth can-i VERB RESOURCE [--as=SUBJECT]',
     short: 'Check whether an action is allowed',
     transformKind: 'verbResource',
-    flags: [AS_SUBJECT_FLAG]
+    flags: [
+      AS_SUBJECT_FLAG,
+      {
+        kind: 'bool',
+        name: 'list',
+        description: 'If true, prints all allowed actions'
+      },
+      {
+        kind: 'bool',
+        name: 'no-headers',
+        description: 'If true, prints allowed actions without headers'
+      }
+    ]
   },
   {
     token: 'whoami',

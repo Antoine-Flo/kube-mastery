@@ -40,16 +40,22 @@ export const KUBECTL_TABLE_SPACING = 3
 
 export const withKubectlTableSpacing = (options?: {
   align?: ('left' | 'right')[]
-}): { spacing: number; align?: ('left' | 'right')[] } => {
-  if (options?.align != null) {
-    return {
-      spacing: KUBECTL_TABLE_SPACING,
-      align: options.align
-    }
-  }
-  return {
+  noHeaders?: boolean
+}): { spacing: number; align?: ('left' | 'right')[]; noHeaders?: boolean } => {
+  const tableOptions: {
+    spacing: number
+    align?: ('left' | 'right')[]
+    noHeaders?: boolean
+  } = {
     spacing: KUBECTL_TABLE_SPACING
   }
+  if (options?.align != null) {
+    tableOptions.align = options.align
+  }
+  if (options?.noHeaders === true) {
+    tableOptions.noHeaders = true
+  }
+  return tableOptions
 }
 
 export const buildLeftAlign = (columnsCount: number): ('left' | 'right')[] => {

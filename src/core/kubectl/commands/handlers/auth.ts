@@ -9,6 +9,7 @@ import { err as ntErr, ok as ntOk, type Result as NtResult } from 'neverthrow'
 import { flatMap, map, pipe } from 'remeda'
 import { dispatchByAction } from '../shared/actionDispatch'
 import { buildRequiresFilenameFlagMessage } from '../shared/errorMessages'
+import { formatKubectlTable } from '../output/outputHelpers'
 
 type SubjectIdentity =
   | {
@@ -27,7 +28,10 @@ type SubjectIdentity =
 
 type RbacRule = {
   verbs: string[]
+  apiGroups?: string[]
   resources?: string[]
+  resourceNames?: string[]
+  nonResourceURLs?: string[]
 }
 
 type DefaultUserIdentity = {
@@ -39,6 +43,53 @@ type DefaultUserIdentity = {
 const DEFAULT_KUBERNETES_ADMIN_GROUPS = [
   'kubeadm:cluster-admins',
   'system:authenticated'
+]
+
+const DEFAULT_AUTHENTICATED_NON_RESOURCE_URLS = [
+  '/.well-known/openid-configuration/',
+  '/.well-known/openid-configuration',
+  '/api/*',
+  '/api',
+  '/apis/*',
+  '/apis',
+  '/healthz',
+  '/healthz',
+  '/livez',
+  '/livez',
+  '/openapi/*',
+  '/openapi',
+  '/openid/v1/jwks/',
+  '/openid/v1/jwks',
+  '/readyz',
+  '/readyz',
+  '/version/',
+  '/version/',
+  '/version',
+  '/version'
+]
+
+const DEFAULT_AUTHENTICATED_SELF_SUBJECT_RULES: readonly RbacRule[] = [
+  {
+    verbs: ['create'],
+    apiGroups: ['authentication.k8s.io'],
+    resources: ['selfsubjectreviews'],
+    resourceNames: [],
+    nonResourceURLs: []
+  },
+  {
+    verbs: ['create'],
+    apiGroups: ['authorization.k8s.io'],
+    resources: ['selfsubjectaccessreviews'],
+    resourceNames: [],
+    nonResourceURLs: []
+  },
+  {
+    verbs: ['create'],
+    apiGroups: ['authorization.k8s.io'],
+    resources: ['selfsubjectrulesreviews'],
+    resourceNames: [],
+    nonResourceURLs: []
+  }
 ]
 
 const parseDistinctOrganizations = (subject: string): string[] => {
@@ -285,6 +336,77 @@ const includesWithWildcard = (
   return values.includes(target)
 }
 
+const combineResourceGroup = (
+  resources: string[] | undefined,
+  apiGroups: string[] | undefined
+): string => {
+  if (resources == null || resources.length === 0) {
+    return ''
+  }
+  const groups = apiGroups != null && apiGroups.length > 0 ? apiGroups : ['']
+  const merged = flatMap(resources, (resource) => {
+    return groups.map((group) => {
+      if (group.length === 0) {
+        return resource
+      }
+      return `${resource}.${group}`
+    })
+  })
+  return merged.join(',')
+}
+
+const formatSliceLikeKubectl = (values: string[] | undefined): string => {
+  if (values == null || values.length === 0) {
+    return '[]'
+  }
+  return `[${values.join(' ')}]`
+}
+
+const buildAuthenticatedDefaultRules = (): RbacRule[] => {
+  const defaultNonResourceRules = DEFAULT_AUTHENTICATED_NON_RESOURCE_URLS.map(
+    (url) => {
+      return {
+        verbs: ['get'],
+        nonResourceURLs: [url],
+        resourceNames: []
+      }
+    }
+  )
+  return [...DEFAULT_AUTHENTICATED_SELF_SUBJECT_RULES, ...defaultNonResourceRules]
+}
+
+const collectEffectiveRules = (
+  apiServer: ApiServerFacade,
+  identity: SubjectIdentity,
+  namespace: string
+): RbacRule[] => {
+  const roleRules = collectRoleRules(apiServer, identity, namespace)
+  const clusterRoleRules = collectClusterRoleRules(apiServer, identity)
+  const baseRules = [...roleRules, ...clusterRoleRules]
+  if (!identity.groups.includes('system:authenticated')) {
+    return baseRules
+  }
+  const authenticatedDefaults = buildAuthenticatedDefaultRules()
+  const selfSubjectDefaults = authenticatedDefaults.filter((rule) => {
+    return rule.resources != null && rule.resources.length > 0
+  })
+  const nonResourceDefaults = authenticatedDefaults.filter((rule) => {
+    return rule.nonResourceURLs != null && rule.nonResourceURLs.length > 0
+  })
+  return [...selfSubjectDefaults, ...baseRules, ...nonResourceDefaults]
+}
+
+const toAuthCanIListRows = (rules: RbacRule[]): string[][] => {
+  return rules.map((rule) => {
+    return [
+      combineResourceGroup(rule.resources, rule.apiGroups),
+      formatSliceLikeKubectl(rule.nonResourceURLs),
+      formatSliceLikeKubectl(rule.resourceNames),
+      formatSliceLikeKubectl(rule.verbs)
+    ]
+  })
+}
+
 const collectRoleRules = (
   apiServer: ApiServerFacade,
   identity: SubjectIdentity,
@@ -361,12 +483,13 @@ const canIdentity = (
   if (identity.raw === 'kubernetes-admin') {
     return true
   }
-  const roleRules = collectRoleRules(apiServer, identity, namespace)
-  const clusterRoleRules = collectClusterRoleRules(apiServer, identity)
-  const allRules = [...roleRules, ...clusterRoleRules]
+  const allRules = collectEffectiveRules(apiServer, identity, namespace)
+  const isNonResourceRequest = resource.startsWith('/')
   return allRules.some((rule) => {
     const verbAllowed = includesWithWildcard(rule.verbs, verb)
-    const resourceAllowed = includesWithWildcard(rule.resources, resource)
+    const resourceAllowed = isNonResourceRequest
+      ? includesWithWildcard(rule.nonResourceURLs, resource)
+      : includesWithWildcard(rule.resources, resource)
     return verbAllowed && resourceAllowed
   })
 }
@@ -376,6 +499,31 @@ const resolveAuthCanIResult = (
   fileSystem: FileSystem,
   parsed: ParsedCommand
 ): NtResult<string, string> => {
+  if (parsed.flags.list === true) {
+    const namespace = parsed.namespace ?? 'default'
+    const identity = normalizeSubject(parsed, fileSystem)
+    const rows = toAuthCanIListRows(
+      collectEffectiveRules(apiServer, identity, namespace)
+    )
+    if (parsed.flags['no-headers'] === true) {
+      const rowsWithKubectlNoHeadersSpacing = rows.map((row) => {
+        return [row[0] ?? '', row[1] ?? '', `${row[2] ?? ''} `, row[3] ?? '']
+      })
+      const rendered = formatKubectlTable(['', '', '', ''], rowsWithKubectlNoHeadersSpacing, {
+        uppercase: false
+      })
+      return ntOk(rendered.split('\n').slice(1).join('\n'))
+    }
+    return ntOk(
+      formatKubectlTable(
+        ['Resources', 'Non-Resource URLs', 'Resource Names', 'Verbs'],
+        rows,
+        {
+          uppercase: false
+        }
+      )
+    )
+  }
   if (parsed.authVerb == null || parsed.authResource == null) {
     return ntErr('auth can-i requires <verb> <resource>')
   }
